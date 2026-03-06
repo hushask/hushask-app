@@ -1,0 +1,32 @@
+# Secrets — never commit
+.env
+.env.save
+
+# Database
+*.db
+*.sqlite
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Logs
+*.log
+/tmp/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Legacy / scratch (root-level only)
+logo-concepts.html
+/logo.png
+/logo.svg
+.env.save
+
+# Generated assets (keep ha-512.png for Notion, exclude others if regenerated)
+assets/bot-avatar.png

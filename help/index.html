@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HushAsk Help Center</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--grad:linear-gradient(135deg,#FF8C42,#FF3CAC);--bg:#0d0d0d;--surface:#141414;--border:#222;--text:#f0f0f0;--muted:#666;--accent:#FF8C42}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.7;min-height:100vh}
+    nav{padding:20px 48px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .logo-badge{width:32px;height:32px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:white;transform:rotate(-6deg)}
+    .logo-name{font-size:16px;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    nav a.back{color:var(--muted);text-decoration:none;font-size:14px}
+    nav a.back:hover{color:var(--text)}
+    .hero{padding:80px 48px 60px;max-width:860px;margin:0 auto;text-align:center}
+    .hero h1{font-size:48px;font-weight:900;letter-spacing:-2px;margin-bottom:16px}
+    .hero p{color:var(--muted);font-size:17px;max-width:520px;margin:0 auto}
+    .guides{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:1000px;margin:0 auto;padding:0 48px 80px}
+    .guide-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px 28px;text-decoration:none;color:var(--text);transition:border-color .2s,transform .15s;display:block}
+    .guide-card:hover{border-color:#FF8C42;transform:translateY(-2px)}
+    .guide-icon{font-size:32px;margin-bottom:16px}
+    .guide-card h3{font-size:18px;font-weight:700;margin-bottom:10px;letter-spacing:-.3px}
+    .guide-card p{font-size:14px;color:var(--muted);line-height:1.6}
+    .guide-tag{display:inline-block;background:#1a1a1a;border:1px solid var(--border);border-radius:100px;padding:2px 10px;font-size:11px;color:var(--muted);margin-top:16px}
+    footer{border-top:1px solid var(--border);padding:28px 48px;text-align:center;color:var(--muted);font-size:13px}
+    @media(max-width:768px){nav{padding:16px 20px}.hero{padding:60px 20px 40px}.guides{grid-template-columns:1fr;padding:0 20px 60px}}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="logo"><div class="logo-badge">HA</div><span class="logo-name">HushAsk</span></a>
+    <a href="/" class="back">← Back to site</a>
+  </nav>
+  <div class="hero">
+    <h1>Help Center</h1>
+    <p>Everything you need to set up, secure, and scale HushAsk in your workspace.</p>
+  </div>
+  <div class="guides">
+    <a href="setting-up-notion.html" class="guide-card">
+      <div class="guide-icon">📄</div>
+      <h3>Setting up Notion</h3>
+      <p>Connect your Notion workspace to sync anonymous Q&A answers as permanent, searchable documentation.</p>
+      <span class="guide-tag">Admin · 5 min</span>
+    </a>
+    <a href="privacy-and-hashing.html" class="guide-card">
+      <div class="guide-icon">🔒</div>
+      <h3>Privacy & Hashing</h3>
+      <p>How SHA-256 hashing works, what data is stored, what isn't, and why HushAsk can't identify you.</p>
+      <span class="guide-tag">Everyone · 3 min</span>
+    </a>
+    <a href="managing-hush-hr.html" class="guide-card">
+      <div class="guide-icon">🧑‍💼</div>
+      <h3>Managing #HR-Whisper</h3>
+      <p>Best practices for managing your confidential HR channel — who has access, how to respond, and triage workflows.</p>
+      <span class="guide-tag">HR / Admin · 4 min</span>
+    </a>
+  </div>
+  <footer>A product of HonestAlias. Built with ❤️ by Simon.</footer>
+</body>
+</html>

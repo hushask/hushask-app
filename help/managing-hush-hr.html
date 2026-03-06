@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Managing #HR-Whisper — HushAsk Help</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--grad:linear-gradient(135deg,#FF8C42,#FF3CAC);--bg:#0d0d0d;--surface:#141414;--border:#222;--text:#f0f0f0;--muted:#666}
+    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.75;min-height:100vh}
+    nav{padding:20px 48px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+    .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+    .logo-badge{width:32px;height:32px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:middle;font-weight:900;font-size:13px;color:white;transform:rotate(-6deg)}
+    .logo-name{font-size:16px;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    nav a.back{color:var(--muted);text-decoration:none;font-size:14px}
+    nav a.back:hover{color:var(--text)}
+    .content{max-width:720px;margin:0 auto;padding:60px 48px 80px}
+    .tag{display:inline-block;background:#1a1a1a;border:1px solid var(--border);border-radius:100px;padding:3px 12px;font-size:12px;color:var(--muted);margin-bottom:20px}
+    h1{font-size:42px;font-weight:900;letter-spacing:-2px;margin-bottom:16px;line-height:1.1}
+    .lead{font-size:18px;color:var(--muted);margin-bottom:48px;line-height:1.65}
+    h2{font-size:22px;font-weight:700;margin:40px 0 12px;letter-spacing:-.3px}
+    p{color:#ccc;margin-bottom:16px;font-size:15px}
+    code{font-family:'SF Mono',monospace;background:#1a1a1a;border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:13px;color:#FF8C42}
+    .practice{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:16px}
+    .practice h3{font-size:15px;font-weight:700;margin-bottom:6px}
+    .practice p{font-size:14px;color:var(--muted);margin:0}
+    .callout{background:#1a1a1a;border:1px solid var(--border);border-left:3px solid #FF3CAC;border-radius:8px;padding:16px 20px;margin:24px 0;font-size:14px;color:#ccc}
+    .warning{border-left-color:#febc2e}
+    footer{border-top:1px solid var(--border);padding:28px 48px;text-align:center;color:var(--muted);font-size:13px}
+    @media(max-width:768px){nav{padding:16px 20px}.content{padding:40px 20px 60px}h1{font-size:32px}}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="/" class="logo"><div class="logo-badge">HA</div><span class="logo-name">HushAsk</span></a>
+    <a href="index.html" class="back">← Help Center</a>
+  </nav>
+  <div class="content">
+    <div class="tag">HR / Admin · ~4 min</div>
+    <h1>Managing the Confidential Channel</h1>
+    <p class="lead">Whether you're using <code>#hush-hr</code>, <code>#hr-whisper</code>, or a custom private channel, this guide covers best practices for managing sensitive anonymous feedback effectively and fairly.</p>
+
+    <h2>Channel setup</h2>
+    <p>HushAsk's auto-create feature creates <code>#hush-hr</code> as a <strong>private channel</strong>. Only invited members can see it. After creation:</p>
+    <p>• Invite only HR staff, HR leadership, and relevant executives<br>
+    • Do not invite managers of the teams most likely to send feedback<br>
+    • Document who has access in your HR system of record</p>
+
+    <div class="callout warning">
+      ⚠️ <strong>Keep the circle small.</strong> The fewer people with access to this channel, the more trust employees will have in using it. Err on the side of restricting access.
+    </div>
+
+    <h2>Triage workflow</h2>
+    <p>Every message that arrives in the confidential channel is anonymous. Here's a recommended triage process:</p>
+
+    <div class="practice">
+      <h3>1. Acknowledge within 48 hours</h3>
+      <p>Even if you can't act immediately, post a thread reply acknowledging the message was received. Use HushAsk's public channel to post a general acknowledgment if a response is warranted company-wide.</p>
+    </div>
+    <div class="practice">
+      <h3>2. Categorize before acting</h3>
+      <p>Not every message requires the same urgency. Classify as: Informational, Requires Follow-up, Legal/Compliance, or Immediate Action. Tackle them in reverse order.</p>
+    </div>
+    <div class="practice">
+      <h3>3. Sync answered questions to Notion</h3>
+      <p>If a question has a general answer that would benefit others, click <strong>📄 Sync to Notion</strong> on the triage message. This creates a doc in your HushAsk knowledge base — answer it there. No response goes back to the sender (by design).</p>
+    </div>
+    <div class="practice">
+      <h3>4. Never attempt to identify the sender</h3>
+      <p>Even if you suspect who sent a message, do not attempt to correlate it with other signals. Doing so violates the trust HushAsk was built on — and in many jurisdictions, may have legal implications.</p>
+    </div>
+
+    <h2>What to do with difficult messages</h2>
+    <p><strong>Threats or harassment:</strong> Preserve a screenshot, escalate to legal/compliance, and consult your organization's incident response policy. Remember: HushAsk logs a user hash, not an identity — legal authorities with the appropriate warrant may be able to work with Slack's own audit logs.</p>
+    <p><strong>Repeated similar messages:</strong> A pattern of similar concerns is a signal, not a nuisance. Treat them as a data point for systemic issues, not individual complaints.</p>
+    <p><strong>Vague feedback:</strong> Post a general request in a public channel for anyone with feedback on that topic to be more specific. Don't speculate about the original sender.</p>
+
+    <div class="callout">
+      🔒 <strong>Reminder:</strong> HushAsk stores only a 16-character user hash alongside message content. This hash cannot be reversed. If you delete the delivered message from Slack, the content is still in HushAsk's database until manually purged. Contact your HushAsk admin to clear records if needed.
+    </div>
+
+    <h2>Monthly review</h2>
+    <p>Once a month, review the volume and categories of messages received. Patterns often reveal systemic issues that one-on-ones and all-hands don't surface. Share aggregate trends (never individual messages) with leadership as part of your culture health report.</p>
+  </div>
+  <footer>A product of HonestAlias. Built with ❤️ by Simon.</footer>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "display_information": {
+    "name": "HushAsk",
+    "description": "Anonymous Slack router that turns transient chat into Notion assets.",
+    "background_color": "#0a0a0a",
+    "long_description": "HushAsk lets your team send anonymous feedback directly in Slack — just DM the bot or mention it in a channel. No slash commands. No configuration. Routing buttons appear instantly."
+  },
+  "features": {
+    "app_home": {
+      "home_tab_enabled": true,
+      "messages_tab_enabled": true,
+      "messages_tab_read_only_enabled": false
+    },
+    "bot_user": {
+      "display_name": "HushAsk",
+      "always_online": true
+    }
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": [
+        "chat:write",
+        "chat:write.public",
+        "channels:read",
+        "channels:history",
+        "channels:manage",
+        "groups:read",
+        "groups:write",
+        "im:history",
+        "im:read",
+        "im:write",
+        "app_mentions:read",
+        "users:read",
+        "conversations.connect:read"
+      ]
+    }
+  },
+  "settings": {
+    "event_subscriptions": {
+      "bot_events": [
+        "message.im",
+        "app_mention",
+        "app_home_opened"
+      ]
+    },
+    "interactivity": {
+      "is_enabled": true
+    },
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": true,
+    "token_rotation_enabled": false
+  }
+}
