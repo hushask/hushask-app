@@ -2,18 +2,17 @@
 database.py — HushAsk SQLite layer
 """
 
-import sqlite3
-import os
+import sqlite3, os, secrets
 from datetime import datetime, timezone
 
-DB_PATH   = os.environ.get("DB_PATH", "hushask.db")
+DB_PATH    = os.environ.get("DB_PATH", "hushask.db")
 FREE_LIMIT = int(os.environ.get("FREE_LIMIT", "20"))
 
 
 def get_conn():
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode=WAL")  # safe for concurrent web.py + app.py access
+    conn.execute("PRAGMA journal_mode=WAL")
     return conn
 
 
@@ -21,10 +20,15 @@ def init_db():
     with get_conn() as conn:
         conn.executescript("""
             CREATE TABLE IF NOT EXISTS workspaces (
-                team_id       TEXT PRIMARY KEY,
-                team_name     TEXT,
-                bot_token     TEXT NOT NULL,
-                installed_at  TEXT DEFAULT (datetime('now'))
+                team_id         TEXT PRIMARY KEY,
+                enterprise_id   TEXT DEFAULT '',
+                team_name       TEXT,
+                bot_token       TEXT NOT NULL,
+                bot_user_id     TEXT,
+                app_id          TEXT,
+                installer_user_id TEXT,
+                is_pro          INTEGER DEFAULT 0,
+                installed_at    TEXT DEFAULT (datetime('now'))
             );
 
             CREATE TABLE IF NOT EXISTS workspace_config (
@@ -46,6 +50,11 @@ def init_db():
             CREATE TABLE IF NOT EXISTS notion_auth_states (
                 state      TEXT PRIMARY KEY,
                 team_id    TEXT NOT NULL,
+                created_at TEXT DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS slack_oauth_states (
+                state      TEXT PRIMARY KEY,
                 created_at TEXT DEFAULT (datetime('now'))
             );
 
@@ -73,6 +82,76 @@ def init_db():
     print("[db] Initialized.")
 
 
+# ── Workspace / Installation ──────────────────────────────────────────────────
+
+def save_workspace(team_id: str, enterprise_id: str, team_name: str,
+                   bot_token: str, bot_user_id: str = None,
+                   app_id: str = None, installer_user_id: str = None):
+    with get_conn() as conn:
+        conn.execute("""
+            INSERT INTO workspaces
+                (team_id, enterprise_id, team_name, bot_token, bot_user_id, app_id, installer_user_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(team_id) DO UPDATE SET
+                enterprise_id     = excluded.enterprise_id,
+                team_name         = excluded.team_name,
+                bot_token         = excluded.bot_token,
+                bot_user_id       = excluded.bot_user_id,
+                app_id            = excluded.app_id,
+                installer_user_id = excluded.installer_user_id
+        """, (team_id, enterprise_id or '', team_name, bot_token,
+              bot_user_id, app_id, installer_user_id))
+
+
+def find_bot_token(enterprise_id: str | None, team_id: str) -> str | None:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT bot_token FROM workspaces WHERE team_id = ?", (team_id,)
+        ).fetchone()
+        return row["bot_token"] if row else None
+
+
+def find_installer_user_id(team_id: str) -> str | None:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT installer_user_id FROM workspaces WHERE team_id = ?", (team_id,)
+        ).fetchone()
+        return row["installer_user_id"] if row else None
+
+
+def upgrade_to_pro(team_id: str):
+    with get_conn() as conn:
+        conn.execute("UPDATE workspaces SET is_pro = 1 WHERE team_id = ?", (team_id,))
+
+
+def is_workspace_pro(team_id: str) -> bool:
+    with get_conn() as conn:
+        row = conn.execute("SELECT is_pro FROM workspaces WHERE team_id = ?", (team_id,)).fetchone()
+        return bool(row and row["is_pro"])
+
+
+# ── Slack OAuth state store ───────────────────────────────────────────────────
+
+def issue_slack_state() -> str:
+    state = secrets.token_hex(16)
+    with get_conn() as conn:
+        conn.execute("DELETE FROM slack_oauth_states WHERE created_at < datetime('now', '-10 minutes')")
+        conn.execute("INSERT INTO slack_oauth_states (state) VALUES (?)", (state,))
+    return state
+
+
+def consume_slack_state(state: str) -> bool:
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT state FROM slack_oauth_states WHERE state = ? AND created_at > datetime('now', '-10 minutes')",
+            (state,)
+        ).fetchone()
+        if row:
+            conn.execute("DELETE FROM slack_oauth_states WHERE state = ?", (state,))
+            return True
+        return False
+
+
 # ── Workspace config ──────────────────────────────────────────────────────────
 
 def get_workspace_config(workspace_id: str):
@@ -84,8 +163,7 @@ def get_workspace_config(workspace_id: str):
 
 def save_workspace_config(workspace_id: str, installer_id: str,
                            public_channel: str, hr_channel: str,
-                           notion_api_key: str = None,
-                           notion_database_id: str = None):
+                           notion_api_key: str = None, notion_database_id: str = None):
     with get_conn() as conn:
         conn.execute("""
             INSERT INTO workspace_config
@@ -103,7 +181,6 @@ def save_workspace_config(workspace_id: str, installer_id: str,
 
 
 def save_workspace_notion(workspace_id: str, notion_api_key: str, notion_database_id: str):
-    """Called by web.py OAuth callback to save Notion credentials independently."""
     with get_conn() as conn:
         conn.execute("""
             INSERT INTO workspace_config (workspace_id, notion_api_key, notion_database_id, updated_at)
@@ -124,14 +201,8 @@ def reset_workspace_config(workspace_id: str):
 
 def store_notion_state(state: str, team_id: str):
     with get_conn() as conn:
-        # Purge states older than 1 hour first
-        conn.execute(
-            "DELETE FROM notion_auth_states WHERE created_at < datetime('now', '-1 hour')"
-        )
-        conn.execute(
-            "INSERT OR REPLACE INTO notion_auth_states (state, team_id) VALUES (?, ?)",
-            (state, team_id)
-        )
+        conn.execute("DELETE FROM notion_auth_states WHERE created_at < datetime('now', '-1 hour')")
+        conn.execute("INSERT OR REPLACE INTO notion_auth_states (state, team_id) VALUES (?, ?)", (state, team_id))
 
 
 def get_team_from_state(state: str) -> str | None:
@@ -150,12 +221,15 @@ def delete_notion_state(state: str):
 
 # ── Freemium usage ────────────────────────────────────────────────────────────
 
-def _ensure_usage(conn, workspace_id: str):
+def _ensure_usage(conn, workspace_id):
     conn.execute("INSERT OR IGNORE INTO workspace_usage (workspace_id) VALUES (?)", (workspace_id,))
 
 
 def check_and_increment(workspace_id: str) -> tuple[bool, int]:
-    """Check monthly cap. Increments if allowed. Returns (allowed, count)."""
+    """Check monthly cap (bypass for Pro). Returns (allowed, count)."""
+    if is_workspace_pro(workspace_id):
+        return True, 0
+
     now = datetime.now(timezone.utc).isoformat()
     with get_conn() as conn:
         _ensure_usage(conn, workspace_id)
@@ -163,7 +237,6 @@ def check_and_increment(workspace_id: str) -> tuple[bool, int]:
             "SELECT message_count, count_reset_at FROM workspace_usage WHERE workspace_id = ?",
             (workspace_id,)
         ).fetchone()
-
         reset_at = datetime.fromisoformat(row["count_reset_at"].replace("Z", "+00:00"))
         if (datetime.now(timezone.utc) - reset_at).days >= 30:
             conn.execute(
@@ -176,7 +249,6 @@ def check_and_increment(workspace_id: str) -> tuple[bool, int]:
 
         if count >= FREE_LIMIT:
             return False, count
-
         conn.execute(
             "UPDATE workspace_usage SET message_count = message_count + 1 WHERE workspace_id = ?",
             (workspace_id,)
@@ -187,13 +259,11 @@ def check_and_increment(workspace_id: str) -> tuple[bool, int]:
 def get_usage(workspace_id: str) -> int:
     with get_conn() as conn:
         _ensure_usage(conn, workspace_id)
-        row = conn.execute(
-            "SELECT message_count FROM workspace_usage WHERE workspace_id = ?", (workspace_id,)
-        ).fetchone()
+        row = conn.execute("SELECT message_count FROM workspace_usage WHERE workspace_id = ?", (workspace_id,)).fetchone()
         return row["message_count"] if row else 0
 
 
-# ── Pending messages ──────────────────────────────────────────────────────────
+# ── Pending / Delivered messages ──────────────────────────────────────────────
 
 def save_pending(token, team_id, source_channel, message, user_hash, message_ts=None):
     with get_conn() as conn:
@@ -206,17 +276,13 @@ def save_pending(token, team_id, source_channel, message, user_hash, message_ts=
 
 def get_pending(token):
     with get_conn() as conn:
-        return conn.execute(
-            "SELECT * FROM pending_messages WHERE token = ?", (token,)
-        ).fetchone()
+        return conn.execute("SELECT * FROM pending_messages WHERE token = ?", (token,)).fetchone()
 
 
 def delete_pending(token):
     with get_conn() as conn:
         conn.execute("DELETE FROM pending_messages WHERE token = ?", (token,))
 
-
-# ── Delivered messages ────────────────────────────────────────────────────────
 
 def log_delivered(team_id, target_channel, route_type, message, user_hash) -> int:
     with get_conn() as conn:
@@ -229,22 +295,9 @@ def log_delivered(team_id, target_channel, route_type, message, user_hash) -> in
 
 def get_delivered(msg_id: int):
     with get_conn() as conn:
-        return conn.execute(
-            "SELECT * FROM delivered_messages WHERE id = ?", (msg_id,)
-        ).fetchone()
+        return conn.execute("SELECT * FROM delivered_messages WHERE id = ?", (msg_id,)).fetchone()
 
 
 def mark_notion_synced(msg_id: int):
     with get_conn() as conn:
         conn.execute("UPDATE delivered_messages SET notion_synced = 1 WHERE id = ?", (msg_id,))
-
-
-def save_workspace(team_id, team_name, bot_token):
-    with get_conn() as conn:
-        conn.execute("""
-            INSERT INTO workspaces (team_id, team_name, bot_token)
-            VALUES (?, ?, ?)
-            ON CONFLICT(team_id) DO UPDATE SET
-                team_name = excluded.team_name,
-                bot_token = excluded.bot_token
-        """, (team_id, team_name, bot_token))
