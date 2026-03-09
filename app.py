@@ -703,7 +703,43 @@ def handle_sync_notion(ack, body, client):
         client.chat_postEphemeral(channel=channel, user=user_id, text=f"⚠️ Notion sync failed: {err}")
 
 
+# ── Bootstrap ─────────────────────────────────────────────────────────────────
+
+def _bootstrap_from_env():
+    """Seed the workspaces table from SLACK_BOT_TOKEN if the DB is empty.
+    Handles the transition from Socket Mode (single token) to multi-tenant OAuth.
+    Safe to run on every startup — no-ops if the workspace is already stored."""
+    bot_token = os.environ.get("SLACK_BOT_TOKEN", "")
+    if not bot_token:
+        return
+    try:
+        from slack_sdk import WebClient as _WC
+        client = _WC(token=bot_token)
+        auth   = client.auth_test()
+        team_id   = auth["team_id"]
+        team_name = auth.get("team", "")
+        bot_user_id   = auth.get("bot_id", "")
+        app_id        = auth.get("app_id", os.environ.get("SLACK_APP_ID", ""))
+        existing = find_bot_token(None, team_id)
+        if existing:
+            print(f"[bootstrap] Workspace {team_id} already in DB — skipping.")
+            return
+        save_workspace(
+            team_id=team_id,
+            enterprise_id="",
+            team_name=team_name,
+            bot_token=bot_token,
+            bot_user_id=bot_user_id,
+            app_id=app_id,
+            installer_user_id=None,   # will be set on first wizard save
+        )
+        print(f"[bootstrap] Seeded workspace {team_id} ({team_name}) from SLACK_BOT_TOKEN.")
+    except Exception as e:
+        print(f"[bootstrap] Warning: could not seed workspace from env — {e}")
+
+
 # ── Init ──────────────────────────────────────────────────────────────────────
 
 init_db()
+_bootstrap_from_env()
 print("[HushAsk] App initialized (HTTP mode).")
