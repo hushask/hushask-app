@@ -425,7 +425,7 @@ def wizard_step3(meta):
     notion_state = meta.get("notion_state", "")
     if has_oauth:
         oauth_url = (f"https://api.notion.com/v1/oauth/authorize?client_id={NOTION_CLIENT_ID}"
-                     f"&response_type=code&owner=user&redirect_uri={urllib.parse.quote(NOTION_REDIRECT)}&state={notion_state}")
+                     f"&response_type=code&owner=user&redirect_uri={urllib.parse.quote(NOTION_REDIRECT, safe='')}&state={notion_state}")
         vault_blocks = [
             {"type":"section","text":{"type":"mrkdwn","text":f"Click below to authorize HushAsk in your Notion workspace. We'll automatically create a *Hush Library* database — no tokens or page IDs needed. <{HELP_BASE}/setting-up-notion.html|Setup guide →>"}},
             {"type":"divider"},
