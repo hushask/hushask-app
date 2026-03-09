@@ -256,7 +256,11 @@ def check_and_increment(workspace_id: str) -> tuple[bool, int]:
             "SELECT message_count, count_reset_at FROM workspace_usage WHERE workspace_id = ?",
             (workspace_id,)
         ).fetchone()
-        reset_at = datetime.fromisoformat(row["count_reset_at"].replace("Z", "+00:00"))
+        raw_ts = row["count_reset_at"].replace("Z", "+00:00")
+        reset_at = datetime.fromisoformat(raw_ts)
+        # Ensure both sides are timezone-aware before subtracting
+        if reset_at.tzinfo is None:
+            reset_at = reset_at.replace(tzinfo=timezone.utc)
         if (datetime.now(timezone.utc) - reset_at).days >= 30:
             conn.execute(
                 "UPDATE workspace_usage SET message_count = 0, count_reset_at = ? WHERE workspace_id = ?",

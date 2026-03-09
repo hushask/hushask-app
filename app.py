@@ -455,10 +455,21 @@ def wizard_step3(meta):
 @app.event("app_home_opened")
 def handle_home_opened(event, client):
     user_id = event["user"]
-    team_id = event["view"]["team_id"]
+    # "messages" tab fires app_home_opened without a "view" key — guard it
+    view = event.get("view")
+    if not view:
+        return
+    team_id = view.get("team_id") or event.get("team_id", "")
+    if not team_id:
+        return
     publish_home(client, user_id, team_id)
     # First-time nudge: DM the opener if workspace has no config yet
     _maybe_send_install_nudge(client, user_id, team_id)
+
+
+# Ack the nudge deep-link button so Slack doesn't show an error
+@app.action("open_home_nudge")
+def handle_open_home_nudge(ack): ack()
 
 
 def _maybe_send_install_nudge(client, user_id: str, team_id: str):
@@ -466,7 +477,8 @@ def _maybe_send_install_nudge(client, user_id: str, team_id: str):
     and the workspace has no configuration yet."""
     try:
         config = get_workspace_config(team_id)
-        if config and (config.get("public_channel") or config.get("hr_channel")):
+        # sqlite3.Row doesn't support .get() — index directly with fallback
+        if config and (config["public_channel"] or config["hr_channel"]):
             return  # Already configured — stay silent
         from database import has_nudge_been_sent, mark_nudge_sent
         if has_nudge_been_sent(team_id):
@@ -744,24 +756,25 @@ def handle_sync_notion(ack, body, client):
 # ── Bootstrap ─────────────────────────────────────────────────────────────────
 
 def _bootstrap_from_env():
-    """Seed the workspaces table from SLACK_BOT_TOKEN if the DB is empty.
-    Handles the transition from Socket Mode (single token) to multi-tenant OAuth.
-    Safe to run on every startup — no-ops if the workspace is already stored."""
+    """Seed OR refresh the workspaces table from SLACK_BOT_TOKEN on every startup.
+    This ensures reinstalls (which generate a new bot_token) stay in sync with the DB.
+    If the token in the env matches what's stored, this is a cheap no-op."""
     bot_token = os.environ.get("SLACK_BOT_TOKEN", "")
     if not bot_token:
         return
     try:
         from slack_sdk import WebClient as _WC
-        client = _WC(token=bot_token)
-        auth   = client.auth_test()
+        client    = _WC(token=bot_token)
+        auth      = client.auth_test()
         team_id   = auth["team_id"]
         team_name = auth.get("team", "")
-        bot_user_id   = auth.get("bot_id", "")
-        app_id        = auth.get("app_id", os.environ.get("SLACK_APP_ID", ""))
-        existing = find_bot_token(None, team_id)
-        if existing:
-            print(f"[bootstrap] Workspace {team_id} already in DB — skipping.")
+        bot_user_id = auth.get("bot_id", "")
+        app_id      = auth.get("app_id", os.environ.get("SLACK_APP_ID", ""))
+        existing_token = find_bot_token(None, team_id)
+        if existing_token == bot_token:
+            print(f"[bootstrap] Workspace {team_id} token unchanged — skipping.")
             return
+        # Token is new or missing — upsert it
         save_workspace(
             team_id=team_id,
             enterprise_id="",
@@ -769,11 +782,12 @@ def _bootstrap_from_env():
             bot_token=bot_token,
             bot_user_id=bot_user_id,
             app_id=app_id,
-            installer_user_id=None,   # will be set on first wizard save
+            installer_user_id=None,
         )
-        print(f"[bootstrap] Seeded workspace {team_id} ({team_name}) from SLACK_BOT_TOKEN.")
+        action = "Updated" if existing_token else "Seeded"
+        print(f"[bootstrap] {action} workspace {team_id} ({team_name}) from SLACK_BOT_TOKEN.")
     except Exception as e:
-        print(f"[bootstrap] Warning: could not seed workspace from env — {e}")
+        print(f"[bootstrap] Warning: could not sync workspace from env — {e}")
 
 
 # ── Init ──────────────────────────────────────────────────────────────────────
