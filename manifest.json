@@ -1,9 +1,9 @@
 {
   "display_information": {
     "name": "HushAsk",
-    "description": "Anonymous feedback router — turning transient chat into permanent knowledge.",
+    "description": "Anonymous feedback router \u2014 turning transient chat into permanent knowledge.",
     "background_color": "#0d0d0d",
-    "long_description": "HushAsk lets anyone on your team send anonymous messages to the right channel — public knowledge base or confidential HR — with one click. Answers can be synced to a Notion database with zero effort."
+    "long_description": "HushAsk lets anyone on your team send anonymous messages to the right channel \u2014 public knowledge base or confidential HR \u2014 with one click. Answers can be synced to a Notion database with zero effort."
   },
   "features": {
     "bot_user": {
@@ -14,7 +14,16 @@
       "home_tab_enabled": true,
       "messages_tab_enabled": true,
       "messages_tab_read_only_enabled": false
-    }
+    },
+    "slash_commands": [
+      {
+        "command": "/ha",
+        "url": "https://api.hushask.com/slack/interactive",
+        "description": "Send an anonymous message or open HushAsk settings",
+        "usage_hint": "[your message or leave blank for settings]",
+        "should_escape": false
+      }
+    ]
   },
   "oauth_config": {
     "redirect_urls": [
@@ -34,7 +43,8 @@
         "im:write",
         "app_mentions:read",
         "users:read",
-        "conversations.connect:read"
+        "conversations.connect:read",
+        "commands"
       ]
     }
   },

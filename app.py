@@ -665,6 +665,41 @@ def on_mention(event, client):
     handle_incoming(client, event["team"], event["user"], event["channel"], event.get("text",""))
 
 
+@app.command("/ha")
+def handle_ha_command(ack, body, client):
+    """Entry point for /ha slash command.
+    - No text: open the setup wizard (admin) or show routing prompt (user)
+    - With text: route the text as an anonymous message
+    """
+    ack()
+    user_id = body["user_id"]
+    team_id = body["team_id"]
+    text    = (body.get("text") or "").strip()
+    print(f"[/ha] user={user_id} team={team_id} text={repr(text)}")
+
+    config      = get_workspace_config(team_id)
+    installer_id = config["installer_id"] if config else None
+
+    if not text:
+        # No text — open wizard for admin/installer, routing hint for everyone else
+        if is_admin(client, user_id) or user_id == installer_id:
+            _open_wizard(ack=lambda **_: None, body=body, client=client)
+        else:
+            dm = client.conversations_open(users=user_id)["channel"]["id"]
+            client.chat_postMessage(
+                channel=dm,
+                text="Send me a message here and I'll route it anonymously. 🔒",
+                blocks=[
+                    {"type": "section", "text": {"type": "mrkdwn",
+                     "text": "👋 DM me directly with your message and I'll route it anonymously.\n\nOr type `/ha your message here` to send right now."}},
+                ]
+            )
+    else:
+        # Text provided — route it as an anonymous message
+        dm = client.conversations_open(users=user_id)["channel"]["id"]
+        handle_incoming(client, team_id, user_id, dm, text)
+
+
 # ── Routing actions ───────────────────────────────────────────────────────────
 
 def _do_route(ack, body, client, route_type):
