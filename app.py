@@ -413,31 +413,50 @@ def home_configured(config, client, team_id):
     blocks += [
         {"type":"actions","elements":buttons},
         {"type":"divider"},
-        {"type":"context","elements":[{"type":"mrkdwn","text":f"<{HELP_BASE}/|Help Center> · {'⭐ Pro Plan' if pro else 'Free Plan'}"}]}
+        {"type":"context","elements":[
+            {"type":"mrkdwn","text":f"<{HELP_BASE}/|Help Center> · {'⭐ Pro Plan' if pro else 'Free Plan'} · `Build: {BUILD_ID}`"}
+        ]}
     ]
     return {"type":"home","blocks":blocks}
 
-def publish_home(client, user_id, team_id):
-    from database import DB_PATH
-    config        = get_workspace_config(team_id)
-    installer_id  = config["installer_id"]      if config else None
-    pub_ch        = config["public_channel"]     if config else None
-    hr_ch         = config["hr_channel"]         if config else None
-    notion_key    = config["notion_api_key"]     if config else None
-    notion_db     = config["notion_database_id"] if config else None
-    is_configured = bool(pub_ch and hr_ch)
-    print(f"[publish_home] user={user_id} team={team_id} db={DB_PATH} | "
-          f"configured={is_configured} pub={pub_ch} hr={hr_ch} "
-          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} installer={installer_id}")
+BUILD_ID = "540ca15"  # git short SHA — update on each deploy for UI verification
 
+def publish_home(client, user_id, team_id):
+    """Publish the App Home tab for a user.
+
+    IMPORTANT ordering: is_admin() is an API call that takes ~1-3s.
+    We do it FIRST, then read the DB — this way any concurrent wizard3
+    write has time to commit before we snapshot config.
+    """
+    from database import DB_PATH
+
+    # ── Step 1: resolve admin status (slow API call) ─────────────────────────
     try:
         admin = is_admin(client, user_id)
     except Exception as e:
         print(f"[publish_home] is_admin failed ({e}) — defaulting False")
         admin = False
 
-    # If is_admin fails and installer_id is None (bootstrap case), trust the user.
-    # A user who can trigger app_home_opened IS in the workspace — show them the right UI.
+    # ── Step 2: read DB AFTER is_admin — catches concurrent wizard3 writes ───
+    config = get_workspace_config(team_id)
+
+    # Safety net: if config is still empty, wait briefly and retry once.
+    # This handles the rare case where is_admin() returned in <100ms.
+    if config is None:
+        import time; time.sleep(0.5)
+        config = get_workspace_config(team_id)
+
+    installer_id  = config["installer_id"]       if config else None
+    pub_ch        = config["public_channel"]      if config else None
+    hr_ch         = config["hr_channel"]          if config else None
+    notion_key    = config["notion_api_key"]      if config else None
+    notion_db     = config["notion_database_id"]  if config else None
+    is_configured = bool(pub_ch and hr_ch)
+
+    print(f"[publish_home] build={BUILD_ID} user={user_id} team={team_id} db={DB_PATH} | "
+          f"configured={is_configured} pub={pub_ch} hr={hr_ch} "
+          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} installer={installer_id}")
+
     is_privileged = admin or user_id == installer_id or (installer_id is None and config is not None)
 
     if is_privileged or is_configured:
