@@ -6,13 +6,15 @@ import sqlite3, os, secrets
 from datetime import datetime, timezone
 
 DB_PATH    = os.environ.get("DB_PATH", "hushask.db")
+print(f"[db] DB_PATH={DB_PATH}", flush=True)
 FREE_LIMIT = int(os.environ.get("FREE_LIMIT", "20"))
 
 
 def get_conn():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")   # WAL + NORMAL is safe and fast
     return conn
 
 

@@ -379,22 +379,30 @@ def home_configured(config, client, team_id):
     return {"type":"home","blocks":blocks}
 
 def publish_home(client, user_id, team_id):
-    config       = get_workspace_config(team_id)
-    installer_id = config["installer_id"] if config else None
-    pub_ch       = config["public_channel"]    if config else None
-    hr_ch        = config["hr_channel"]        if config else None
-    notion_key   = config["notion_api_key"]    if config else None
-    notion_db    = config["notion_database_id"] if config else None
+    from database import DB_PATH
+    config        = get_workspace_config(team_id)
+    installer_id  = config["installer_id"]      if config else None
+    pub_ch        = config["public_channel"]     if config else None
+    hr_ch         = config["hr_channel"]         if config else None
+    notion_key    = config["notion_api_key"]     if config else None
+    notion_db     = config["notion_database_id"] if config else None
     is_configured = bool(pub_ch and hr_ch)
-    print(f"[publish_home] user={user_id} team={team_id} | "
+    print(f"[publish_home] user={user_id} team={team_id} db={DB_PATH} | "
           f"configured={is_configured} pub={pub_ch} hr={hr_ch} "
-          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)}")
+          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} installer={installer_id}")
+
     try:
         admin = is_admin(client, user_id)
     except Exception as e:
-        print(f"[publish_home] is_admin check failed ({e}) — treating as non-admin")
+        print(f"[publish_home] is_admin failed ({e}) — defaulting False")
         admin = False
-    if admin or user_id == installer_id:
+
+    # If is_admin fails and installer_id is None (bootstrap case), trust the user.
+    # A user who can trigger app_home_opened IS in the workspace — show them the right UI.
+    is_privileged = admin or user_id == installer_id or (installer_id is None and config is not None)
+
+    if is_privileged or is_configured:
+        # Show configured home if workspace has channels; wizard otherwise
         view = home_configured(config, client, team_id) if is_configured else home_unconfigured()
     else:
         view = home_welcome()

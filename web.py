@@ -65,6 +65,12 @@ def slack_oauth_redirect():
 
 @web.route("/slack/events", methods=["POST"])
 def slack_events():
+    # Drop Slack's automatic retries — our handlers are idempotent but
+    # concurrent retries cause race conditions in the wizard flow.
+    if request.headers.get("X-Slack-Retry-Num"):
+        print(f"[slack/events] dropping retry #{request.headers.get('X-Slack-Retry-Num')}")
+        return "", 200
+
     payload = request.get_json(silent=True) or {}
     print(f"[slack/events] raw payload: {payload}")
 
@@ -78,6 +84,12 @@ def slack_events():
 
 @web.route("/slack/interactive", methods=["POST"])
 def slack_interactive():
+    # Drop Slack's automatic retries for interactive payloads (view submissions,
+    # block actions). Our view handlers are idempotent and retries cause the
+    # wizard to restart after it already completed successfully.
+    if request.headers.get("X-Slack-Retry-Num"):
+        print(f"[slack/interactive] dropping retry #{request.headers.get('X-Slack-Retry-Num')}")
+        return "", 200
     return handler.handle(request)
 
 @web.route("/slack/options", methods=["POST"])
