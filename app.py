@@ -453,17 +453,18 @@ def wizard_step3(meta):
 # ── Events & Actions ──────────────────────────────────────────────────────────
 
 @app.event("app_home_opened")
-def handle_home_opened(event, client):
+def handle_home_opened(event, client, body):
     user_id = event["user"]
-    # "messages" tab fires app_home_opened without a "view" key — guard it
-    view = event.get("view")
-    if not view:
+    # Skip the Messages tab — only publish on the Home tab
+    if event.get("tab") == "messages":
         return
-    team_id = view.get("team_id") or event.get("team_id", "")
+    # team_id is always in the outer body, never rely on event["view"]
+    team_id = body.get("team_id", "")
     if not team_id:
+        print(f"[home] WARNING: no team_id in body for user {user_id}")
         return
+    print(f"[home] publishing for user={user_id} team={team_id}")
     publish_home(client, user_id, team_id)
-    # First-time nudge: DM the opener if workspace has no config yet
     _maybe_send_install_nudge(client, user_id, team_id)
 
 
