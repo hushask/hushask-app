@@ -209,8 +209,13 @@ def stripe_webhook():
             print(f"[stripe] Workspace {team_id} upgraded to Pro.")
 
     elif event["type"] == "customer.subscription.deleted":
-        # Future: downgrade logic
-        pass
+        sub     = event["data"]["object"]
+        team_id = (sub.get("metadata") or {}).get("team_id")
+        if team_id:
+            from database import revoke_pro
+            revoke_pro(team_id)
+            _send_downgrade_notice(team_id)
+            print(f"[stripe] Workspace {team_id} downgraded to free tier.")
 
     return "", 200
 
@@ -233,6 +238,43 @@ def _send_pro_welcome(team_id: str):
         )
     except Exception as e:
         print(f"[pro_welcome] error: {e}")
+
+
+def _send_downgrade_notice(team_id: str):
+    """DM the installer when their Pro subscription is cancelled."""
+    from database import find_bot_token, get_workspace_config
+    from slack_sdk import WebClient
+    bot_token = find_bot_token(None, team_id)
+    config    = get_workspace_config(team_id)
+    if not bot_token or not config: return
+    installer_id = config.get("installer_id") if config else None
+    if not installer_id: return
+    try:
+        client = WebClient(token=bot_token)
+        dm     = client.conversations_open(users=installer_id)["channel"]["id"]
+        client.chat_postMessage(
+            channel=dm,
+            text="Your HushAsk Pro subscription has ended.",
+            blocks=[
+                {"type": "section", "text": {"type": "mrkdwn", "text":
+                    "😔 *Your HushAsk Pro subscription has ended.*\n\n"
+                    "Your workspace has been moved back to the free tier "
+                    f"(*{os.environ.get('FREE_LIMIT', '20')} messages/month*). "
+                    "Existing configurations and Notion sync are preserved.\n\n"
+                    "You can reactivate Pro at any time."
+                }},
+                {"type": "actions", "elements": [
+                    {"type": "button",
+                     "text": {"type": "plain_text", "text": "⭐ Reactivate Pro"},
+                     "style": "primary",
+                     "url": f"{API_BASE}/upgrade?team_id={team_id}",
+                     "action_id": "reactivate_pro_cta"}
+                ]}
+            ]
+        )
+        print(f"[downgrade_notice] Sent to {installer_id} for workspace {team_id}")
+    except Exception as e:
+        print(f"[downgrade_notice] error: {e}")
 
 
 # ── Static serving ─────────────────────────────────────────────────────────────

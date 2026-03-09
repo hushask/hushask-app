@@ -434,7 +434,51 @@ def wizard_step3(meta):
 
 @app.event("app_home_opened")
 def handle_home_opened(event, client):
-    publish_home(client, event["user"], event["view"]["team_id"])
+    user_id = event["user"]
+    team_id = event["view"]["team_id"]
+    publish_home(client, user_id, team_id)
+    # First-time nudge: DM the opener if workspace has no config yet
+    _maybe_send_install_nudge(client, user_id, team_id)
+
+
+def _maybe_send_install_nudge(client, user_id: str, team_id: str):
+    """Send a one-time setup DM when someone opens the App Home for the first time
+    and the workspace has no configuration yet."""
+    try:
+        config = get_workspace_config(team_id)
+        if config and (config.get("public_channel") or config.get("hr_channel")):
+            return  # Already configured — stay silent
+        from database import has_nudge_been_sent, mark_nudge_sent
+        if has_nudge_been_sent(team_id):
+            return  # Already nudged
+        dm = client.conversations_open(users=user_id)["channel"]["id"]
+        client.chat_postMessage(
+            channel=dm,
+            text="Welcome to HushAsk! Run /ha to get started.",
+            blocks=[
+                {"type": "section", "text": {"type": "mrkdwn", "text":
+                    "👋 *Welcome to HushAsk!*\n\n"
+                    "Anonymous feedback for your team — set up takes 60 seconds.\n\n"
+                    "Run `/ha` in any channel to open the setup wizard and configure "
+                    "your public and private routing channels."
+                }},
+                {"type": "actions", "elements": [
+                    {"type": "button",
+                     "text": {"type": "plain_text", "text": "Open App Home"},
+                     "action_id": "open_home_nudge",
+                     "style": "primary",
+                     "url": f"slack://app?team={team_id}&id={os.environ.get('SLACK_APP_ID', '')}"}
+                ]},
+                {"type": "context", "elements": [
+                    {"type": "mrkdwn",
+                     "text": f"Need help? Visit <{HELP_BASE}|hushask.com/help>"}
+                ]}
+            ]
+        )
+        mark_nudge_sent(team_id)
+        print(f"[install_nudge] Sent to {user_id} for workspace {team_id}")
+    except Exception as e:
+        print(f"[install_nudge] error: {e}")
 
 def _open_wizard(ack, body, client):
     ack()

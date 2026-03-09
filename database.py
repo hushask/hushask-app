@@ -78,6 +78,10 @@ def init_db():
                 notion_synced  INTEGER DEFAULT 0,
                 delivered_at   TEXT DEFAULT (datetime('now'))
             );
+            CREATE TABLE IF NOT EXISTS install_nudges (
+                team_id    TEXT PRIMARY KEY,
+                sent_at    TEXT DEFAULT (datetime('now'))
+            );
         """)
     print("[db] Initialized.")
 
@@ -122,6 +126,12 @@ def find_installer_user_id(team_id: str) -> str | None:
 def upgrade_to_pro(team_id: str):
     with get_conn() as conn:
         conn.execute("UPDATE workspaces SET is_pro = 1 WHERE team_id = ?", (team_id,))
+
+
+def revoke_pro(team_id: str):
+    """Downgrade workspace to free tier after subscription cancellation."""
+    with get_conn() as conn:
+        conn.execute("UPDATE workspaces SET is_pro = 0 WHERE team_id = ?", (team_id,))
 
 
 def is_workspace_pro(team_id: str) -> bool:
@@ -301,3 +311,15 @@ def get_delivered(msg_id: int):
 def mark_notion_synced(msg_id: int):
     with get_conn() as conn:
         conn.execute("UPDATE delivered_messages SET notion_synced = 1 WHERE id = ?", (msg_id,))
+
+
+# ── Install nudge tracking ────────────────────────────────────────────────────
+
+def has_nudge_been_sent(team_id: str) -> bool:
+    with get_conn() as conn:
+        row = conn.execute("SELECT 1 FROM install_nudges WHERE team_id = ?", (team_id,)).fetchone()
+        return row is not None
+
+def mark_nudge_sent(team_id: str):
+    with get_conn() as conn:
+        conn.execute("INSERT OR IGNORE INTO install_nudges (team_id) VALUES (?)", (team_id,))
