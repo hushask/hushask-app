@@ -58,7 +58,24 @@ class SQLiteInstallationStore(InstallationStore):
         )
 
     def find_installation(self, *, enterprise_id, team_id, is_enterprise_install=False, user_id=None):
-        return self.find_bot(enterprise_id=enterprise_id, team_id=team_id)
+        # Must return Installation (not Bot) — Bolt middleware reads .user_token on this object
+        from database import find_workspace_row
+        row = find_workspace_row(team_id)
+        if not row or not row.get("bot_token"):
+            return None
+        bot_uid = row.get("bot_user_id") or ""
+        return Installation(
+            app_id=row.get("app_id") or os.environ.get("SLACK_APP_ID", ""),
+            enterprise_id=enterprise_id or "",
+            team_id=team_id,
+            bot_token=row["bot_token"],
+            bot_id=bot_uid,
+            bot_user_id=bot_uid,
+            bot_scopes=[],
+            user_id=row.get("installer_user_id") or "",
+            user_token=None,      # we don't store user tokens — bot-only app
+            installed_at=datetime.now(timezone.utc),
+        )
 
     def find_bot(self, *, enterprise_id, team_id, is_enterprise_install=False):
         from slack_sdk.oauth.installation_store.models.bot import Bot
@@ -72,7 +89,7 @@ class SQLiteInstallationStore(InstallationStore):
             enterprise_id=enterprise_id or "",
             team_id=team_id,
             bot_token=row["bot_token"],
-            bot_id=bot_uid,        # required by slack-sdk >= 3.19
+            bot_id=bot_uid,
             bot_user_id=bot_uid,
             bot_scopes=[],
             installed_at=datetime.now(timezone.utc),
