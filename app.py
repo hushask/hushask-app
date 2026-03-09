@@ -146,48 +146,87 @@ def is_admin(client, user_id):
         return False
 
 def channel_display(client, cid):
+    """Return '#name' for a channel ID, or the raw ID if lookup fails."""
     if not cid: return "—"
-    try:    return f"#{client.conversations_info(channel=cid)['channel']['name']}"
-    except: return cid
+    try:
+        info = client.conversations_info(channel=cid)
+        if info.get("ok"):
+            return f"#{info['channel']['name']}"
+        print(f"[channel_display] conversations_info not ok for {cid}: {info.get('error')}")
+        return cid
+    except Exception as e:
+        print(f"[channel_display] exception for {cid}: {e}")
+        return cid
+
+def channels_are_valid(client, pub_ch, hr_ch):
+    """Return True if both channel IDs exist and the bot can access them."""
+    if not pub_ch or not hr_ch:
+        return False
+    for cid in (pub_ch, hr_ch):
+        try:
+            info = client.conversations_info(channel=cid)
+            if not info.get("ok"):
+                print(f"[channels] validation FAIL for {cid}: {info.get('error')}")
+                return False
+        except Exception as e:
+            print(f"[channels] validation exception for {cid}: {e}")
+            return False
+    return True
 
 def find_or_create_channel(client, name, is_private):
-    """Create a channel by name or return its ID if it already exists.
-    Fast path: scan existing channels first to avoid a create + name_taken roundtrip.
+    """Return the channel ID for `name`, creating it if needed.
+    Logs every API call result explicitly so failures are visible in Railway.
+    Returns None if the channel cannot be found or created.
     """
     ctype = "private_channel" if is_private else "public_channel"
 
-    # Fast path: check if channel already exists before attempting creation
+    # ── Fast path: scan existing channels first ─────────────────────────────
     try:
         cursor = None
         while True:
-            resp = client.conversations_list(types=ctype, limit=200,
-                                              exclude_archived=True, cursor=cursor)
+            resp = client.conversations_list(
+                types=ctype, limit=200, exclude_archived=True, cursor=cursor
+            )
+            if not resp.get("ok"):
+                print(f"[channels] conversations_list FAILED for '{name}': {resp.get('error')}")
+                break
             match = next((c for c in resp.get("channels", []) if c["name"] == name), None)
             if match:
-                print(f"[channels] '{name}' already exists: {match['id']}")
+                print(f"[channels] ✅ '{name}' exists: {match['id']} (type={ctype})")
                 return match["id"]
             cursor = resp.get("response_metadata", {}).get("next_cursor")
             if not cursor:
+                print(f"[channels] '{name}' not found in existing channels — will create")
                 break
     except Exception as e:
-        print(f"[channels] list error for '{name}': {e}")
+        print(f"[channels] conversations_list exception for '{name}': {e}")
 
-    # Channel doesn't exist — create it
+    # ── Create the channel ───────────────────────────────────────────────────
     try:
         result = client.conversations_create(name=name, is_private=is_private)
-        ch_id = result["channel"]["id"]
-        print(f"[channels] created '{name}': {ch_id}")
-        return ch_id
+        if result.get("ok"):
+            ch_id = result["channel"]["id"]
+            print(f"[channels] ✅ created '{name}': {ch_id} (private={is_private})")
+            return ch_id
+        else:
+            error = result.get("error", "unknown")
+            print(f"[channels] conversations_create FAILED for '{name}': error={error}")
+            if error == "name_taken":
+                # Shouldn't happen after list scan — try one final lookup
+                print(f"[channels] name_taken race — scanning once more for '{name}'")
+                try:
+                    resp2 = client.conversations_list(types=ctype, limit=200, exclude_archived=True)
+                    match = next((c for c in resp2.get("channels", []) if c["name"] == name), None)
+                    if match:
+                        print(f"[channels] ✅ found on re-scan: {match['id']}")
+                        return match["id"]
+                except Exception as e2:
+                    print(f"[channels] re-scan exception: {e2}")
+            elif error in ("missing_scope", "not_allowed_token_type", "restricted_action"):
+                print(f"[channels] ❌ PERMISSION ERROR for '{name}': {error} — check bot scopes")
+            return None
     except Exception as e:
-        if "name_taken" in str(e):
-            # Race condition: someone else just created it — scan again
-            try:
-                resp = client.conversations_list(types=ctype, limit=200, exclude_archived=True)
-                match = next((c for c in resp.get("channels", []) if c["name"] == name), None)
-                return match["id"] if match else None
-            except Exception:
-                return None
-        print(f"[channels] create error for '{name}': {e}")
+        print(f"[channels] conversations_create exception for '{name}': {e}")
         return None
 
 def upgrade_link(team_id):
@@ -387,6 +426,12 @@ def publish_home(client, user_id, team_id):
     notion_key    = config["notion_api_key"]     if config else None
     notion_db     = config["notion_database_id"] if config else None
     is_configured = bool(pub_ch and hr_ch)
+    # Verify channels actually exist in Slack — catches stale IDs after reinstall/rename
+    if is_configured:
+        is_configured = channels_are_valid(client, pub_ch, hr_ch)
+        if not is_configured:
+            print(f"[publish_home] ⚠️ channels in DB but invalid in Slack — forcing wizard")
+
     print(f"[publish_home] user={user_id} team={team_id} db={DB_PATH} | "
           f"configured={is_configured} pub={pub_ch} hr={hr_ch} "
           f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} installer={installer_id}")
@@ -402,7 +447,6 @@ def publish_home(client, user_id, team_id):
     is_privileged = admin or user_id == installer_id or (installer_id is None and config is not None)
 
     if is_privileged or is_configured:
-        # Show configured home if workspace has channels; wizard otherwise
         view = home_configured(config, client, team_id) if is_configured else home_unconfigured()
     else:
         view = home_welcome()
@@ -664,6 +708,14 @@ def wizard3_submit(ack, body, client):
                 print(f"[wizard3] channels result: pub={pub_id} hr={hr_id}")
                 if pub_id: pub_ch = pub_id
                 if hr_id:  hr_ch  = hr_id
+
+        # ── Gate: only save if BOTH channels resolved to valid IDs ──────────
+        if not pub_ch or not hr_ch:
+            print(f"[wizard3] ❌ ABORT SAVE — channel IDs missing: pub={pub_ch!r} hr={hr_ch!r}. "
+                  f"Check bot scopes (channels:manage, groups:write) and workspace permissions.")
+            # Still publish home so user sees wizard (not a blank screen)
+            publish_home(client, user_id, team_id)
+            return
 
         # Read Notion credentials from DB (OAuth callback may have already saved them).
         # Pass None if not available — save_workspace_config preserves existing values atomically.
