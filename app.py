@@ -535,6 +535,7 @@ def handle_upgrade(ack): ack()
 
 @app.view("wizard_step1")
 def wizard1_submit(ack):
+    print("[wizard1] submitted — pushing step 2")
     ack(response_action="push", view=wizard_step2_modal(auto_create=True))
 
 @app.view("wizard_step2")
@@ -542,6 +543,7 @@ def wizard2_submit(ack, body):
     values  = body["view"]["state"]["values"]
     meta    = json.loads(body["view"].get("private_metadata", "{}"))
     team_id = body["team"]["id"]
+    print(f"[wizard2] submitted for {team_id}")
 
     auto_opts   = values.get("block_auto_create", {}).get("auto_create_check", {}).get("selected_options", [])
     auto_create = any(o["value"] == "auto_create" for o in auto_opts)
@@ -557,36 +559,52 @@ def wizard2_submit(ack, body):
     store_notion_state(notion_state, team_id)
     meta.update({"team_id": team_id, "auto_create": auto_create,
                  "public_channel": pub_ch, "hr_channel": hr_ch, "notion_state": notion_state})
+    print(f"[wizard2] meta built: auto_create={auto_create} pub={pub_ch} hr={hr_ch} — pushing step 3")
     ack(response_action="push", view=wizard_step3(meta))
 
 @app.view("wizard_step3")
 def wizard3_submit(ack, body, client):
+    # ACK immediately — must respond within 3s before any heavy work
     ack()
     team_id = body["team"]["id"]
     user_id = body["user"]["id"]
     meta    = json.loads(body["view"].get("private_metadata", "{}"))
     values  = body["view"]["state"]["values"]
+    print(f"[wizard3] submitted for {team_id} by {user_id} | meta={meta}")
 
-    pub_ch = meta.get("public_channel", "")
-    hr_ch  = meta.get("hr_channel", "")
-    if meta.get("auto_create"):
-        pub_id = find_or_create_channel(client, "hush-public", is_private=False)
-        hr_id  = find_or_create_channel(client, "hush-hr",     is_private=True)
-        if pub_id: pub_ch = pub_id
-        if hr_id:  hr_ch  = hr_id
+    try:
+        pub_ch = meta.get("public_channel", "")
+        hr_ch  = meta.get("hr_channel", "")
+        if meta.get("auto_create"):
+            print(f"[wizard3] auto-creating channels for {team_id}")
+            pub_id = find_or_create_channel(client, "hush-public", is_private=False)
+            hr_id  = find_or_create_channel(client, "hush-hr",     is_private=True)
+            print(f"[wizard3] channels: pub={pub_id} hr={hr_id}")
+            if pub_id: pub_ch = pub_id
+            if hr_id:  hr_ch  = hr_id
 
-    existing    = get_workspace_config(team_id)
-    notion_key  = existing["notion_api_key"]     if existing else None
-    notion_db   = existing["notion_database_id"] if existing else None
-    if not NOTION_CLIENT_ID:
-        manual_key = (values.get("block_notion_token", {}).get("notion_token_input", {}).get("value") or "").strip() or None
-        manual_db  = (values.get("block_notion_db",    {}).get("notion_db_input",    {}).get("value") or "").strip() or None
-        if manual_key: notion_key = manual_key
-        if manual_db:  notion_db  = manual_db
+        existing   = get_workspace_config(team_id)
+        notion_key = existing["notion_api_key"]     if existing else None
+        notion_db  = existing["notion_database_id"] if existing else None
+        if not NOTION_CLIENT_ID:
+            manual_key = (values.get("block_notion_token", {}).get("notion_token_input", {}).get("value") or "").strip() or None
+            manual_db  = (values.get("block_notion_db",    {}).get("notion_db_input",    {}).get("value") or "").strip() or None
+            if manual_key: notion_key = manual_key
+            if manual_db:  notion_db  = manual_db
 
-    installer_id = existing["installer_id"] if (existing and existing["installer_id"]) else user_id
-    save_workspace_config(team_id, installer_id, pub_ch, hr_ch, notion_key, notion_db)
-    publish_home(client, user_id, team_id)
+        installer_id = existing["installer_id"] if (existing and existing["installer_id"]) else user_id
+        save_workspace_config(team_id, installer_id, pub_ch, hr_ch, notion_key, notion_db)
+        print(f"[wizard3] config saved — pub={pub_ch} hr={hr_ch} notion_key={bool(notion_key)} notion_db={bool(notion_db)}")
+    except Exception as e:
+        print(f"[wizard3] ERROR saving config for {team_id}: {e}")
+        import traceback; traceback.print_exc()
+
+    try:
+        publish_home(client, user_id, team_id)
+        print(f"[wizard3] home published for {user_id}")
+    except Exception as e:
+        print(f"[wizard3] ERROR publishing home for {user_id}: {e}")
+        import traceback; traceback.print_exc()
 
 
 # ── Example prompts ───────────────────────────────────────────────────────────

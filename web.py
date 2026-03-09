@@ -125,8 +125,8 @@ def notion_callback():
 
 def _provision_hush_library(token):
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
-    payload = {
-        "parent": {"type": "workspace", "workspace": True},
+
+    db_props = {
         "title": [{"type": "text", "text": {"content": "Hush Library"}}],
         "icon": {"type": "emoji", "emoji": "🔒"},
         "properties": {
@@ -136,16 +136,44 @@ def _provision_hush_library(token):
             "Synced At": {"date": {}},
         }
     }
+
+    # Strategy 1: workspace root (works if user granted full workspace access)
+    # Strategy 2: fall back to the first page the integration has access to
+    parents_to_try = [{"type": "workspace", "workspace": True}]
+
+    # Discover pages the token has access to as fallback parents
     try:
-        r = http.post("https://api.notion.com/v1/databases", json=payload, headers=headers, timeout=15)
-        if r.status_code == 200:
-            db = r.json()
-            db_id  = db["id"]
-            db_url = db.get("url") or f"https://notion.so/{db_id.replace('-','')}"
-            return db_id, db_url
-        return None, None
-    except Exception:
-        return None, None
+        search_r = http.post(
+            "https://api.notion.com/v1/search",
+            json={"filter": {"value": "page", "property": "object"}, "page_size": 5},
+            headers=headers, timeout=10
+        )
+        if search_r.status_code == 200:
+            pages = search_r.json().get("results", [])
+            print(f"[notion] accessible pages: {[p.get('id') for p in pages[:5]]}")
+            for page in pages:
+                parents_to_try.append({"type": "page_id", "page_id": page["id"]})
+    except Exception as e:
+        print(f"[notion] search error: {e}")
+
+    for parent in parents_to_try:
+        try:
+            payload = {"parent": parent, **db_props}
+            r = http.post("https://api.notion.com/v1/databases", json=payload, headers=headers, timeout=15)
+            print(f"[notion] create attempt parent={parent} → HTTP {r.status_code}")
+            print(f"[notion] response body: {r.text[:500]}")
+            if r.status_code == 200:
+                db     = r.json()
+                db_id  = db["id"]
+                db_url = db.get("url") or f"https://notion.so/{db_id.replace('-','')}"
+                parent_info = db.get("parent", {})
+                print(f"[notion] ✅ Hush Library created! id={db_id} url={db_url} parent={parent_info}")
+                return db_id, db_url
+        except Exception as e:
+            print(f"[notion] create exception with parent={parent}: {e}")
+
+    print("[notion] ❌ All parent strategies failed — could not create Hush Library")
+    return None, None
 
 
 # ── Stripe Checkout ────────────────────────────────────────────────────────────
