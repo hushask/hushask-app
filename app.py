@@ -381,8 +381,21 @@ def home_configured(config, client, team_id):
 def publish_home(client, user_id, team_id):
     config       = get_workspace_config(team_id)
     installer_id = config["installer_id"] if config else None
-    if is_admin(client, user_id) or user_id == installer_id:
-        view = home_configured(config, client, team_id) if config else home_unconfigured()
+    pub_ch       = config["public_channel"]    if config else None
+    hr_ch        = config["hr_channel"]        if config else None
+    notion_key   = config["notion_api_key"]    if config else None
+    notion_db    = config["notion_database_id"] if config else None
+    is_configured = bool(pub_ch and hr_ch)
+    print(f"[publish_home] user={user_id} team={team_id} | "
+          f"configured={is_configured} pub={pub_ch} hr={hr_ch} "
+          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)}")
+    try:
+        admin = is_admin(client, user_id)
+    except Exception as e:
+        print(f"[publish_home] is_admin check failed ({e}) — treating as non-admin")
+        admin = False
+    if admin or user_id == installer_id:
+        view = home_configured(config, client, team_id) if is_configured else home_unconfigured()
     else:
         view = home_welcome()
     client.views_publish(user_id=user_id, view=view)
@@ -615,26 +628,39 @@ def wizard3_submit(ack, body, client):
     try:
         existing = get_workspace_config(team_id)
 
+        # ── Fast-exit idempotency ────────────────────────────────────────────
+        # If workspace is already fully configured (channels + Notion) this is
+        # a Slack retry of a view submission we already processed. Don't touch
+        # the DB — just republish home and exit.
+        if (existing
+                and existing["public_channel"]
+                and existing["hr_channel"]
+                and existing["notion_api_key"]
+                and existing["notion_database_id"]):
+            print(f"[wizard3] FULLY CONFIGURED (idempotency exit) — skipping save, republishing home")
+            publish_home(client, user_id, team_id)
+            return
+
         pub_ch = meta.get("public_channel", "")
         hr_ch  = meta.get("hr_channel", "")
 
         if meta.get("auto_create"):
-            # Idempotency: if channels already saved from a previous (possibly retried) run, skip creation
             if existing and existing["public_channel"] and existing["hr_channel"]:
                 pub_ch = existing["public_channel"]
                 hr_ch  = existing["hr_channel"]
-                print(f"[wizard3] channels already configured — skipping creation: pub={pub_ch} hr={hr_ch}")
+                print(f"[wizard3] channels in DB — skipping creation: pub={pub_ch} hr={hr_ch}")
             else:
                 print(f"[wizard3] auto-creating channels for {team_id}")
                 pub_id = find_or_create_channel(client, "hush-public", is_private=False)
                 hr_id  = find_or_create_channel(client, "hush-hr",     is_private=True)
-                print(f"[wizard3] channels: pub={pub_id} hr={hr_id}")
+                print(f"[wizard3] channels result: pub={pub_id} hr={hr_id}")
                 if pub_id: pub_ch = pub_id
                 if hr_id:  hr_ch  = hr_id
 
-        # Read Notion credentials from DB (Notion OAuth callback may have saved them already)
-        notion_key = existing["notion_api_key"]     if existing else None
-        notion_db  = existing["notion_database_id"] if existing else None
+        # Read Notion credentials from DB (OAuth callback may have already saved them).
+        # Pass None if not available — save_workspace_config preserves existing values atomically.
+        notion_key = existing["notion_api_key"]      if existing else None
+        notion_db  = existing["notion_database_id"]  if existing else None
         if not NOTION_CLIENT_ID:
             manual_key = (values.get("block_notion_token", {}).get("notion_token_input", {}).get("value") or "").strip() or None
             manual_db  = (values.get("block_notion_db",    {}).get("notion_db_input",    {}).get("value") or "").strip() or None
@@ -642,9 +668,7 @@ def wizard3_submit(ack, body, client):
             if manual_db:  notion_db  = manual_db
 
         installer_id = existing["installer_id"] if (existing and existing["installer_id"]) else user_id
-        # COALESCE in DB will preserve existing notion values if we pass None here
         save_workspace_config(team_id, installer_id, pub_ch, hr_ch, notion_key, notion_db)
-        print(f"[wizard3] config saved — pub={pub_ch} hr={hr_ch} notion_key={bool(notion_key)} notion_db={bool(notion_db)}")
     except Exception as e:
         print(f"[wizard3] ERROR saving config for {team_id}: {e}")
         import traceback; traceback.print_exc()

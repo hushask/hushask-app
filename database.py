@@ -184,6 +184,15 @@ def save_workspace_config(workspace_id: str, installer_id: str,
                            public_channel: str, hr_channel: str,
                            notion_api_key: str = None, notion_database_id: str = None):
     with get_conn() as conn:
+        # Atomically read + preserve existing Notion values within the same
+        # connection so concurrent wizard3 retries can't race each other.
+        existing = conn.execute(
+            "SELECT notion_api_key, notion_database_id FROM workspace_config WHERE workspace_id = ?",
+            (workspace_id,)
+        ).fetchone()
+        final_notion_key = notion_api_key or (existing["notion_api_key"] if existing else None)
+        final_notion_db  = notion_database_id or (existing["notion_database_id"] if existing else None)
+
         conn.execute("""
             INSERT INTO workspace_config
                 (workspace_id, installer_id, public_channel, hr_channel,
@@ -192,13 +201,14 @@ def save_workspace_config(workspace_id: str, installer_id: str,
             ON CONFLICT(workspace_id) DO UPDATE SET
                 public_channel     = excluded.public_channel,
                 hr_channel         = excluded.hr_channel,
-                -- Preserve existing Notion values if new ones are NULL
-                -- (wizard3 may run before Notion OAuth callback completes)
-                notion_api_key     = COALESCE(excluded.notion_api_key,     notion_api_key),
-                notion_database_id = COALESCE(excluded.notion_database_id, notion_database_id),
+                notion_api_key     = excluded.notion_api_key,
+                notion_database_id = excluded.notion_database_id,
                 updated_at         = excluded.updated_at
         """, (workspace_id, installer_id, public_channel, hr_channel,
-              notion_api_key, notion_database_id))
+              final_notion_key, final_notion_db))
+
+        print(f"[db] save_workspace_config: pub={public_channel} hr={hr_channel} "
+              f"notion_key={bool(final_notion_key)} notion_db={bool(final_notion_db)}")
 
 
 def save_workspace_notion(workspace_id: str, notion_api_key: str, notion_database_id: str):
