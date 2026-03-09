@@ -214,6 +214,36 @@ def limit_blocks(usage, team_id=""):
         {"type":"context","elements":[{"type":"mrkdwn","text":"Resets automatically at the start of your next billing month."}]}
     ]
 
+def _alert_installer_limit(client, team_id: str, usage: int):
+    """DM the workspace installer once when the free tier cap is first hit."""
+    try:
+        from database import find_installer_user_id
+        installer_id = find_installer_user_id(team_id)
+        if not installer_id:
+            return
+        dm = client.conversations_open(users=installer_id)["channel"]["id"]
+        client.chat_postMessage(
+            channel=dm,
+            text=f"⚠️ Your workspace has hit the HushAsk free tier limit ({usage}/{FREE_LIMIT} messages this month).",
+            blocks=[
+                {"type": "section", "text": {"type": "mrkdwn", "text":
+                    f"⚠️ *HushAsk free tier limit reached.*\n\n"
+                    f"Your workspace has sent *{usage}/{FREE_LIMIT}* anonymous messages this month. "
+                    f"New submissions are paused until the month resets or you upgrade.\n\n"
+                    f"Upgrade to Pro for unlimited routing, priority support, and Notion Vault sync."
+                }},
+                {"type": "actions", "elements": [
+                    {"type": "button", "text": {"type": "plain_text", "text": "⭐ Upgrade to Pro"},
+                     "style": "primary", "url": f"{UPGRADE_URL}?team_id={team_id}",
+                     "action_id": "upgrade_cta_admin_alert"}
+                ]}
+            ]
+        )
+        print(f"[limit_alert] Sent admin DM to {installer_id} for workspace {team_id} ({usage}/{FREE_LIMIT})")
+    except Exception as e:
+        print(f"[limit_alert] Failed to DM installer for {team_id}: {e}")
+
+
 def pro_welcome_blocks():
     return [
         {"type":"header","text":{"type":"plain_text","text":"🎉 Welcome to HushAsk Pro!","emoji":True}},
@@ -560,6 +590,9 @@ def _do_route(ack, body, client, route_type):
     if not allowed:
         try:   client.chat_update(channel=src, ts=msg_ts, blocks=limit_blocks(usage, team_id), text="Limit reached.")
         except: client.chat_postEphemeral(channel=src, user=user_id, blocks=limit_blocks(usage, team_id), text="Limit reached.")
+        # Admin alert — DM the installer once when the workspace first hits the cap
+        if usage == FREE_LIMIT:
+            _alert_installer_limit(client, team_id, usage)
         return
 
     config     = get_workspace_config(team_id)
