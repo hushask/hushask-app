@@ -426,12 +426,6 @@ def publish_home(client, user_id, team_id):
     notion_key    = config["notion_api_key"]     if config else None
     notion_db     = config["notion_database_id"] if config else None
     is_configured = bool(pub_ch and hr_ch)
-    # Verify channels actually exist in Slack — catches stale IDs after reinstall/rename
-    if is_configured:
-        is_configured = channels_are_valid(client, pub_ch, hr_ch)
-        if not is_configured:
-            print(f"[publish_home] ⚠️ channels in DB but invalid in Slack — forcing wizard")
-
     print(f"[publish_home] user={user_id} team={team_id} db={DB_PATH} | "
           f"configured={is_configured} pub={pub_ch} hr={hr_ch} "
           f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} installer={installer_id}")
@@ -492,16 +486,37 @@ def wizard_step2_modal(auto_create=True, meta=None):
         {"type":"input","block_id":"block_auto_create","label":{"type":"plain_text","text":"🔧 Channel setup"},"optional":True,"element":auto_el},
     ]
     if auto_create:
-        blocks.append({"type":"section","text":{"type":"mrkdwn","text":"✅ *We'll create both channels automatically.*\n\n_Uncheck to pick existing channels instead._"}})
+        blocks.append({"type":"section","text":{"type":"mrkdwn","text":"✅ *We'll create both channels automatically.*\n\n_`#hush-public` (📢 Public) and `#hush-hr` (🔒 Private) will be created if they don't already exist._\n\n_Uncheck to pick existing channels instead._"}})
     else:
-        pub_el = {"type":"conversations_select","action_id":"public_channel_select","placeholder":{"type":"plain_text","text":"Select a channel"},"filter":{"include":["public"],"exclude_bot_users":True}}
-        hr_el  = {"type":"conversations_select","action_id":"hr_channel_select","placeholder":{"type":"plain_text","text":"Select a channel"},"filter":{"include":["private"],"exclude_bot_users":True}}
+        # No type filter — show ALL channels the user can access.
+        # Filtering by "private" only shows channels the bot is already in,
+        # which is an empty list before setup. Let the user pick any channel.
+        pub_el = {
+            "type": "conversations_select",
+            "action_id": "public_channel_select",
+            "placeholder": {"type": "plain_text", "text": "Pick a public channel"},
+            "filter": {"include": ["public"], "exclude_bot_users": True},
+        }
+        hr_el = {
+            "type": "conversations_select",
+            "action_id": "hr_channel_select",
+            "placeholder": {"type": "plain_text", "text": "Pick any channel for HR/private"},
+            # No private filter — bot won't be in private channels yet.
+            # User picks any channel; they should invite the bot separately.
+        }
         if meta.get("public_channel"): pub_el["initial_conversation"] = meta["public_channel"]
         if meta.get("hr_channel"):     hr_el["initial_conversation"]  = meta["hr_channel"]
         blocks += [
-            {"type":"divider"},
-            {"type":"input","block_id":"block_public_channel","label":{"type":"plain_text","text":"📢 Public Channel"},"hint":{"type":"plain_text","text":"Anonymous public messages route here."},"optional":False,"element":pub_el},
-            {"type":"input","block_id":"block_hr_channel","label":{"type":"plain_text","text":"🔒 Private Channel"},"hint":{"type":"plain_text","text":"Sensitive messages — keep this private."},"optional":False,"element":hr_el},
+            {"type": "divider"},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "⚠️ *Bot access required:* The bot must be a member of both channels. Invite it with `/invite @HushAsk` after setup."}},
+            {"type": "input", "block_id": "block_public_channel",
+             "label": {"type": "plain_text", "text": "📢 Public Channel"},
+             "hint":  {"type": "plain_text", "text": "Anonymous public messages route here."},
+             "optional": False, "element": pub_el},
+            {"type": "input", "block_id": "block_hr_channel",
+             "label": {"type": "plain_text", "text": "🔒 Private / HR Channel"},
+             "hint":  {"type": "plain_text", "text": "Confidential messages. Invite the bot first."},
+             "optional": False, "element": hr_el},
         ]
     return {
         "type":"modal","callback_id":"wizard_step2",
@@ -669,27 +684,32 @@ def wizard2_submit(ack, body):
 
 @app.view("wizard_step3")
 def wizard3_submit(ack, body, client):
-    # ACK immediately — must respond within 3s before any heavy work
+    """ACK Slack immediately, then do ALL work in a daemon thread.
+    This guarantees the HTTP 200 reaches Slack in <100ms regardless of
+    how long channel creation or DB writes take — kills the retry loop."""
     ack()
+    import threading
+    threading.Thread(target=_wizard3_work, args=(body, client), daemon=True).start()
+
+
+def _wizard3_work(body, client):
     team_id = body["team"]["id"]
     user_id = body["user"]["id"]
     meta    = json.loads(body["view"].get("private_metadata", "{}"))
     values  = body["view"]["state"]["values"]
-    print(f"[wizard3] submitted for {team_id} by {user_id} | meta={meta}")
+    print(f"[wizard3] started background work for {team_id} by {user_id} | "
+          f"auto_create={meta.get('auto_create')} notion_state={meta.get('notion_state','')[:8]}")
 
     try:
         existing = get_workspace_config(team_id)
 
         # ── Fast-exit idempotency ────────────────────────────────────────────
-        # If workspace is already fully configured (channels + Notion) this is
-        # a Slack retry of a view submission we already processed. Don't touch
-        # the DB — just republish home and exit.
         if (existing
                 and existing["public_channel"]
                 and existing["hr_channel"]
                 and existing["notion_api_key"]
                 and existing["notion_database_id"]):
-            print(f"[wizard3] FULLY CONFIGURED (idempotency exit) — skipping save, republishing home")
+            print(f"[wizard3] FULLY CONFIGURED — idempotency exit, republishing home")
             publish_home(client, user_id, team_id)
             return
 
@@ -700,7 +720,7 @@ def wizard3_submit(ack, body, client):
             if existing and existing["public_channel"] and existing["hr_channel"]:
                 pub_ch = existing["public_channel"]
                 hr_ch  = existing["hr_channel"]
-                print(f"[wizard3] channels in DB — skipping creation: pub={pub_ch} hr={hr_ch}")
+                print(f"[wizard3] channels in DB — reusing: pub={pub_ch} hr={hr_ch}")
             else:
                 print(f"[wizard3] auto-creating channels for {team_id}")
                 pub_id = find_or_create_channel(client, "hush-public", is_private=False)
@@ -709,16 +729,12 @@ def wizard3_submit(ack, body, client):
                 if pub_id: pub_ch = pub_id
                 if hr_id:  hr_ch  = hr_id
 
-        # ── Gate: only save if BOTH channels resolved to valid IDs ──────────
+        # ── Gate: only commit if BOTH channels resolved ──────────────────────
         if not pub_ch or not hr_ch:
-            print(f"[wizard3] ❌ ABORT SAVE — channel IDs missing: pub={pub_ch!r} hr={hr_ch!r}. "
-                  f"Check bot scopes (channels:manage, groups:write) and workspace permissions.")
-            # Still publish home so user sees wizard (not a blank screen)
+            print(f"[wizard3] ❌ ABORT — channel IDs missing: pub={pub_ch!r} hr={hr_ch!r}")
             publish_home(client, user_id, team_id)
             return
 
-        # Read Notion credentials from DB (OAuth callback may have already saved them).
-        # Pass None if not available — save_workspace_config preserves existing values atomically.
         notion_key = existing["notion_api_key"]      if existing else None
         notion_db  = existing["notion_database_id"]  if existing else None
         if not NOTION_CLIENT_ID:
@@ -729,8 +745,9 @@ def wizard3_submit(ack, body, client):
 
         installer_id = existing["installer_id"] if (existing and existing["installer_id"]) else user_id
         save_workspace_config(team_id, installer_id, pub_ch, hr_ch, notion_key, notion_db)
+
     except Exception as e:
-        print(f"[wizard3] ERROR saving config for {team_id}: {e}")
+        print(f"[wizard3] ERROR for {team_id}: {e}")
         import traceback; traceback.print_exc()
 
     try:

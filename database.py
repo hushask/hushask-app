@@ -201,6 +201,8 @@ def save_workspace_config(workspace_id: str, installer_id: str,
                  notion_api_key, notion_database_id, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
             ON CONFLICT(workspace_id) DO UPDATE SET
+                -- Preserve installer_id if it's already set (first writer wins)
+                installer_id       = COALESCE(installer_id, excluded.installer_id),
                 public_channel     = excluded.public_channel,
                 hr_channel         = excluded.hr_channel,
                 notion_api_key     = excluded.notion_api_key,
