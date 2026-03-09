@@ -192,8 +192,10 @@ def save_workspace_config(workspace_id: str, installer_id: str,
             ON CONFLICT(workspace_id) DO UPDATE SET
                 public_channel     = excluded.public_channel,
                 hr_channel         = excluded.hr_channel,
-                notion_api_key     = excluded.notion_api_key,
-                notion_database_id = excluded.notion_database_id,
+                -- Preserve existing Notion values if new ones are NULL
+                -- (wizard3 may run before Notion OAuth callback completes)
+                notion_api_key     = COALESCE(excluded.notion_api_key,     notion_api_key),
+                notion_database_id = COALESCE(excluded.notion_database_id, notion_database_id),
                 updated_at         = excluded.updated_at
         """, (workspace_id, installer_id, public_channel, hr_channel,
               notion_api_key, notion_database_id))

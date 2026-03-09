@@ -151,17 +151,44 @@ def channel_display(client, cid):
     except: return cid
 
 def find_or_create_channel(client, name, is_private):
+    """Create a channel by name or return its ID if it already exists.
+    Fast path: scan existing channels first to avoid a create + name_taken roundtrip.
+    """
+    ctype = "private_channel" if is_private else "public_channel"
+
+    # Fast path: check if channel already exists before attempting creation
     try:
-        return client.conversations_create(name=name, is_private=is_private)["channel"]["id"]
+        cursor = None
+        while True:
+            resp = client.conversations_list(types=ctype, limit=200,
+                                              exclude_archived=True, cursor=cursor)
+            match = next((c for c in resp.get("channels", []) if c["name"] == name), None)
+            if match:
+                print(f"[channels] '{name}' already exists: {match['id']}")
+                return match["id"]
+            cursor = resp.get("response_metadata", {}).get("next_cursor")
+            if not cursor:
+                break
+    except Exception as e:
+        print(f"[channels] list error for '{name}': {e}")
+
+    # Channel doesn't exist — create it
+    try:
+        result = client.conversations_create(name=name, is_private=is_private)
+        ch_id = result["channel"]["id"]
+        print(f"[channels] created '{name}': {ch_id}")
+        return ch_id
     except Exception as e:
         if "name_taken" in str(e):
-            ctype = "private_channel" if is_private else "public_channel"
+            # Race condition: someone else just created it — scan again
             try:
-                chs = client.conversations_list(types=ctype, limit=200)["channels"]
-                m = next((c for c in chs if c["name"] == name), None)
-                return m["id"] if m else None
-            except: return None
-        raise
+                resp = client.conversations_list(types=ctype, limit=200, exclude_archived=True)
+                match = next((c for c in resp.get("channels", []) if c["name"] == name), None)
+                return match["id"] if match else None
+            except Exception:
+                return None
+        print(f"[channels] create error for '{name}': {e}")
+        return None
 
 def upgrade_link(team_id):
     return f"{API_BASE}/upgrade?team_id={team_id}"
@@ -586,17 +613,26 @@ def wizard3_submit(ack, body, client):
     print(f"[wizard3] submitted for {team_id} by {user_id} | meta={meta}")
 
     try:
+        existing = get_workspace_config(team_id)
+
         pub_ch = meta.get("public_channel", "")
         hr_ch  = meta.get("hr_channel", "")
-        if meta.get("auto_create"):
-            print(f"[wizard3] auto-creating channels for {team_id}")
-            pub_id = find_or_create_channel(client, "hush-public", is_private=False)
-            hr_id  = find_or_create_channel(client, "hush-hr",     is_private=True)
-            print(f"[wizard3] channels: pub={pub_id} hr={hr_id}")
-            if pub_id: pub_ch = pub_id
-            if hr_id:  hr_ch  = hr_id
 
-        existing   = get_workspace_config(team_id)
+        if meta.get("auto_create"):
+            # Idempotency: if channels already saved from a previous (possibly retried) run, skip creation
+            if existing and existing["public_channel"] and existing["hr_channel"]:
+                pub_ch = existing["public_channel"]
+                hr_ch  = existing["hr_channel"]
+                print(f"[wizard3] channels already configured — skipping creation: pub={pub_ch} hr={hr_ch}")
+            else:
+                print(f"[wizard3] auto-creating channels for {team_id}")
+                pub_id = find_or_create_channel(client, "hush-public", is_private=False)
+                hr_id  = find_or_create_channel(client, "hush-hr",     is_private=True)
+                print(f"[wizard3] channels: pub={pub_id} hr={hr_id}")
+                if pub_id: pub_ch = pub_id
+                if hr_id:  hr_ch  = hr_id
+
+        # Read Notion credentials from DB (Notion OAuth callback may have saved them already)
         notion_key = existing["notion_api_key"]     if existing else None
         notion_db  = existing["notion_database_id"] if existing else None
         if not NOTION_CLIENT_ID:
@@ -606,6 +642,7 @@ def wizard3_submit(ack, body, client):
             if manual_db:  notion_db  = manual_db
 
         installer_id = existing["installer_id"] if (existing and existing["installer_id"]) else user_id
+        # COALESCE in DB will preserve existing notion values if we pass None here
         save_workspace_config(team_id, installer_id, pub_ch, hr_ch, notion_key, notion_db)
         print(f"[wizard3] config saved — pub={pub_ch} hr={hr_ch} notion_key={bool(notion_key)} notion_db={bool(notion_db)}")
     except Exception as e:
