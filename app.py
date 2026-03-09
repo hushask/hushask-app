@@ -62,15 +62,18 @@ class SQLiteInstallationStore(InstallationStore):
 
     def find_bot(self, *, enterprise_id, team_id, is_enterprise_install=False):
         from slack_sdk.oauth.installation_store.models.bot import Bot
-        token = find_bot_token(enterprise_id, team_id)
-        if not token:
+        from database import find_workspace_row
+        row = find_workspace_row(team_id)
+        if not row or not row.get("bot_token"):
             return None
+        bot_uid = row.get("bot_user_id") or ""
         return Bot(
-            app_id=os.environ.get("SLACK_APP_ID", ""),
+            app_id=row.get("app_id") or os.environ.get("SLACK_APP_ID", ""),
             enterprise_id=enterprise_id or "",
             team_id=team_id,
-            bot_token=token,
-            bot_user_id="",
+            bot_token=row["bot_token"],
+            bot_id=bot_uid,        # required by slack-sdk >= 3.19
+            bot_user_id=bot_uid,
             bot_scopes=[],
             installed_at=datetime.now(timezone.utc),
         )

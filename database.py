@@ -115,6 +115,15 @@ def find_bot_token(enterprise_id: str | None, team_id: str) -> str | None:
         return row["bot_token"] if row else None
 
 
+def find_workspace_row(team_id: str) -> dict | None:
+    """Return full workspace row (token, bot_user_id, app_id, etc.) for find_bot."""
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM workspaces WHERE team_id = ?", (team_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+
 def find_installer_user_id(team_id: str) -> str | None:
     with get_conn() as conn:
         row = conn.execute(
