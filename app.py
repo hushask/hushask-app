@@ -413,7 +413,7 @@ def home_configured(config, client, team_id):
     ]
     return {"type":"home","blocks":blocks}
 
-BUILD_ID = "86c03aa"  # git short SHA — update on each deploy for UI verification
+BUILD_ID = "debug-sync"  # git short SHA — update on each deploy for UI verification
 
 def publish_home(client, user_id, team_id):
     """Publish the App Home tab for a user.
@@ -583,6 +583,24 @@ def handle_home_opened(event, client, body):
     if not team_id:
         print(f"[home] WARNING: no team_id in body for user {user_id}")
         return
+
+    # ── Stale-read guard ─────────────────────────────────────────────────────
+    # Slack sends app_home_opened whenever the view changes — including after
+    # wizard3 publishes a configured home. If the event's embedded view already
+    # shows a configured home AND the DB agrees, skip this redundant publish.
+    # This prevents the race where a slow is_admin() worker overwrites a fresh
+    # configured home with a stale configured=False snapshot.
+    current_blocks = event.get("view", {}).get("blocks", [])
+    view_looks_configured = any(
+        "Current Configuration" in str(b) for b in current_blocks
+    )
+    if view_looks_configured:
+        config = get_workspace_config(team_id)
+        if config and config.get("public_channel") and config.get("hr_channel"):
+            print(f"[home] SKIP — view already shows configured state, DB agrees "
+                  f"(pub={config['public_channel']} hr={config['hr_channel']})")
+            return
+
     print(f"[home] publishing for user={user_id} team={team_id}")
     publish_home(client, user_id, team_id)
     _maybe_send_install_nudge(client, user_id, team_id)
@@ -697,12 +715,12 @@ def wizard2_submit(ack, body):
 
 @app.view("wizard_step3")
 def wizard3_submit(ack, body, client):
-    """ACK Slack immediately, then do ALL work in a daemon thread.
-    This guarantees the HTTP 200 reaches Slack in <100ms regardless of
-    how long channel creation or DB writes take — kills the retry loop."""
+    """Synchronous wizard3 handler — threading disabled for debug visibility.
+    All work happens inline so every error is captured in Railway logs.
+    Slack may fire a retry (X-Slack-Retry-Num) if this takes >3s;
+    the retry-block middleware handles that."""
+    _wizard3_work(body, client)
     ack()
-    import threading
-    threading.Thread(target=_wizard3_work, args=(body, client), daemon=True).start()
 
 
 def _wizard3_work(body, client):
@@ -710,8 +728,18 @@ def _wizard3_work(body, client):
     user_id = body["user"]["id"]
     meta    = json.loads(body["view"].get("private_metadata", "{}"))
     values  = body["view"]["state"]["values"]
-    print(f"[wizard3] started background work for {team_id} by {user_id} | "
+    print(f"[wizard3] submitted for {team_id} by {user_id} | "
           f"auto_create={meta.get('auto_create')} notion_state={meta.get('notion_state','')[:8]}")
+
+    # ── Nuclear identity + scope check ──────────────────────────────────────
+    try:
+        auth = client.auth_test()
+        scopes = auth.get("response_metadata", {}).get("scopes", [])
+        print(f"[wizard3] auth_test OK — bot_id={auth.get('bot_id')} "
+              f"user_id={auth.get('user_id')} team={auth.get('team_id')} "
+              f"scopes={','.join(scopes) if scopes else auth.get('scope','N/A')[:300]}")
+    except Exception as e:
+        print(f"[wizard3] auth_test FAILED: {e}")
 
     try:
         existing = get_workspace_config(team_id)
