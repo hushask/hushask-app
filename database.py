@@ -15,6 +15,7 @@ def get_conn():
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")   # WAL + NORMAL is safe and fast
+    conn.execute("PRAGMA busy_timeout=5000")    # wait up to 5s before "database locked"
     return conn
 
 
@@ -228,8 +229,18 @@ def save_workspace_notion(workspace_id: str, notion_api_key: str, notion_databas
 
 
 def reset_workspace_config(workspace_id: str):
+    """Clear channel assignments + installer but PRESERVE Notion credentials.
+    This prevents duplicate Hush Library DBs on every Reset → re-wizard cycle.
+    If there's no row yet, the UPDATE is a no-op — safe."""
     with get_conn() as conn:
-        conn.execute("DELETE FROM workspace_config WHERE workspace_id = ?", (workspace_id,))
+        conn.execute("""
+            UPDATE workspace_config
+            SET public_channel = NULL,
+                hr_channel     = NULL,
+                installer_id   = NULL,
+                updated_at     = datetime('now')
+            WHERE workspace_id = ?
+        """, (workspace_id,))
 
 
 # ── Notion OAuth states ───────────────────────────────────────────────────────

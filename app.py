@@ -174,54 +174,60 @@ def channels_are_valid(client, pub_ch, hr_ch):
     return True
 
 def find_or_create_channel(client, name, is_private):
-    """Return the channel ID for `name`, creating it if needed.
+    """Return (channel_id, error_message) for `name`, creating it if needed.
 
     Strategy: CREATE first (O(1)), fall back to a single-page LIST only on
-    name_taken.  Never paginate — pagination over thousands of channels caused
-    67-minute hangs in testing.
+    name_taken. Never paginate.
 
-    Returns None if the channel cannot be found or created.
+    Returns (channel_id, None) on success.
+    Returns (None, user-facing error string) on failure.
     """
     ctype = "private_channel" if is_private else "public_channel"
 
-    # ── Try to create first — fastest path for new workspaces ───────────────
+    # ── Try to create first ──────────────────────────────────────────────────
     try:
         result = client.conversations_create(name=name, is_private=is_private)
         if result.get("ok"):
             ch_id = result["channel"]["id"]
-            print(f"[channels] ✅ created '{name}': {ch_id} (private={is_private})")
-            return ch_id
+            print(f"[channels] ✅ created '#{name}': {ch_id} (private={is_private})")
+            return ch_id, None
         error = result.get("error", "unknown")
-        print(f"[channels] conversations_create result: '{name}' error={error}")
+        print(f"[channels] conversations_create: '#{name}' error={error}")
         if error not in ("name_taken",):
             if error in ("missing_scope", "not_allowed_token_type", "restricted_action"):
-                print(f"[channels] ❌ PERMISSION ERROR for '{name}': {error} — verify bot scopes")
-            return None
-        # name_taken → channel already exists; fall through to find it
+                msg = f"Permission denied creating #{name} (`{error}`). Verify the bot has `channels:manage` + `groups:write` scopes."
+            else:
+                msg = f"Could not create #{name}: Slack returned `{error}`."
+            print(f"[channels] ❌ {msg}")
+            return None, msg
+        # name_taken → channel already exists; find it
     except Exception as e:
-        print(f"[channels] conversations_create exception for '{name}': {e}")
-        return None
+        print(f"[channels] conversations_create exception for '#{name}': {e}")
+        return None, f"Exception creating #{name}: {e}"
 
-    # ── name_taken: single-page scan (no deep pagination) ───────────────────
-    # NOTE: conversations_list only returns channels the BOT is a member of
-    # for private channels. If the bot was removed from a private channel it
-    # previously created, this scan will miss it — that's an ops issue.
+    # ── name_taken: single-page scan ────────────────────────────────────────
     try:
         resp = client.conversations_list(types=ctype, limit=200, exclude_archived=True)
         if resp.get("ok"):
             match = next((c for c in resp.get("channels", []) if c["name"] == name), None)
             if match:
-                print(f"[channels] ✅ '{name}' exists: {match['id']} (type={ctype})")
-                return match["id"]
-            # Not in first page — workspace may have >200 channels or bot isn't a member
-            print(f"[channels] ⚠️ '{name}' name_taken but not in first 200 {ctype}s — "
-                  f"bot may not be a member of the channel")
+                print(f"[channels] ✅ '#{name}' exists: {match['id']} (type={ctype})")
+                return match["id"], None
+            # Not visible — for private channels this means the bot isn't a member
+            if is_private:
+                msg = (f"Channel `#{name}` already exists but I'm not a member. "
+                       f"Please `/invite @HushAsk` to `#{name}` first, then run Setup again.")
+            else:
+                msg = f"Channel `#{name}` already exists but isn't visible to the bot. Check channel permissions."
+            print(f"[channels] ⚠️ {msg}")
+            return None, msg
         else:
-            print(f"[channels] conversations_list FAILED for '{name}': {resp.get('error')}")
+            msg = f"conversations.list failed for #{name}: `{resp.get('error')}`"
+            print(f"[channels] ❌ {msg}")
+            return None, msg
     except Exception as e:
-        print(f"[channels] conversations_list exception for '{name}': {e}")
-
-    return None
+        print(f"[channels] conversations_list exception for '#{name}': {e}")
+        return None, f"Exception scanning for #{name}: {e}"
 
 def upgrade_link(team_id):
     return f"{API_BASE}/upgrade?team_id={team_id}"
@@ -413,7 +419,7 @@ def home_configured(config, client, team_id):
     ]
     return {"type":"home","blocks":blocks}
 
-BUILD_ID = "debug-sync"  # git short SHA — update on each deploy for UI verification
+BUILD_ID = "sovereign-v1"  # git short SHA — update on each deploy for UI verification
 
 def publish_home(client, user_id, team_id):
     """Publish the App Home tab for a user.
@@ -716,11 +722,13 @@ def wizard2_submit(ack, body):
 @app.view("wizard_step3")
 def wizard3_submit(ack, body, client):
     """Synchronous wizard3 handler — threading disabled for debug visibility.
-    All work happens inline so every error is captured in Railway logs.
-    Slack may fire a retry (X-Slack-Retry-Num) if this takes >3s;
-    the retry-block middleware handles that."""
-    _wizard3_work(body, client)
-    ack()
+    Returns errors dict to ack() so Slack shows inline errors in the modal."""
+    ui_errors = _wizard3_work(body, client)
+    if ui_errors:
+        # Show error inside the current modal (Bolt will re-render with field errors)
+        ack(response_action="errors", errors=ui_errors)
+    else:
+        ack()
 
 
 def _wizard3_work(body, client):
@@ -764,17 +772,23 @@ def _wizard3_work(body, client):
                 print(f"[wizard3] channels in DB — reusing: pub={pub_ch} hr={hr_ch}")
             else:
                 print(f"[wizard3] auto-creating channels for {team_id}")
-                pub_id = find_or_create_channel(client, "hush-public", is_private=False)
-                hr_id  = find_or_create_channel(client, "hush-hr",     is_private=True)
-                print(f"[wizard3] channels result: pub={pub_id} hr={hr_id}")
-                if pub_id: pub_ch = pub_id
-                if hr_id:  hr_ch  = hr_id
+                pub_ch, pub_err = find_or_create_channel(client, "hush-public", is_private=False)
+                hr_ch,  hr_err  = find_or_create_channel(client, "hush-hr",     is_private=True)
+                print(f"[wizard3] channels result: pub={pub_ch} ({pub_err}) hr={hr_ch} ({hr_err})")
 
-        # ── Gate: only commit if BOTH channels resolved ──────────────────────
-        if not pub_ch or not hr_ch:
-            print(f"[wizard3] ❌ ABORT — channel IDs missing: pub={pub_ch!r} hr={hr_ch!r}")
-            publish_home(client, user_id, team_id)
-            return
+        # ── Gate: surface missing channels as modal errors ───────────────────
+        ui_errors = {}
+        if not pub_ch:
+            err_msg = pub_err or "Could not create or find #hush-public."
+            ui_errors["block_auto_create"] = f"📢 Public channel: {err_msg}"
+        if not hr_ch:
+            err_msg = hr_err or "Could not create or find #hush-hr."
+            # Append to existing error or set new one
+            existing_err = ui_errors.get("block_auto_create", "")
+            ui_errors["block_auto_create"] = (existing_err + " | " if existing_err else "") + f"🔒 Private channel: {err_msg}"
+        if ui_errors:
+            print(f"[wizard3] ❌ UI errors: {ui_errors}")
+            return ui_errors  # wizard3_submit will pass these to ack(errors=...)
 
         notion_key = existing["notion_api_key"]      if existing else None
         notion_db  = existing["notion_database_id"]  if existing else None
@@ -790,13 +804,15 @@ def _wizard3_work(body, client):
     except Exception as e:
         print(f"[wizard3] ERROR for {team_id}: {e}")
         import traceback; traceback.print_exc()
+        return {"block_auto_create": f"Unexpected error: {e}"}
 
     try:
         publish_home(client, user_id, team_id)
         print(f"[wizard3] home published for {user_id}")
     except Exception as e:
         print(f"[wizard3] ERROR publishing home for {user_id}: {e}")
-        import traceback; traceback.print_exc()
+
+    return None  # success — ack() with no errors
 
 
 # ── Example prompts ───────────────────────────────────────────────────────────

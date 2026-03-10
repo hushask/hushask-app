@@ -138,6 +138,26 @@ def notion_callback():
 def _provision_hush_library(token):
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
 
+    # ── Check for existing Hush Library before creating a new one ───────────
+    # This prevents duplicate DBs on every Reset → re-wizard cycle.
+    try:
+        s = http.post(
+            "https://api.notion.com/v1/search",
+            json={"query": "Hush Library", "filter": {"value": "database", "property": "object"}, "page_size": 10},
+            headers=headers, timeout=10
+        )
+        if s.status_code == 200:
+            for db in s.json().get("results", []):
+                title_parts = db.get("title", [])
+                title_text  = title_parts[0].get("text", {}).get("content", "") if title_parts else ""
+                if title_text == "Hush Library":
+                    db_id  = db["id"]
+                    db_url = db.get("url") or f"https://notion.so/{db_id.replace('-', '')}"
+                    print(f"[notion] ✅ Reusing existing Hush Library: {db_id}")
+                    return db_id, db_url
+    except Exception as e:
+        print(f"[notion] search-before-create failed: {e}")
+
     db_props = {
         "title": [{"type": "text", "text": {"content": "Hush Library"}}],
         "icon": {"type": "emoji", "emoji": "🔒"},
