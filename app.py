@@ -413,7 +413,7 @@ def home_configured(config, client, team_id):
     ]
     return {"type":"home","blocks":blocks}
 
-BUILD_ID = "63e9fe7"  # git short SHA — update on each deploy for UI verification
+BUILD_ID = "86c03aa"  # git short SHA — update on each deploy for UI verification
 
 def publish_home(client, user_id, team_id):
     """Publish the App Home tab for a user.
