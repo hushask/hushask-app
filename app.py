@@ -175,59 +175,53 @@ def channels_are_valid(client, pub_ch, hr_ch):
 
 def find_or_create_channel(client, name, is_private):
     """Return the channel ID for `name`, creating it if needed.
-    Logs every API call result explicitly so failures are visible in Railway.
+
+    Strategy: CREATE first (O(1)), fall back to a single-page LIST only on
+    name_taken.  Never paginate — pagination over thousands of channels caused
+    67-minute hangs in testing.
+
     Returns None if the channel cannot be found or created.
     """
     ctype = "private_channel" if is_private else "public_channel"
 
-    # ── Fast path: scan existing channels first ─────────────────────────────
-    try:
-        cursor = None
-        while True:
-            resp = client.conversations_list(
-                types=ctype, limit=200, exclude_archived=True, cursor=cursor
-            )
-            if not resp.get("ok"):
-                print(f"[channels] conversations_list FAILED for '{name}': {resp.get('error')}")
-                break
-            match = next((c for c in resp.get("channels", []) if c["name"] == name), None)
-            if match:
-                print(f"[channels] ✅ '{name}' exists: {match['id']} (type={ctype})")
-                return match["id"]
-            cursor = resp.get("response_metadata", {}).get("next_cursor")
-            if not cursor:
-                print(f"[channels] '{name}' not found in existing channels — will create")
-                break
-    except Exception as e:
-        print(f"[channels] conversations_list exception for '{name}': {e}")
-
-    # ── Create the channel ───────────────────────────────────────────────────
+    # ── Try to create first — fastest path for new workspaces ───────────────
     try:
         result = client.conversations_create(name=name, is_private=is_private)
         if result.get("ok"):
             ch_id = result["channel"]["id"]
             print(f"[channels] ✅ created '{name}': {ch_id} (private={is_private})")
             return ch_id
-        else:
-            error = result.get("error", "unknown")
-            print(f"[channels] conversations_create FAILED for '{name}': error={error}")
-            if error == "name_taken":
-                # Shouldn't happen after list scan — try one final lookup
-                print(f"[channels] name_taken race — scanning once more for '{name}'")
-                try:
-                    resp2 = client.conversations_list(types=ctype, limit=200, exclude_archived=True)
-                    match = next((c for c in resp2.get("channels", []) if c["name"] == name), None)
-                    if match:
-                        print(f"[channels] ✅ found on re-scan: {match['id']}")
-                        return match["id"]
-                except Exception as e2:
-                    print(f"[channels] re-scan exception: {e2}")
-            elif error in ("missing_scope", "not_allowed_token_type", "restricted_action"):
-                print(f"[channels] ❌ PERMISSION ERROR for '{name}': {error} — check bot scopes")
+        error = result.get("error", "unknown")
+        print(f"[channels] conversations_create result: '{name}' error={error}")
+        if error not in ("name_taken",):
+            if error in ("missing_scope", "not_allowed_token_type", "restricted_action"):
+                print(f"[channels] ❌ PERMISSION ERROR for '{name}': {error} — verify bot scopes")
             return None
+        # name_taken → channel already exists; fall through to find it
     except Exception as e:
         print(f"[channels] conversations_create exception for '{name}': {e}")
         return None
+
+    # ── name_taken: single-page scan (no deep pagination) ───────────────────
+    # NOTE: conversations_list only returns channels the BOT is a member of
+    # for private channels. If the bot was removed from a private channel it
+    # previously created, this scan will miss it — that's an ops issue.
+    try:
+        resp = client.conversations_list(types=ctype, limit=200, exclude_archived=True)
+        if resp.get("ok"):
+            match = next((c for c in resp.get("channels", []) if c["name"] == name), None)
+            if match:
+                print(f"[channels] ✅ '{name}' exists: {match['id']} (type={ctype})")
+                return match["id"]
+            # Not in first page — workspace may have >200 channels or bot isn't a member
+            print(f"[channels] ⚠️ '{name}' name_taken but not in first 200 {ctype}s — "
+                  f"bot may not be a member of the channel")
+        else:
+            print(f"[channels] conversations_list FAILED for '{name}': {resp.get('error')}")
+    except Exception as e:
+        print(f"[channels] conversations_list exception for '{name}': {e}")
+
+    return None
 
 def upgrade_link(team_id):
     return f"{API_BASE}/upgrade?team_id={team_id}"
