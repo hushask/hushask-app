@@ -77,7 +77,7 @@ def init_db():
                 message        TEXT NOT NULL,
                 user_hash      TEXT NOT NULL,
                 message_ts     TEXT,
-                created_at     TEXT DEFAULT (datetime('now'))
+                created_at     TEXT DEFAULT (strftime('%Y-%m-%d %H:%M', 'now'))
             );
 
             CREATE TABLE IF NOT EXISTS delivered_messages (
@@ -91,7 +91,7 @@ def init_db():
                 source_channel TEXT,
                 thread_ts      TEXT,
                 replied        INTEGER DEFAULT 0,
-                delivered_at   TEXT DEFAULT (datetime('now'))
+                delivered_at   TEXT DEFAULT (strftime('%Y-%m-%d %H:%M', 'now'))
             );
             CREATE TABLE IF NOT EXISTS install_nudges (
                 team_id    TEXT PRIMARY KEY,
@@ -104,7 +104,7 @@ def init_db():
                 thread_ts      TEXT NOT NULL,
                 user_hash      TEXT NOT NULL,
                 source_channel TEXT NOT NULL,
-                created_at     TEXT DEFAULT (datetime('now')),
+                created_at     TEXT DEFAULT (strftime('%Y-%m-%d %H:%M', 'now')),
                 UNIQUE(team_id, thread_ts)
             );
         """)
@@ -125,8 +125,8 @@ def save_routing(team_id: str, thread_ts: str, user_hash: str, source_channel: s
     with get_conn() as conn:
         conn.execute("""
             INSERT OR IGNORE INTO routing_table
-                (team_id, thread_ts, user_hash, source_channel)
-            VALUES (?, ?, ?, ?)
+                (team_id, thread_ts, user_hash, source_channel, created_at)
+            VALUES (?, ?, ?, ?, strftime('%Y-%m-%d %H:%M', 'now'))
         """, (team_id, thread_ts, user_hash, source_channel))
 
 
@@ -381,8 +381,8 @@ def save_pending(token, team_id, source_channel, message, user_hash, message_ts=
     with get_conn() as conn:
         conn.execute("""
             INSERT OR REPLACE INTO pending_messages
-                (token, team_id, source_channel, message, user_hash, message_ts)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (token, team_id, source_channel, message, user_hash, message_ts, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M', 'now'))
         """, (token, team_id, source_channel, message, user_hash, message_ts))
 
 
@@ -401,8 +401,8 @@ def log_delivered(team_id, target_channel, route_type, message, user_hash,
     with get_conn() as conn:
         cur = conn.execute("""
             INSERT INTO delivered_messages
-                (team_id, target_channel, route_type, message, user_hash, source_channel, thread_ts)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+                (team_id, target_channel, route_type, message, user_hash, source_channel, thread_ts, delivered_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M', 'now'))
         """, (team_id, target_channel, route_type, message, user_hash, source_channel, thread_ts))
         return cur.lastrowid
 
