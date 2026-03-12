@@ -9,6 +9,7 @@ HTTP Events API mode (multi-tenant, Railway-hosted)
 """
 
 import os, json, hashlib, secrets, time, re
+from threading import Lock
 import urllib.parse
 import requests as http
 from datetime import datetime, timezone
@@ -233,6 +234,55 @@ def find_or_create_channel(client, name, is_private):
 
 def upgrade_link(team_id):
     return f"{API_BASE}/upgrade?team_id={team_id}"
+
+
+# ── Workspace display-name cache (for safety filter) ─────────────────────────
+
+_display_name_cache: dict = {}   # team_id → {"names": [...], "fetched_at": float}
+_display_name_lock = Lock()
+_DISPLAY_NAME_TTL  = 3600  # refresh every 60 minutes
+
+def get_workspace_display_names(client, team_id: str) -> list:
+    """Return lowercased display/real names for all non-bot, non-deleted members.
+
+    Results are cached per team_id and refreshed every 60 minutes.
+    """
+    with _display_name_lock:
+        entry = _display_name_cache.get(team_id)
+        if entry and (time.time() - entry["fetched_at"]) < _DISPLAY_NAME_TTL:
+            return entry["names"]
+
+    names = []
+    try:
+        cursor = None
+        while True:
+            kwargs = {"limit": 200}
+            if cursor:
+                kwargs["cursor"] = cursor
+            resp = client.users_list(**kwargs)
+            if not resp.get("ok"):
+                print(f"[display_names] users_list error: {resp.get('error')}")
+                break
+            for member in resp.get("members", []):
+                if member.get("deleted") or member.get("is_bot") or member.get("id") == "USLACKBOT":
+                    continue
+                profile = member.get("profile", {})
+                dn = (profile.get("display_name") or "").strip().lower()
+                rn = (profile.get("real_name")    or "").strip().lower()
+                if dn and len(dn) >= 3:
+                    names.append(dn)
+                if rn and len(rn) >= 3 and rn != dn:
+                    names.append(rn)
+            cursor = resp.get("response_metadata", {}).get("next_cursor")
+            if not cursor:
+                break
+    except Exception as e:
+        print(f"[display_names] Exception fetching for {team_id}: {e}")
+
+    with _display_name_lock:
+        _display_name_cache[team_id] = {"names": names, "fetched_at": time.time()}
+
+    return names
 
 
 # ── Notion ────────────────────────────────────────────────────────────────────
@@ -856,17 +906,37 @@ def on_mention(event, client):
     handle_incoming(client, event["team"], event["user"], event["channel"], event.get("text",""))
 
 
+def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id):
+    """Actually deliver the DM and mark replied. Called directly or after confirm."""
+    dm_text = f"A response has been posted to your question:\n\n>{clean_reply}"
+    client.chat_postMessage(
+        channel=source_channel,
+        text=dm_text,
+        blocks=[
+            {"type": "section", "text": {"type": "mrkdwn",
+             "text": f"💬 *A response has been posted to your question:*\n\n>{clean_reply}"}},
+            {"type": "context", "elements": [
+                {"type": "mrkdwn", "text": "🔒 Responder identity protected · HushAsk"}
+            ]}
+        ]
+    )
+    mark_replied(msg_id)
+    print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
+
+
 @app.event("message")
 def on_triage_reply(event, client, body):
     """Anonymous reply-back listener.
 
     Fires when any message is posted. Filters to:
     - Thread replies only (has thread_ts != ts)
-    - In a known triage channel (hush-public / hush-hr)
+    - In a configured triage channel (public_channel or hr_channel) for this workspace
     - Not from a bot (no bot_id / subtype)
 
-    Looks up the original submission by (channel, thread_ts), then DMs
-    the reply back to the original sender with NO identity info.
+    Applies a safety filter: if the reply contains a workspace member's name,
+    shows an ephemeral Block Kit prompt to the replier before delivering.
+    Looks up the original submission by (channel, thread_ts) via Identity Vault,
+    then DMs the reply back to the original sender with NO identity info.
     """
     # Ignore bot messages and system subtypes
     if event.get("bot_id") or event.get("subtype"):
@@ -878,7 +948,7 @@ def on_triage_reply(event, client, body):
     if not thread_ts or thread_ts == ts:
         return  # top-level message — ignore
 
-    channel   = event.get("channel")
+    channel    = event.get("channel")
     reply_text = (event.get("text") or "").strip()
     if not reply_text:
         return
@@ -887,12 +957,26 @@ def on_triage_reply(event, client, body):
                or body.get("team", {}).get("id")
                or event.get("team", ""))
 
-    # Look up the original submission — Identity Vault is the primary source
+    # ── Triage channel scoping ────────────────────────────────────────────────
+    # Only process replies in the configured triage channels for this workspace.
+    try:
+        ws_config = get_workspace_config(team_id)
+    except Exception as e:
+        print(f"[reply_back] Could not fetch workspace config for {team_id}: {e}")
+        return
+
+    if not ws_config:
+        return  # Workspace not configured
+
+    triage_channels = {ws_config.get("public_channel"), ws_config.get("hr_channel")} - {None, ""}
+    if channel not in triage_channels:
+        return  # Not a triage channel — ignore
+
+    # ── Identity Vault lookup ─────────────────────────────────────────────────
     try:
         routing = get_routing(team_id, thread_ts)
         if routing:
             source_channel = routing["source_channel"]
-            msg_id = None  # routing_table has no msg_id; fall back to delivered for mark_replied
             # Also fetch delivered record so we can call mark_replied
             delivered_record = get_delivered_by_thread_ts(channel, thread_ts)
             msg_id = delivered_record["id"] if delivered_record else None
@@ -908,9 +992,6 @@ def on_triage_reply(event, client, body):
         return
 
     if not source_channel:
-        return  # Not a tracked triage thread
-
-    if not source_channel:
         print(f"[reply_back] msg_id={msg_id} has no source_channel — cannot DM")
         return
 
@@ -918,24 +999,96 @@ def on_triage_reply(event, client, body):
     clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
     clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
 
-    dm_text = f"A response has been posted to your question:\n\n>{clean_reply}"
-
+    # ── Safety Filter — Name Detection ────────────────────────────────────────
+    replier_id = event.get("user", "")
     try:
-        client.chat_postMessage(
-            channel=source_channel,
-            text=dm_text,
-            blocks=[
-                {"type": "section", "text": {"type": "mrkdwn",
-                 "text": f"💬 *A response has been posted to your question:*\n\n>{clean_reply}"}},
-                {"type": "context", "elements": [
-                    {"type": "mrkdwn", "text": "🔒 Responder identity protected · HushAsk"}
-                ]}
-            ]
-        )
-        mark_replied(msg_id)
-        print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
+        workspace_names = get_workspace_display_names(client, team_id)
+        words = re.findall(r"[a-z]{3,}", clean_reply.lower())
+        name_hit = next((w for w in words if w in workspace_names), None)
+    except Exception as e:
+        print(f"[reply_back] name-check error (proceeding without filter): {e}")
+        name_hit = None
+
+    if name_hit:
+        # Possible name detected — ask the replier before delivering
+        print(f"[reply_back] Name hit '{name_hit}' in reply by {replier_id} — showing safety prompt")
+        ctx = json.dumps({
+            "source_channel": source_channel,
+            "clean_reply":    clean_reply,
+            "msg_id":         msg_id,
+        })
+        try:
+            client.chat_postEphemeral(
+                channel=channel,
+                user=replier_id,
+                text="⚠️ Identity Risk: Your reply may contain a name. Deliver anyway?",
+                blocks=[
+                    {"type": "section", "text": {"type": "mrkdwn",
+                     "text": "⚠️ *Identity Risk*: Your reply may contain a name. Deliver anyway?"}},
+                    {"type": "actions", "elements": [
+                        {"type": "button", "action_id": "reply_deliver_confirm",
+                         "style": "danger",
+                         "text": {"type": "plain_text", "text": "Deliver", "emoji": True},
+                         "value": ctx},
+                        {"type": "button", "action_id": "reply_deliver_cancel",
+                         "text": {"type": "plain_text", "text": "Cancel", "emoji": True},
+                         "value": ctx},
+                    ]},
+                ]
+            )
+        except Exception as e:
+            print(f"[reply_back] Failed to post safety ephemeral: {e}")
+        return  # Hold delivery pending leader's choice
+
+    # ── Deliver immediately ───────────────────────────────────────────────────
+    try:
+        _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
     except Exception as e:
         print(f"[reply_back] Failed to DM reply for msg_id={msg_id}: {e}")
+
+
+@app.action("reply_deliver_confirm")
+def handle_reply_deliver_confirm(ack, body, client):
+    """Leader confirmed delivery despite name warning — send the DM."""
+    ack()
+    try:
+        ctx = json.loads(body["actions"][0]["value"])
+        source_channel = ctx["source_channel"]
+        clean_reply    = ctx["clean_reply"]
+        msg_id         = ctx.get("msg_id")
+        _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
+        # Remove the ephemeral prompt
+        try:
+            client.chat_delete(
+                channel=body["channel"]["id"],
+                ts=body["message"]["ts"]
+            )
+        except Exception:
+            pass  # Ephemeral delete may fail silently — that's fine
+    except Exception as e:
+        print(f"[reply_deliver_confirm] Error: {e}")
+
+
+@app.action("reply_deliver_cancel")
+def handle_reply_deliver_cancel(ack, body, client):
+    """Leader cancelled delivery — post confirmation ephemeral."""
+    ack()
+    channel    = body["channel"]["id"]
+    user_id    = body["user"]["id"]
+    msg_ts     = body["message"]["ts"]
+    try:
+        # Replace the safety prompt with a cancellation notice
+        client.chat_postEphemeral(
+            channel=channel,
+            user=user_id,
+            text="Delivery cancelled."
+        )
+        try:
+            client.chat_delete(channel=channel, ts=msg_ts)
+        except Exception:
+            pass  # OK if ephemeral delete fails
+    except Exception as e:
+        print(f"[reply_deliver_cancel] Error: {e}")
 
 
 @app.command("/ha")
