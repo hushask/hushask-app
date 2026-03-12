@@ -8,13 +8,34 @@ HTTP Events API mode (multi-tenant, Railway-hosted)
 - Freemium 20 msg/month cap (bypassed for Pro)
 """
 
-import os, json, hashlib, secrets, time, re
+import os, json, hashlib, secrets, time, re, logging
 from threading import Lock
 import urllib.parse
 import requests as http
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 load_dotenv()
+
+# ── Zero-knowledge log scrubbing ──────────────────────────────────────────────
+
+class RedactUserIdFilter(logging.Filter):
+    """Redact Slack User IDs (U + 8-11 alphanumeric chars) from all log output."""
+    _pattern = re.compile(r'\bU[A-Z0-9]{8,11}\b')
+
+    def filter(self, record):
+        record.msg = self._pattern.sub('[REDACTED_USER]', str(record.msg))
+        if record.args:
+            try:
+                record.msg = record.msg % record.args
+            except Exception:
+                pass
+            record.args = None
+        return True
+
+_redact_filter = RedactUserIdFilter()
+logging.getLogger().addFilter(_redact_filter)
+logging.getLogger("slack_bolt").addFilter(_redact_filter)
+logging.getLogger("slack_sdk").addFilter(_redact_filter)
 
 from slack_bolt import App
 from slack_bolt.oauth.oauth_settings import OAuthSettings
@@ -500,9 +521,9 @@ def publish_home(client, user_id, team_id):
     notion_db     = config["notion_database_id"]  if config else None
     is_configured = bool(pub_ch and hr_ch)
 
-    print(f"[publish_home] build={BUILD_ID} user={user_id} team={team_id} db={DB_PATH} | "
+    print(f"[publish_home] build={BUILD_ID} user={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} team={team_id} db={DB_PATH} | "
           f"configured={is_configured} pub={pub_ch} hr={hr_ch} "
-          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} installer={installer_id}")
+          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} installer={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(installer_id))}")
 
     is_privileged = admin or user_id == installer_id or (installer_id is None and config is not None)
 
@@ -634,7 +655,7 @@ def handle_home_opened(event, client, body):
     # team_id is always in the outer body, never rely on event["view"]
     team_id = body.get("team_id", "")
     if not team_id:
-        print(f"[home] WARNING: no team_id in body for user {user_id}")
+        print(f"[home] WARNING: no team_id in body for user {re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))}")
         return
 
     # ── Stale-read guard ─────────────────────────────────────────────────────
@@ -654,7 +675,7 @@ def handle_home_opened(event, client, body):
                   f"(pub={config['public_channel']} hr={config['hr_channel']})")
             return
 
-    print(f"[home] publishing for user={user_id} team={team_id}")
+    print(f"[home] publishing for user={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} team={team_id}")
     publish_home(client, user_id, team_id)
     _maybe_send_install_nudge(client, user_id, team_id)
 
@@ -698,7 +719,7 @@ def _maybe_send_install_nudge(client, user_id: str, team_id: str):
             ]
         )
         mark_nudge_sent(team_id)
-        print(f"[install_nudge] Sent to {user_id} for workspace {team_id}")
+        print(f"[install_nudge] Sent to {re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} for workspace {team_id}")
     except Exception as e:
         print(f"[install_nudge] error: {e}")
 
@@ -781,7 +802,7 @@ def _wizard3_work(body, client):
     user_id = body["user"]["id"]
     meta    = json.loads(body["view"].get("private_metadata", "{}"))
     values  = body["view"]["state"]["values"]
-    print(f"[wizard3] submitted for {team_id} by {user_id} | "
+    print(f"[wizard3] submitted for {team_id} by {re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} | "
           f"auto_create={meta.get('auto_create')} notion_state={meta.get('notion_state','')[:8]}")
 
     # ── Nuclear identity + scope check ──────────────────────────────────────
@@ -853,9 +874,9 @@ def _wizard3_work(body, client):
 
     try:
         publish_home(client, user_id, team_id)
-        print(f"[wizard3] home published for {user_id}")
+        print(f"[wizard3] home published for {re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))}")
     except Exception as e:
-        print(f"[wizard3] ERROR publishing home for {user_id}: {e}")
+        print(f"[wizard3] ERROR publishing home for {re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))}: {e}")
 
     return None  # success — ack() with no errors
 
@@ -1101,7 +1122,7 @@ def handle_ha_command(ack, body, client):
     user_id = body["user_id"]
     team_id = body["team_id"]
     text    = (body.get("text") or "").strip()
-    print(f"[/ha] user={user_id} team={team_id} text={repr(text)}")
+    print(f"[/ha] user={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} team={team_id} text={repr(text)}")
 
     config      = get_workspace_config(team_id)
     installer_id = config["installer_id"] if config else None
