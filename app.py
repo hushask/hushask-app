@@ -195,9 +195,9 @@ def find_or_create_channel(client, name, is_private):
         print(f"[channels] conversations_create: '#{name}' error={error}")
         if error not in ("name_taken",):
             if error in ("missing_scope", "not_allowed_token_type", "restricted_action"):
-                msg = f"Permission denied creating #{name} (`{error}`). Verify the bot has `channels:manage` + `groups:write` scopes."
+                msg = f"Cannot create #{name} (`{error}`). Bot needs `channels:manage` and `groups:write` scopes."
             else:
-                msg = f"Could not create #{name}: Slack returned `{error}`."
+                msg = f"Failed to create #{name}: `{error}`."
             print(f"[channels] ❌ {msg}")
             return None, msg
         # name_taken → channel already exists; find it
@@ -215,10 +215,10 @@ def find_or_create_channel(client, name, is_private):
                 return match["id"], None
             # Not visible — for private channels this means the bot isn't a member
             if is_private:
-                msg = (f"Channel `#{name}` already exists but I'm not a member. "
-                       f"Please `/invite @HushAsk` to `#{name}` first, then run Setup again.")
+                msg = (f"`#{name}` exists but bot is not a member. "
+                       f"Run `/invite @HushAsk` then retry Setup.")
             else:
-                msg = f"Channel `#{name}` already exists but isn't visible to the bot. Check channel permissions."
+                msg = f"`#{name}` exists but isn't accessible. Check bot permissions."
             print(f"[channels] ⚠️ {msg}")
             return None, msg
         else:
@@ -272,32 +272,32 @@ EXAMPLE_MESSAGES = {
 def routing_blocks(token, message):
     preview = message if len(message) <= 280 else message[:277] + "…"
     return [
-        {"type":"section","text":{"type":"mrkdwn","text":"🔒 *Your identity has been anonymized.* Choose how to route your message:"}},
-        {"type":"section","text":{"type":"mrkdwn","text":f"*Your message:*\n>{preview}"}},
+        {"type":"section","text":{"type":"mrkdwn","text":"Identity stripped. Choose a route:"}},
+        {"type":"section","text":{"type":"mrkdwn","text":f"Message:\n>{preview}"}},
         {"type":"divider"},
         {"type":"actions","elements":[
             {"type":"button","action_id":"route_public","style":"primary","text":{"type":"plain_text","text":"📢 Public","emoji":True},"value":token},
             {"type":"button","action_id":"route_hr","style":"danger","text":{"type":"plain_text","text":"🔒 Private / HR","emoji":True},"value":token},
         ]},
-        {"type":"context","elements":[{"type":"mrkdwn","text":"Your Slack identity will never be stored or shared."}]}
+        {"type":"context","elements":[{"type":"mrkdwn","text":"Slack identity not stored."}]}
     ]
 
 def confirmed_blocks(label):
-    return [{"type":"section","text":{"type":"mrkdwn","text":f"✅ *Delivered anonymously.*\nRouted to: *{label}*"}}]
+    return [{"type":"section","text":{"type":"mrkdwn","text":f"Sent. Routed to: *{label}*"}}]
 
 def triage_blocks(message, label, msg_id, has_notion):
     blocks = [{"type":"section","text":{"type":"mrkdwn","text":f"{label}\n\n{message}"}}]
     if has_notion:
         blocks.append({"type":"actions","elements":[{"type":"button","action_id":"sync_notion","text":{"type":"plain_text","text":"📄 Sync to Notion","emoji":True},"value":str(msg_id)}]})
-    blocks.append({"type":"context","elements":[{"type":"mrkdwn","text":"🔒 Delivered anonymously via HushAsk"}]})
+    blocks.append({"type":"context","elements":[{"type":"mrkdwn","text":"🔒 Anonymous · HushAsk"}]})
     return blocks
 
 def limit_blocks(usage, team_id=""):
     url = upgrade_link(team_id) if team_id else UPGRADE_URL
     return [
-        {"type":"section","text":{"type":"mrkdwn","text":f"⚠️ *You've hit the free tier limit.*\nYour workspace has sent *{usage}/{FREE_LIMIT}* anonymous messages this month.\n\nUpgrade to Pro for unlimited routing, priority support, and advanced analytics."}},
-        {"type":"actions","elements":[{"type":"button","action_id":"upgrade_click","style":"primary","text":{"type":"plain_text","text":"🚀 Upgrade to Pro","emoji":True},"url":url}]},
-        {"type":"context","elements":[{"type":"mrkdwn","text":"Resets automatically at the start of your next billing month."}]}
+        {"type":"section","text":{"type":"mrkdwn","text":f"Free tier cap reached: *{usage}/{FREE_LIMIT}* messages this month.\n\nUpgrade to remove the limit."}},
+        {"type":"actions","elements":[{"type":"button","action_id":"upgrade_click","style":"primary","text":{"type":"plain_text","text":"Upgrade to Pro","emoji":True},"url":url}]},
+        {"type":"context","elements":[{"type":"mrkdwn","text":"Resets monthly."}]}
     ]
 
 def _alert_installer_limit(client, team_id: str, usage: int):
@@ -310,16 +310,14 @@ def _alert_installer_limit(client, team_id: str, usage: int):
         dm = client.conversations_open(users=installer_id)["channel"]["id"]
         client.chat_postMessage(
             channel=dm,
-            text=f"⚠️ Your workspace has hit the HushAsk free tier limit ({usage}/{FREE_LIMIT} messages this month).",
+            text=f"Free tier cap hit: {usage}/{FREE_LIMIT} messages this month.",
             blocks=[
                 {"type": "section", "text": {"type": "mrkdwn", "text":
-                    f"⚠️ *HushAsk free tier limit reached.*\n\n"
-                    f"Your workspace has sent *{usage}/{FREE_LIMIT}* anonymous messages this month. "
-                    f"New submissions are paused until the month resets or you upgrade.\n\n"
-                    f"Upgrade to Pro for unlimited routing, priority support, and Notion Vault sync."
+                    f"*Free tier cap: {usage}/{FREE_LIMIT}.*\n\n"
+                    f"New submissions paused. Upgrade to restore routing, or wait for monthly reset."
                 }},
                 {"type": "actions", "elements": [
-                    {"type": "button", "text": {"type": "plain_text", "text": "⭐ Upgrade to Pro"},
+                    {"type": "button", "text": {"type": "plain_text", "text": "Upgrade to Pro"},
                      "style": "primary", "url": f"{UPGRADE_URL}?team_id={team_id}",
                      "action_id": "upgrade_cta_admin_alert"}
                 ]}
@@ -332,11 +330,10 @@ def _alert_installer_limit(client, team_id: str, usage: int):
 
 def pro_welcome_blocks():
     return [
-        {"type":"header","text":{"type":"plain_text","text":"🎉 Welcome to HushAsk Pro!","emoji":True}},
-        {"type":"section","text":{"type":"mrkdwn","text":"Your workspace is now on Pro. Here's what you've unlocked:\n\n✅ *Unlimited anonymous messages* — no monthly cap\n✅ *Priority support*\n✅ *Full Notion Vault sync*\n✅ *Multi-channel routing*"}},
+        {"type":"header","text":{"type":"plain_text","text":"HushAsk Pro — Active","emoji":True}},
+        {"type":"section","text":{"type":"mrkdwn","text":"Pro plan active. What changed:\n\n✅ No message cap\n✅ Notion sync\n✅ Multi-channel routing\n✅ Priority support"}},
         {"type":"divider"},
-        {"type":"section","text":{"type":"mrkdwn","text":"Your team can keep sending — we handle the rest. 🔒"}},
-        {"type":"context","elements":[{"type":"mrkdwn","text":"Questions? Email hello@hushask.com"}]}
+        {"type":"context","elements":[{"type":"mrkdwn","text":"Support: hello@hushask.com"}]}
     ]
 
 
@@ -345,30 +342,29 @@ def pro_welcome_blocks():
 def home_welcome():
     return {
         "type":"home","blocks":[
-            {"type":"header","text":{"type":"plain_text","text":"Welcome to HushAsk 👋","emoji":True}},
-            {"type":"section","text":{"type":"mrkdwn","text":"_Turning transient chat into a permanent library — anonymously._"}},
+            {"type":"header","text":{"type":"plain_text","text":"HushAsk","emoji":True}},
+            {"type":"section","text":{"type":"mrkdwn","text":"Anonymous message routing for your team."}},
             {"type":"divider"},
-            {"type":"section","text":{"type":"mrkdwn","text":"*Your voice, protected.* Send any question, idea, or concern to the right channel — anonymously. Your identity is hashed and never stored."}},
+            {"type":"section","text":{"type":"mrkdwn","text":"Send any question, idea, or concern to the right channel — anonymously. Identity is hashed and never stored."}},
             {"type":"divider"},
-            {"type":"section","text":{"type":"mrkdwn","text":"*Try an example — click to send it through the bot:*"}},
-            {"type":"section","text":{"type":"mrkdwn","text":"💻 *Ask a Tech Question*\n_\"Our deploy process feels fragile — has anyone proposed a more reliable approach?\"_"},"accessory":{"type":"button","action_id":"example_tech","text":{"type":"plain_text","text":"Try this →","emoji":True},"style":"primary"}},
-            {"type":"section","text":{"type":"mrkdwn","text":"🧑‍💼 *Send HR Feedback*\n_\"I'd like to discuss my compensation but I'm not sure who to talk to or how to start.\"_"},"accessory":{"type":"button","action_id":"example_feedback","text":{"type":"plain_text","text":"Try this →","emoji":True}}},
-            {"type":"section","text":{"type":"mrkdwn","text":"💡 *Share a Company Idea*\n_\"What if we ran a quarterly retrospective open to every team, not just engineering?\"_"},"accessory":{"type":"button","action_id":"example_idea","text":{"type":"plain_text","text":"Try this →","emoji":True}}},
+            {"type":"section","text":{"type":"mrkdwn","text":"Examples — click to route through the bot:"}},
+            {"type":"section","text":{"type":"mrkdwn","text":"💻 *Tech*\n_\"Our deploy process feels fragile — has anyone proposed a more reliable approach?\"_"},"accessory":{"type":"button","action_id":"example_tech","text":{"type":"plain_text","text":"Send this","emoji":True},"style":"primary"}},
+            {"type":"section","text":{"type":"mrkdwn","text":"🧑‍💼 *HR*\n_\"I'd like to discuss my compensation but I'm not sure who to talk to.\"_"},"accessory":{"type":"button","action_id":"example_feedback","text":{"type":"plain_text","text":"Send this","emoji":True}}},
+            {"type":"section","text":{"type":"mrkdwn","text":"💡 *Idea*\n_\"What if we ran a quarterly retrospective open to every team, not just engineering?\"_"},"accessory":{"type":"button","action_id":"example_idea","text":{"type":"plain_text","text":"Send this","emoji":True}}},
             {"type":"divider"},
-            {"type":"context","elements":[{"type":"mrkdwn","text":f"🔒 Your Slack ID is SHA-256 hashed before any data is stored. · <{HELP_BASE}/privacy-and-hashing.html|Learn more>"}]}
+            {"type":"context","elements":[{"type":"mrkdwn","text":f"🔒 Slack ID is SHA-256 hashed — never stored in plaintext. · <{HELP_BASE}/privacy-and-hashing.html|Learn more>"}]}
         ]
     }
 
 def home_unconfigured():
     return {
         "type":"home","blocks":[
-            {"type":"header","text":{"type":"plain_text","text":"HushAsk Command Center ⚙️","emoji":True}},
-            {"type":"section","text":{"type":"mrkdwn","text":"_Anonymous Slack router · by HonestAlias_"}},
+            {"type":"header","text":{"type":"plain_text","text":"HushAsk Setup","emoji":True}},
             {"type":"divider"},
-            {"type":"section","text":{"type":"mrkdwn","text":"👋 *Welcome, admin.* HushAsk isn't configured yet.\n\nRun the 3-step wizard to set up routing channels and optionally connect Notion."}},
-            {"type":"actions","elements":[{"type":"button","action_id":"start_setup","style":"primary","text":{"type":"plain_text","text":"⚙️ Start Setup Wizard","emoji":True}}]},
+            {"type":"section","text":{"type":"mrkdwn","text":"Not configured yet. Run the setup wizard to define routing channels and optional Notion sync."}},
+            {"type":"actions","elements":[{"type":"button","action_id":"start_setup","style":"primary","text":{"type":"plain_text","text":"Start Setup","emoji":True}}]},
             {"type":"divider"},
-            {"type":"context","elements":[{"type":"mrkdwn","text":"🔒 Only workspace admins and the installer can access this panel."}]}
+            {"type":"context","elements":[{"type":"mrkdwn","text":"Admins and installer only."}]}
         ]
     }
 
@@ -385,15 +381,14 @@ def home_configured(config, client, team_id):
     bar   = ("🟧" * (pct // 20)) + ("⬜" * (5 - pct // 20))
 
     blocks = [
-        {"type":"header","text":{"type":"plain_text","text":"HushAsk Command Center ⚙️","emoji":True}},
-        {"type":"section","text":{"type":"mrkdwn","text":"_Anonymous Slack router · by HonestAlias_"}},
+        {"type":"header","text":{"type":"plain_text","text":"HushAsk","emoji":True}},
         {"type":"divider"},
-        {"type":"section","text":{"type":"mrkdwn","text":"*Current Configuration*"}},
+        {"type":"section","text":{"type":"mrkdwn","text":"*Configuration*"}},
         {"type":"section","fields":[
-            {"type":"mrkdwn","text":f"*📢 Public Channel*\n{pub}"},
-            {"type":"mrkdwn","text":f"*🔒 Private Channel*\n{hr}"},
-            {"type":"mrkdwn","text":f"*📄 Notion Vault*\n{notion}"},
-            {"type":"mrkdwn","text":f"*📊 Usage*\n{tier}"},
+            {"type":"mrkdwn","text":f"*📢 Public*\n{pub}"},
+            {"type":"mrkdwn","text":f"*🔒 Private*\n{hr}"},
+            {"type":"mrkdwn","text":f"*📄 Notion*\n{notion}"},
+            {"type":"mrkdwn","text":f"*Usage*\n{tier}"},
         ]},
     ]
 
@@ -404,17 +399,17 @@ def home_configured(config, client, team_id):
         })
 
     buttons = [
-        {"type":"button","action_id":"edit_settings","style":"primary","text":{"type":"plain_text","text":"✏️ Edit Settings","emoji":True}},
-        {"type":"button","action_id":"reset_config","style":"danger","text":{"type":"plain_text","text":"🔄 Reset","emoji":True},"confirm":{"title":{"type":"plain_text","text":"Reset configuration?"},"text":{"type":"mrkdwn","text":"Clears routing and Notion settings. History preserved."},"confirm":{"type":"plain_text","text":"Yes, reset"},"deny":{"type":"plain_text","text":"Cancel"},"style":"danger"}},
+        {"type":"button","action_id":"edit_settings","style":"primary","text":{"type":"plain_text","text":"Edit","emoji":True}},
+        {"type":"button","action_id":"reset_config","style":"danger","text":{"type":"plain_text","text":"Reset","emoji":True},"confirm":{"title":{"type":"plain_text","text":"Reset configuration?"},"text":{"type":"mrkdwn","text":"Clears routing and Notion settings. Message history preserved."},"confirm":{"type":"plain_text","text":"Reset"},"deny":{"type":"plain_text","text":"Cancel"},"style":"danger"}},
     ]
     if not pro:
-        buttons.append({"type":"button","action_id":"upgrade_click","text":{"type":"plain_text","text":"🚀 Upgrade to Pro","emoji":True},"url":upgrade_link(team_id),"style":"primary"})
+        buttons.append({"type":"button","action_id":"upgrade_click","text":{"type":"plain_text","text":"Upgrade to Pro","emoji":True},"url":upgrade_link(team_id),"style":"primary"})
 
     blocks += [
         {"type":"actions","elements":buttons},
         {"type":"divider"},
         {"type":"context","elements":[
-            {"type":"mrkdwn","text":f"<{HELP_BASE}/|Help Center> · {'⭐ Pro Plan' if pro else 'Free Plan'} · `Build: {BUILD_ID}`"}
+            {"type":"mrkdwn","text":f"<{HELP_BASE}/|Help> · {'⭐ Pro' if pro else 'Free'} · `Build: {BUILD_ID}`"}
         ]}
     ]
     return {"type":"home","blocks":blocks}
@@ -471,21 +466,21 @@ def publish_home(client, user_id, team_id):
 def wizard_step1():
     return {
         "type":"modal","callback_id":"wizard_step1",
-        "title":{"type":"plain_text","text":"HushAsk Setup (1/3)"},
-        "submit":{"type":"plain_text","text":"Get Started →"},
+        "title":{"type":"plain_text","text":"Setup (1/3)"},
+        "submit":{"type":"plain_text","text":"Next →"},
         "close":{"type":"plain_text","text":"Cancel"},
         "blocks":[
-            {"type":"header","text":{"type":"plain_text","text":"Turning transient chat into a permanent library.","emoji":True}},
+            {"type":"header","text":{"type":"plain_text","text":"How HushAsk works","emoji":True}},
             {"type":"divider"},
-            {"type":"section","text":{"type":"mrkdwn","text":"HushAsk gives your team a safe, anonymous way to speak up — and turns every answered question into lasting company knowledge.\n\n*Here's the full sequence:*"}},
+            {"type":"section","text":{"type":"mrkdwn","text":"Anonymous message routing, with optional Notion sync.\n\n*Flow:*"}},
             {"type":"section","fields":[
-                {"type":"mrkdwn","text":"*1️⃣  DM the bot*\nAnyone sends a message directly to HushAsk."},
-                {"type":"mrkdwn","text":"*2️⃣  Choose a route*\n📢 Public Knowledge or 🔒 Private / HR."},
-                {"type":"mrkdwn","text":"*3️⃣  Team response*\nThe right people see it in the right channel."},
-                {"type":"mrkdwn","text":"*4️⃣  Sync to Notion _(optional)_*\nOne click turns the Q&A into a permanent doc."},
+                {"type":"mrkdwn","text":"*1.  DM the bot*\nSend a message to HushAsk."},
+                {"type":"mrkdwn","text":"*2.  Route it*\n📢 Public or 🔒 Private / HR."},
+                {"type":"mrkdwn","text":"*3.  Triage*\nMessages land in the configured channel."},
+                {"type":"mrkdwn","text":"*4.  Notion sync _(optional)_*\nOne click creates a permanent record."},
             ]},
             {"type":"divider"},
-            {"type":"context","elements":[{"type":"mrkdwn","text":"The Notion step is completely optional. This wizard takes about 2 minutes."}]}
+            {"type":"context","elements":[{"type":"mrkdwn","text":"Notion step is optional. ~2 minutes total."}]}
         ]
     }
 
@@ -493,19 +488,19 @@ def wizard_step2_modal(auto_create=True, meta=None):
     if meta is None: meta = {}
     auto_el = {
         "type":"checkboxes","action_id":"auto_create_check",
-        "options":[{"text":{"type":"mrkdwn","text":"*Create channels for me*\nSpins up `#hush-public` (📢 Public) and `#hush-hr` (🔒 Private)."},"value":"auto_create"}],
+        "options":[{"text":{"type":"mrkdwn","text":"*Auto-create channels*\nCreates `#hush-public` and `#hush-hr`."},"value":"auto_create"}],
     }
     if auto_create:
-        auto_el["initial_options"] = [{"text":{"type":"mrkdwn","text":"*Create channels for me*\nSpins up `#hush-public` (📢 Public) and `#hush-hr` (🔒 Private)."},"value":"auto_create"}]
+        auto_el["initial_options"] = [{"text":{"type":"mrkdwn","text":"*Auto-create channels*\nCreates `#hush-public` and `#hush-hr`."},"value":"auto_create"}]
 
     blocks = [
-        {"type":"header","text":{"type":"plain_text","text":"Infrastructure — Triage Channels"}},
-        {"type":"section","text":{"type":"mrkdwn","text":"HushAsk routes messages to two channels: one *Public* and one *Private* (confidential / HR)."}},
+        {"type":"header","text":{"type":"plain_text","text":"Triage Channels"}},
+        {"type":"section","text":{"type":"mrkdwn","text":"Two channels required: *Public* (general) and *Private* (HR/confidential)."}},
         {"type":"divider"},
-        {"type":"input","block_id":"block_auto_create","label":{"type":"plain_text","text":"🔧 Channel setup"},"optional":True,"element":auto_el},
+        {"type":"input","block_id":"block_auto_create","label":{"type":"plain_text","text":"Channel setup"},"optional":True,"element":auto_el},
     ]
     if auto_create:
-        blocks.append({"type":"section","text":{"type":"mrkdwn","text":"✅ *We'll create both channels automatically.*\n\n_`#hush-public` (📢 Public) and `#hush-hr` (🔒 Private) will be created if they don't already exist._\n\n_Uncheck to pick existing channels instead._"}})
+        blocks.append({"type":"section","text":{"type":"mrkdwn","text":"`#hush-public` and `#hush-hr` will be created if they don't exist. Uncheck to select existing channels."}})
     else:
         # No type filter — show ALL channels the user can access.
         # Filtering by "private" only shows channels the bot is already in,
@@ -527,20 +522,20 @@ def wizard_step2_modal(auto_create=True, meta=None):
         if meta.get("hr_channel"):     hr_el["initial_conversation"]  = meta["hr_channel"]
         blocks += [
             {"type": "divider"},
-            {"type": "section", "text": {"type": "mrkdwn", "text": "⚠️ *Bot access required:* The bot must be a member of both channels. Invite it with `/invite @HushAsk` after setup."}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "Bot must be a member of both channels. Run `/invite @HushAsk` after setup."}},
             {"type": "input", "block_id": "block_public_channel",
-             "label": {"type": "plain_text", "text": "📢 Public Channel"},
-             "hint":  {"type": "plain_text", "text": "Anonymous public messages route here."},
+             "label": {"type": "plain_text", "text": "Public Channel"},
+             "hint":  {"type": "plain_text", "text": "Public anonymous messages land here."},
              "optional": False, "element": pub_el},
             {"type": "input", "block_id": "block_hr_channel",
-             "label": {"type": "plain_text", "text": "🔒 Private / HR Channel"},
-             "hint":  {"type": "plain_text", "text": "Confidential messages. Invite the bot first."},
+             "label": {"type": "plain_text", "text": "Private / HR Channel"},
+             "hint":  {"type": "plain_text", "text": "Confidential messages. Bot must be a member first."},
              "optional": False, "element": hr_el},
         ]
     return {
         "type":"modal","callback_id":"wizard_step2",
         "private_metadata":json.dumps(meta),
-        "title":{"type":"plain_text","text":"HushAsk Setup (2/3)"},
+        "title":{"type":"plain_text","text":"Setup (2/3)"},
         "submit":{"type":"plain_text","text":"Continue →"},
         "close":{"type":"plain_text","text":"Back"},
         "blocks":blocks
@@ -553,26 +548,26 @@ def wizard_step3(meta):
         oauth_url = (f"https://api.notion.com/v1/oauth/authorize?client_id={NOTION_CLIENT_ID}"
                      f"&response_type=code&owner=user&redirect_uri={urllib.parse.quote(NOTION_REDIRECT, safe='')}&state={notion_state}")
         vault_blocks = [
-            {"type":"section","text":{"type":"mrkdwn","text":f"Click below to authorize HushAsk in your Notion workspace. We'll automatically create a *Hush Library* database — no tokens or page IDs needed. <{HELP_BASE}/setting-up-notion.html|Setup guide →>"}},
+            {"type":"section","text":{"type":"mrkdwn","text":f"Authorize HushAsk to create a *Hush Library* database in Notion. No manual setup needed. <{HELP_BASE}/setting-up-notion.html|Setup guide →>"}},
             {"type":"divider"},
-            {"type":"actions","elements":[{"type":"button","action_id":"notion_oauth_click","style":"primary","text":{"type":"plain_text","text":"🔗 Connect to Notion","emoji":True},"url":oauth_url}]},
-            {"type":"context","elements":[{"type":"mrkdwn","text":"After connecting in your browser, return here and click *Save & Finish*."}]}
+            {"type":"actions","elements":[{"type":"button","action_id":"notion_oauth_click","style":"primary","text":{"type":"plain_text","text":"Connect Notion","emoji":True},"url":oauth_url}]},
+            {"type":"context","elements":[{"type":"mrkdwn","text":"After authorizing in your browser, return here and click Save & Finish."}]}
         ]
     else:
         vault_blocks = [
-            {"type":"section","text":{"type":"mrkdwn","text":f"Provide your Notion token and Hush Library database ID. <{HELP_BASE}/setting-up-notion.html|Setup guide →>"}},
+            {"type":"section","text":{"type":"mrkdwn","text":f"Enter your Notion token and database ID. <{HELP_BASE}/setting-up-notion.html|Setup guide →>"}},
             {"type":"divider"},
             {"type":"input","block_id":"block_notion_token","label":{"type":"plain_text","text":"Notion API Token"},"optional":True,"element":{"type":"plain_text_input","action_id":"notion_token_input","placeholder":{"type":"plain_text","text":"secret_..."},"initial_value":meta.get("notion_api_key","")}},
-            {"type":"input","block_id":"block_notion_db","label":{"type":"plain_text","text":"Hush Library Database ID"},"optional":True,"element":{"type":"plain_text_input","action_id":"notion_db_input","placeholder":{"type":"plain_text","text":"32-char database ID"},"initial_value":meta.get("notion_database_id","")}},
-            {"type":"context","elements":[{"type":"mrkdwn","text":"Both fields optional — add Notion later from Settings."}]}
+            {"type":"input","block_id":"block_notion_db","label":{"type":"plain_text","text":"Database ID"},"optional":True,"element":{"type":"plain_text_input","action_id":"notion_db_input","placeholder":{"type":"plain_text","text":"32-char ID"},"initial_value":meta.get("notion_database_id","")}},
+            {"type":"context","elements":[{"type":"mrkdwn","text":"Optional. Configure later from Settings."}]}
         ]
     return {
         "type":"modal","callback_id":"wizard_step3",
         "private_metadata":json.dumps(meta),
-        "title":{"type":"plain_text","text":"HushAsk Setup (3/3)"},
-        "submit":{"type":"plain_text","text":"Save & Finish ✓"},
+        "title":{"type":"plain_text","text":"Setup (3/3)"},
+        "submit":{"type":"plain_text","text":"Save & Finish"},
         "close":{"type":"plain_text","text":"Back"},
-        "blocks":[{"type":"header","text":{"type":"plain_text","text":"The Notion Vault — Optional","emoji":True}},*vault_blocks]
+        "blocks":[{"type":"header","text":{"type":"plain_text","text":"Notion Sync (optional)","emoji":True}},*vault_blocks]
     }
 
 
@@ -631,13 +626,11 @@ def _maybe_send_install_nudge(client, user_id: str, team_id: str):
         dm = client.conversations_open(users=user_id)["channel"]["id"]
         client.chat_postMessage(
             channel=dm,
-            text="Welcome to HushAsk! Run /ha to get started.",
+            text="HushAsk installed. Run /ha to configure routing.",
             blocks=[
                 {"type": "section", "text": {"type": "mrkdwn", "text":
-                    "👋 *Welcome to HushAsk!*\n\n"
-                    "Anonymous feedback for your team — set up takes 60 seconds.\n\n"
-                    "Run `/ha` in any channel to open the setup wizard and configure "
-                    "your public and private routing channels."
+                    "*HushAsk installed.* Setup takes ~60 seconds.\n\n"
+                    "Run `/ha` to configure your public and private routing channels."
                 }},
                 {"type": "actions", "elements": [
                     {"type": "button",
@@ -648,7 +641,7 @@ def _maybe_send_install_nudge(client, user_id: str, team_id: str):
                 ]},
                 {"type": "context", "elements": [
                     {"type": "mrkdwn",
-                     "text": f"Need help? Visit <{HELP_BASE}|hushask.com/help>"}
+                     "text": f"<{HELP_BASE}|hushask.com/help>"}
                 ]}
             ]
         )
@@ -804,7 +797,7 @@ def _wizard3_work(body, client):
     except Exception as e:
         print(f"[wizard3] ERROR for {team_id}: {e}")
         import traceback; traceback.print_exc()
-        return {"block_auto_create": f"Unexpected error: {e}"}
+        return {"block_auto_create": f"Setup failed: {e}"}
 
     try:
         publish_home(client, user_id, team_id)
@@ -836,14 +829,14 @@ def handle_example(ack, body, client):
 
 def handle_incoming(client, team_id, user_id, channel_id, text):
     if not text or not text.strip():
-        client.chat_postMessage(channel=channel_id, text="Send me a message and I'll route it anonymously. 🔒")
+        client.chat_postMessage(channel=channel_id, text="Send a message to route it anonymously.")
         return
     clean = text.strip()
     if clean.startswith("<@"):
         parts = clean.split(">", 1)
         clean = parts[1].strip() if len(parts) > 1 else ""
     if not clean:
-        client.chat_postMessage(channel=channel_id, text="What would you like to say anonymously? 🔒")
+        client.chat_postMessage(channel=channel_id, text="Message is empty. Try again.")
         return
     user_hash = hash_user(user_id, team_id)
     token     = make_token(user_id, team_id)
@@ -884,10 +877,10 @@ def handle_ha_command(ack, body, client):
             dm = client.conversations_open(users=user_id)["channel"]["id"]
             client.chat_postMessage(
                 channel=dm,
-                text="Send me a message here and I'll route it anonymously. 🔒",
+                text="DM me your message to route it anonymously.",
                 blocks=[
                     {"type": "section", "text": {"type": "mrkdwn",
-                     "text": "👋 DM me directly with your message and I'll route it anonymously.\n\nOr type `/ha your message here` to send right now."}},
+                     "text": "DM me your message to route it anonymously, or use `/ha your message` inline."}},
                 ]
             )
     else:
@@ -963,13 +956,13 @@ def handle_sync_notion(ack, body, client):
     config    = get_workspace_config(team_id)
 
     if not delivered:
-        client.chat_postEphemeral(channel=channel, user=user_id, text="⚠️ Message record not found.")
+        client.chat_postEphemeral(channel=channel, user=user_id, text="Message not found.")
         return
     if delivered["notion_synced"]:
-        client.chat_postEphemeral(channel=channel, user=user_id, text="✅ Already synced to Notion.")
+        client.chat_postEphemeral(channel=channel, user=user_id, text="Already synced.")
         return
     if not config or not config["notion_api_key"] or not config["notion_database_id"]:
-        client.chat_postEphemeral(channel=channel, user=user_id, text=f"⚠️ Notion isn't configured. <{HELP_BASE}/setting-up-notion.html|Setup guide>")
+        client.chat_postEphemeral(channel=channel, user=user_id, text=f"Notion not configured. <{HELP_BASE}/setting-up-notion.html|Setup guide>")
         return
 
     ok, err = push_to_notion(config["notion_api_key"], config["notion_database_id"], delivered["message"], delivered["route_type"])
@@ -977,7 +970,7 @@ def handle_sync_notion(ack, body, client):
         mark_notion_synced(msg_id)
         try:
             new_blocks = [{"type":"section","text":{"type":"mrkdwn","text":body["message"]["blocks"][0]["text"]["text"]}},
-                          {"type":"context","elements":[{"type":"mrkdwn","text":"✅ Synced to Notion · 🔒 Delivered anonymously via HushAsk"}]}]
+                          {"type":"context","elements":[{"type":"mrkdwn","text":"✅ Synced · 🔒 Anonymous"}]}]
             client.chat_update(channel=channel, ts=msg_ts, blocks=new_blocks, text="Synced.")
         except: pass
     else:

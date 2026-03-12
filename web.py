@@ -294,7 +294,7 @@ def _send_pro_welcome(team_id: str):
         client.chat_postMessage(
             channel=dm,
             blocks=bolt_module.pro_welcome_blocks(),
-            text="Welcome to HushAsk Pro! 🎉"
+            text="HushAsk Pro is active."
         )
     except Exception as e:
         print(f"[pro_welcome] error: {e}")
@@ -314,18 +314,16 @@ def _send_downgrade_notice(team_id: str):
         dm     = client.conversations_open(users=installer_id)["channel"]["id"]
         client.chat_postMessage(
             channel=dm,
-            text="Your HushAsk Pro subscription has ended.",
+            text="HushAsk Pro subscription cancelled.",
             blocks=[
                 {"type": "section", "text": {"type": "mrkdwn", "text":
-                    "😔 *Your HushAsk Pro subscription has ended.*\n\n"
-                    "Your workspace has been moved back to the free tier "
-                    f"(*{os.environ.get('FREE_LIMIT', '20')} messages/month*). "
-                    "Existing configurations and Notion sync are preserved.\n\n"
-                    "You can reactivate Pro at any time."
+                    "*Pro subscription ended.*\n\n"
+                    f"Workspace reverted to free tier (*{os.environ.get('FREE_LIMIT', '20')} msgs/month*). "
+                    "Config and Notion sync preserved. Reactivate any time."
                 }},
                 {"type": "actions", "elements": [
                     {"type": "button",
-                     "text": {"type": "plain_text", "text": "⭐ Reactivate Pro"},
+                     "text": {"type": "plain_text", "text": "Reactivate Pro"},
                      "style": "primary",
                      "url": f"{API_BASE}/upgrade?team_id={team_id}",
                      "action_id": "reactivate_pro_cta"}
@@ -386,13 +384,12 @@ _PAGE_STYLE = """
 """
 
 def _render_pro_success_page():
-    return f"""<!DOCTYPE html><html><head><title>Welcome to Pro — HushAsk</title>{_PAGE_STYLE}</head>
+    return f"""<!DOCTYPE html><html><head><title>Pro Active — HushAsk</title>{_PAGE_STYLE}</head>
 <body><div class="card">
   <div class="icon">🎉</div>
-  <h1>Welcome to HushAsk Pro</h1>
-  <p>Your workspace has been upgraded. Unlimited anonymous routing is now active.<br><br>
-  Check your Slack DMs — we've sent a welcome message to the channel installer.</p>
-  <span class="badge pro">⭐ Pro Plan Active</span>
+  <h1>Pro Plan Active</h1>
+  <p>Unlimited routing is now active. A confirmation was sent to the installer via Slack DM.</p>
+  <span class="badge pro">Pro — Active</span>
 </div></body></html>"""
 
 @web.route("/notion/connected")
@@ -403,8 +400,8 @@ def notion_connected():
 <body><div class="card">
   <div class="icon">✅</div>
   <h1>Notion Connected</h1>
-  <p>Your <strong>Hush Library</strong> database has been created. Return to Slack and click <em>Save &amp; Finish</em> to complete setup.{link}</p>
-  <span class="badge ok">Connection successful</span>
+  <p><strong>Hush Library</strong> database created. Return to Slack and click <em>Save &amp; Finish</em>.{link}</p>
+  <span class="badge ok">Connected</span>
 </div></body></html>"""
 
 @web.route("/notion/error")
@@ -414,9 +411,9 @@ def notion_error():
 <body><div class="card">
   <div class="icon">⚠️</div>
   <h1>Connection Failed</h1>
-  <p>Something went wrong connecting HushAsk to Notion.<br><code>{reason}</code></p>
+  <p>Notion connection failed.<br><code>{reason}</code></p>
   <p>Return to Slack and try again, or check the <a href="/help/setting-up-notion.html">setup guide</a>.</p>
-  <span class="badge err">Connection failed</span>
+  <span class="badge err">Failed</span>
 </div></body></html>"""
 
 
