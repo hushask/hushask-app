@@ -28,6 +28,39 @@ def _add_column_if_missing(conn, table: str, column: str, definition: str):
         pass  # Column already exists — sqlite raises OperationalError
 
 
+def _migrate_routing_table_nullable_source():
+    """Recreate routing_table without NOT NULL on source_channel (idempotent).
+
+    Needed for Fix 2 (post-delivery source_channel purge). SQLite does not
+    support ALTER COLUMN, so we do CREATE-copy-drop-rename under a transaction.
+    """
+    with get_conn() as conn:
+        rows = conn.execute("PRAGMA table_info(routing_table)").fetchall()
+        for row in rows:
+            if row["name"] == "source_channel" and row["notnull"] == 1:
+                conn.executescript("""
+                    BEGIN;
+                    CREATE TABLE IF NOT EXISTS routing_table_new (
+                        id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                        team_id        TEXT NOT NULL,
+                        thread_ts      TEXT NOT NULL,
+                        user_hash      TEXT NOT NULL,
+                        source_channel TEXT,
+                        created_at     TEXT DEFAULT (strftime('%Y-%m-%d %H:%M', 'now')),
+                        UNIQUE(team_id, thread_ts)
+                    );
+                    INSERT OR IGNORE INTO routing_table_new
+                        (id, team_id, thread_ts, user_hash, source_channel, created_at)
+                        SELECT id, team_id, thread_ts, user_hash, source_channel, created_at
+                        FROM routing_table;
+                    DROP TABLE routing_table;
+                    ALTER TABLE routing_table_new RENAME TO routing_table;
+                    COMMIT;
+                """)
+                print("[db] Migration: routing_table.source_channel is now nullable")
+                break
+
+
 def init_db():
     with get_conn() as conn:
         conn.executescript("""
@@ -103,7 +136,7 @@ def init_db():
                 team_id        TEXT NOT NULL,
                 thread_ts      TEXT NOT NULL,
                 user_hash      TEXT NOT NULL,
-                source_channel TEXT NOT NULL,
+                source_channel TEXT,
                 created_at     TEXT DEFAULT (strftime('%Y-%m-%d %H:%M', 'now')),
                 UNIQUE(team_id, thread_ts)
             );
@@ -113,8 +146,12 @@ def init_db():
         _add_column_if_missing(conn, "delivered_messages", "replied", "INTEGER DEFAULT 0")
         _add_column_if_missing(conn, "delivered_messages", "source_channel", "TEXT")
         _add_column_if_missing(conn, "delivered_messages", "thread_ts", "TEXT")
+    # Migration: allow NULL source_channel in routing_table (Fix 2 — post-delivery purge)
+    _migrate_routing_table_nullable_source()
     # Auto-purge expired Identity Vault entries on every startup
     purge_expired_routing()
+    # Safety sweep: NULL out source_channel for already-replied routing entries
+    purge_source_channels()
     print("[db] Initialized.")
 
 
@@ -391,6 +428,20 @@ def get_pending(token):
         return conn.execute("SELECT * FROM pending_messages WHERE token = ?", (token,)).fetchone()
 
 
+def claim_pending(token):
+    """Atomically DELETE and RETURN the pending_messages row for token.
+
+    Uses DELETE ... RETURNING * so concurrent button clicks cannot both
+    claim the same pending message (TOCTOU double-route race fix).
+    Returns the row if it existed, None otherwise.
+    """
+    with get_conn() as conn:
+        return conn.execute(
+            "DELETE FROM pending_messages WHERE token = ? RETURNING *",
+            (token,)
+        ).fetchone()
+
+
 def delete_pending(token):
     with get_conn() as conn:
         conn.execute("DELETE FROM pending_messages WHERE token = ?", (token,))
@@ -429,6 +480,52 @@ def get_delivered_by_thread_ts(target_channel: str, thread_ts: str):
 def mark_replied(msg_id: int):
     with get_conn() as conn:
         conn.execute("UPDATE delivered_messages SET replied = 1 WHERE id = ?", (msg_id,))
+
+
+def mark_replied_and_purge_source(msg_id: int | None):
+    """Mark a delivered message as replied AND purge source_channel from routing_table.
+
+    Both operations are in a single transaction. If msg_id is None (edge case
+    where delivered_messages record is missing), the routing purge is skipped
+    and the startup sweep in purge_source_channels() will handle it later.
+    """
+    with get_conn() as conn:
+        if msg_id is not None:
+            row = conn.execute(
+                "SELECT team_id, thread_ts FROM delivered_messages WHERE id = ?",
+                (msg_id,)
+            ).fetchone()
+            if row:
+                conn.execute(
+                    "UPDATE routing_table SET source_channel = NULL "
+                    "WHERE team_id = ? AND thread_ts = ?",
+                    (row["team_id"], row["thread_ts"])
+                )
+            conn.execute(
+                "UPDATE delivered_messages SET replied = 1 WHERE id = ?", (msg_id,)
+            )
+        print(f"[db] mark_replied_and_purge_source: msg_id={msg_id}")
+
+
+def purge_source_channels():
+    """NULL out source_channel in routing_table for all already-replied messages.
+
+    Called on startup as a safety sweep to catch any records that slipped
+    through without a post-delivery purge.
+    """
+    with get_conn() as conn:
+        cur = conn.execute("""
+            UPDATE routing_table
+            SET source_channel = NULL
+            WHERE source_channel IS NOT NULL
+              AND (team_id, thread_ts) IN (
+                  SELECT team_id, thread_ts
+                  FROM delivered_messages
+                  WHERE replied = 1
+              )
+        """)
+        if cur.rowcount:
+            print(f"[db] purge_source_channels: NULLed {cur.rowcount} stale source_channel entries")
 
 
 # ── Install nudge tracking ────────────────────────────────────────────────────

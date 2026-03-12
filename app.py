@@ -8,7 +8,7 @@ HTTP Events API mode (multi-tenant, Railway-hosted)
 - Freemium 20 msg/month cap (bypassed for Pro)
 """
 
-import os, json, hashlib, secrets, time, re, logging
+import os, json, hashlib, secrets, time, re, logging, unicodedata
 from threading import Lock
 import urllib.parse
 import requests as http
@@ -44,12 +44,12 @@ from slack_sdk.oauth.installation_store.models.installation import Installation
 from slack_sdk.oauth.state_store import OAuthStateStore
 
 from database import (
-    init_db,
+    init_db, get_conn,
     save_workspace, find_bot_token, is_workspace_pro,
     issue_slack_state, consume_slack_state,
-    save_pending, get_pending, delete_pending,
+    save_pending, get_pending, delete_pending, claim_pending,
     log_delivered, get_delivered, mark_notion_synced,
-    get_delivered_by_thread_ts, mark_replied,
+    get_delivered_by_thread_ts, mark_replied, mark_replied_and_purge_source,
     save_routing, get_routing,
     get_workspace_config, save_workspace_config, reset_workspace_config,
     save_workspace_notion, store_notion_state, get_team_from_state, delete_notion_state,
@@ -155,7 +155,8 @@ app = App(
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def hash_user(user_id, team_id):
-    return hashlib.sha256(f"{HASH_SALT}:{team_id}:{user_id}".encode()).hexdigest()[:16]
+    # Full 256-bit SHA-256 — no truncation (breaking change: existing [:16] hashes won't match)
+    return hashlib.sha256(f"{HASH_SALT}:{team_id}:{user_id}".encode()).hexdigest()
 
 def make_token(user_id, team_id):
     return hashlib.sha256(
@@ -263,6 +264,19 @@ _display_name_cache: dict = {}   # team_id → {"names": [...], "fetched_at": fl
 _display_name_lock = Lock()
 _DISPLAY_NAME_TTL  = 3600  # refresh every 60 minutes
 
+
+def normalize_for_name_check(text: str) -> str:
+    """NFKD-normalize, strip non-alpha chars, lowercase.
+
+    Handles Unicode homoglyphs and diacritics so name detection isn't
+    bypassable with accented/full-width characters.
+    """
+    nfkd = unicodedata.normalize("NFKD", text)
+    ascii_only = nfkd.encode("ascii", "ignore").decode("ascii")
+    stripped = re.sub(r"[^a-z]", " ", ascii_only.lower())
+    return stripped
+
+
 def get_workspace_display_names(client, team_id: str) -> list:
     """Return lowercased display/real names for all non-bot, non-deleted members.
 
@@ -288,8 +302,8 @@ def get_workspace_display_names(client, team_id: str) -> list:
                 if member.get("deleted") or member.get("is_bot") or member.get("id") == "USLACKBOT":
                     continue
                 profile = member.get("profile", {})
-                dn = (profile.get("display_name") or "").strip().lower()
-                rn = (profile.get("real_name")    or "").strip().lower()
+                dn = normalize_for_name_check(profile.get("display_name") or "").strip()
+                rn = normalize_for_name_check(profile.get("real_name")    or "").strip()
                 if dn and len(dn) >= 3:
                     names.append(dn)
                 if rn and len(rn) >= 3 and rn != dn:
@@ -941,7 +955,7 @@ def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id):
             ]}
         ]
     )
-    mark_replied(msg_id)
+    mark_replied_and_purge_source(msg_id)
     print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
 
 
@@ -1024,7 +1038,8 @@ def on_triage_reply(event, client, body):
     replier_id = event.get("user", "")
     try:
         workspace_names = get_workspace_display_names(client, team_id)
-        words = re.findall(r"[a-z]{3,}", clean_reply.lower())
+        normalized_reply = normalize_for_name_check(clean_reply)
+        words = [w for w in normalized_reply.split() if len(w) >= 3]
         name_hit = next((w for w in words if w in workspace_names), None)
     except Exception as e:
         print(f"[reply_back] name-check error (proceeding without filter): {e}")
@@ -1153,7 +1168,8 @@ def _do_route(ack, body, client, route_type):
     ack()
     token   = body["actions"][0]["value"]
     user_id = body["user"]["id"]
-    pending = get_pending(token)
+    # Atomic claim — concurrent button clicks get None and return early (TOCTOU fix)
+    pending = claim_pending(token)
     if not pending: return
 
     team_id   = pending["team_id"]
@@ -1191,11 +1207,20 @@ def _do_route(ack, body, client, route_type):
             text="Anonymous message via HushAsk"
         )
         triage_ts = triage_result.get("ts")
-        msg_id = log_delivered(team_id, target, route_type, message, user_hash,
-                               source_channel=src, thread_ts=triage_ts)
-        # Identity Vault — map thread_ts → user_hash (no Slack User ID stored)
-        if triage_ts:
-            save_routing(team_id, triage_ts, user_hash, src)
+        # Atomic transaction — both records visible at once, race window closed
+        with get_conn() as conn:
+            cur = conn.execute("""
+                INSERT INTO delivered_messages
+                    (team_id, target_channel, route_type, message, user_hash, source_channel, thread_ts)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (team_id, target, route_type, message, user_hash, src, triage_ts))
+            msg_id = cur.lastrowid
+            if triage_ts:
+                conn.execute("""
+                    INSERT OR IGNORE INTO routing_table
+                        (team_id, thread_ts, user_hash, source_channel)
+                    VALUES (?, ?, ?, ?)
+                """, (team_id, triage_ts, user_hash, src))
         # Update the triage post with the correct msg_id (for Notion sync button)
         if has_notion and triage_ts:
             try:
@@ -1206,7 +1231,7 @@ def _do_route(ack, body, client, route_type):
                 )
             except Exception as upd_e:
                 print(f"[route_{route_type}] triage update error: {upd_e}")
-        delete_pending(token)
+        # pending already removed by claim_pending — no delete_pending needed
         if msg_ts:
             client.chat_update(channel=src, ts=msg_ts, blocks=confirmed_blocks(conf), text="Delivered.")
     except Exception as e:
