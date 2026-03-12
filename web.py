@@ -65,21 +65,6 @@ def slack_oauth_redirect():
 
 @web.route("/slack/events", methods=["POST"])
 def slack_events():
-    # Drop Slack's automatic retries — our handlers are idempotent but
-    # concurrent retries cause race conditions in the wizard flow.
-    if request.headers.get("X-Slack-Retry-Num"):
-        print(f"[slack/events] dropping retry #{request.headers.get('X-Slack-Retry-Num')}")
-        return "", 200
-
-    payload = request.get_json(silent=True) or {}
-    print(f"[slack/events] raw payload: {payload}")
-
-    # Explicit url_verification — don't rely on Bolt for this
-    if payload.get("type") == "url_verification":
-        challenge = payload.get("challenge", "")
-        print(f"[slack/events] url_verification challenge: {challenge}")
-        return jsonify({"challenge": challenge}), 200
-
     return handler.handle(request)
 
 @web.route("/slack/interactive", methods=["POST"])

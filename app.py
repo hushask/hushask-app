@@ -140,7 +140,7 @@ app = App(
         scopes=[
             "chat:write", "chat:write.public",
             "channels:read", "channels:history", "channels:manage",
-            "groups:read", "groups:write",
+            "groups:read", "groups:write", "groups:history",
             "im:history", "im:read", "im:write",
             "app_mentions:read", "users:read",
         ],
@@ -260,9 +260,10 @@ def upgrade_link(team_id):
 
 # ── Workspace display-name cache (for safety filter) ─────────────────────────
 
-_display_name_cache: dict = {}   # team_id → {"names": [...], "fetched_at": float}
+_display_name_cache: dict = {}     # team_id → {"names": [...], "fetched_at": float}
+_display_name_fetching: dict = {}  # team_id → bool; guards against cache stampede
 _display_name_lock = Lock()
-_DISPLAY_NAME_TTL  = 3600  # refresh every 60 minutes
+_DISPLAY_NAME_TTL  = 14400  # refresh every 4 hours
 
 
 def normalize_for_name_check(text: str) -> str:
@@ -280,13 +281,36 @@ def normalize_for_name_check(text: str) -> str:
 def get_workspace_display_names(client, team_id: str) -> list:
     """Return lowercased display/real names for all non-bot, non-deleted members.
 
-    Results are cached per team_id and refreshed every 60 minutes.
+    Results are cached per team_id and refreshed every 4 hours.
+    Uses a double-checked lock to prevent cache stampedes: only one thread
+    fetches per team_id at a time; others wait up to 5 s then return stale/empty.
     """
+    # Fast path — return cached entry if still fresh
     with _display_name_lock:
         entry = _display_name_cache.get(team_id)
         if entry and (time.time() - entry["fetched_at"]) < _DISPLAY_NAME_TTL:
             return entry["names"]
 
+        # If another thread is already fetching for this team, don't double-fetch
+        if _display_name_fetching.get(team_id):
+            should_fetch = False
+        else:
+            _display_name_fetching[team_id] = True
+            should_fetch = True
+
+    if not should_fetch:
+        # Wait up to 5 s for the in-flight fetch to finish, then return whatever is cached
+        deadline = time.time() + 5
+        while time.time() < deadline:
+            with _display_name_lock:
+                if not _display_name_fetching.get(team_id):
+                    return _display_name_cache.get(team_id, {}).get("names", [])
+            time.sleep(0.1)
+        # Timeout — return stale cache if available, else empty list
+        with _display_name_lock:
+            return _display_name_cache.get(team_id, {}).get("names", [])
+
+    # We claimed the fetch slot — go get the data
     names = []
     try:
         cursor = None
@@ -313,9 +337,10 @@ def get_workspace_display_names(client, team_id: str) -> list:
                 break
     except Exception as e:
         print(f"[display_names] Exception fetching for {team_id}: {e}")
-
-    with _display_name_lock:
-        _display_name_cache[team_id] = {"names": names, "fetched_at": time.time()}
+    finally:
+        with _display_name_lock:
+            _display_name_cache[team_id] = {"names": names, "fetched_at": time.time()}
+            _display_name_fetching.pop(team_id, None)
 
     return names
 
@@ -357,16 +382,17 @@ EXAMPLE_MESSAGES = {
 }
 
 def routing_blocks(token, message):
-    preview = message if len(message) <= 280 else message[:277] + "…"
+    preview = message[:280] + "…" if len(message) > 280 else message
     return [
-        {"type":"section","text":{"type":"mrkdwn","text":"Identity stripped. Choose a route:"}},
-        {"type":"section","text":{"type":"mrkdwn","text":f"Message:\n>{preview}"}},
-        {"type":"divider"},
-        {"type":"actions","elements":[
-            {"type":"button","action_id":"route_public","style":"primary","text":{"type":"plain_text","text":"📢 Public","emoji":True},"value":token},
-            {"type":"button","action_id":"route_hr","style":"danger","text":{"type":"plain_text","text":"🔒 Private / HR","emoji":True},"value":token},
+        {"type": "section", "text": {"type": "mrkdwn", "text": f"*Select a channel for this message:*\n>{preview}"}},
+        {"type": "section", "text": {"type": "mrkdwn", "text": "Your Slack identity is not stored or logged."}},
+        {"type": "divider"},
+        {"type": "actions", "elements": [
+            {"type": "button", "action_id": "route_public", "style": "primary",
+             "text": {"type": "plain_text", "text": "Public"}, "value": token},
+            {"type": "button", "action_id": "route_hr",
+             "text": {"type": "plain_text", "text": "Private / HR"}, "value": token},
         ]},
-        {"type":"context","elements":[{"type":"mrkdwn","text":"Slack identity not stored."}]}
     ]
 
 def confirmed_blocks(label):
@@ -770,6 +796,9 @@ def handle_notion_oauth_click(ack): ack()
 @app.action("upgrade_click")
 def handle_upgrade(ack): ack()
 
+@app.action("upgrade_cta_admin_alert")
+def handle_upgrade_cta_admin_alert(ack): ack()
+
 @app.view("wizard_step1")
 def wizard1_submit(ack):
     print("[wizard1] submitted — pushing step 2")
@@ -1084,7 +1113,7 @@ def on_triage_reply(event, client, body):
 
 
 @app.action("reply_deliver_confirm")
-def handle_reply_deliver_confirm(ack, body, client):
+def handle_reply_deliver_confirm(ack, body, client, respond):
     """Leader confirmed delivery despite name warning — send the DM."""
     ack()
     try:
@@ -1093,36 +1122,19 @@ def handle_reply_deliver_confirm(ack, body, client):
         clean_reply    = ctx["clean_reply"]
         msg_id         = ctx.get("msg_id")
         _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
-        # Remove the ephemeral prompt
-        try:
-            client.chat_delete(
-                channel=body["channel"]["id"],
-                ts=body["message"]["ts"]
-            )
-        except Exception:
-            pass  # Ephemeral delete may fail silently — that's fine
+        # Remove the ephemeral prompt via respond (chat_delete silently fails for ephemerals)
+        respond(delete_original=True)
     except Exception as e:
         print(f"[reply_deliver_confirm] Error: {e}")
 
 
 @app.action("reply_deliver_cancel")
-def handle_reply_deliver_cancel(ack, body, client):
-    """Leader cancelled delivery — post confirmation ephemeral."""
+def handle_reply_deliver_cancel(ack, body, client, respond):
+    """Leader cancelled delivery — dismiss the ephemeral safety prompt."""
     ack()
-    channel    = body["channel"]["id"]
-    user_id    = body["user"]["id"]
-    msg_ts     = body["message"]["ts"]
     try:
-        # Replace the safety prompt with a cancellation notice
-        client.chat_postEphemeral(
-            channel=channel,
-            user=user_id,
-            text="Delivery cancelled."
-        )
-        try:
-            client.chat_delete(channel=channel, ts=msg_ts)
-        except Exception:
-            pass  # OK if ephemeral delete fails
+        # Dismiss the safety prompt via respond (chat_delete silently fails for ephemerals)
+        respond(delete_original=True)
     except Exception as e:
         print(f"[reply_deliver_cancel] Error: {e}")
 
