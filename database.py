@@ -19,6 +19,15 @@ def get_conn():
     return conn
 
 
+def _add_column_if_missing(conn, table: str, column: str, definition: str):
+    """Idempotent ALTER TABLE — no-op if column already exists."""
+    try:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+        print(f"[db] Migration: added {table}.{column}")
+    except Exception:
+        pass  # Column already exists — sqlite raises OperationalError
+
+
 def init_db():
     with get_conn() as conn:
         conn.executescript("""
@@ -79,6 +88,9 @@ def init_db():
                 message        TEXT NOT NULL,
                 user_hash      TEXT NOT NULL,
                 notion_synced  INTEGER DEFAULT 0,
+                source_channel TEXT,
+                thread_ts      TEXT,
+                replied        INTEGER DEFAULT 0,
                 delivered_at   TEXT DEFAULT (datetime('now'))
             );
             CREATE TABLE IF NOT EXISTS install_nudges (
@@ -86,6 +98,11 @@ def init_db():
                 sent_at    TEXT DEFAULT (datetime('now'))
             );
         """)
+    # Migrations for columns added after initial schema
+    with get_conn() as conn:
+        _add_column_if_missing(conn, "delivered_messages", "replied", "INTEGER DEFAULT 0")
+        _add_column_if_missing(conn, "delivered_messages", "source_channel", "TEXT")
+        _add_column_if_missing(conn, "delivered_messages", "thread_ts", "TEXT")
     print("[db] Initialized.")
 
 
@@ -334,12 +351,14 @@ def delete_pending(token):
         conn.execute("DELETE FROM pending_messages WHERE token = ?", (token,))
 
 
-def log_delivered(team_id, target_channel, route_type, message, user_hash) -> int:
+def log_delivered(team_id, target_channel, route_type, message, user_hash,
+                  source_channel=None, thread_ts=None) -> int:
     with get_conn() as conn:
         cur = conn.execute("""
-            INSERT INTO delivered_messages (team_id, target_channel, route_type, message, user_hash)
-            VALUES (?, ?, ?, ?, ?)
-        """, (team_id, target_channel, route_type, message, user_hash))
+            INSERT INTO delivered_messages
+                (team_id, target_channel, route_type, message, user_hash, source_channel, thread_ts)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (team_id, target_channel, route_type, message, user_hash, source_channel, thread_ts))
         return cur.lastrowid
 
 
@@ -351,6 +370,20 @@ def get_delivered(msg_id: int):
 def mark_notion_synced(msg_id: int):
     with get_conn() as conn:
         conn.execute("UPDATE delivered_messages SET notion_synced = 1 WHERE id = ?", (msg_id,))
+
+
+def get_delivered_by_thread_ts(target_channel: str, thread_ts: str):
+    """Look up a delivered message by the triage channel and thread timestamp."""
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM delivered_messages WHERE target_channel = ? AND thread_ts = ?",
+            (target_channel, thread_ts)
+        ).fetchone()
+
+
+def mark_replied(msg_id: int):
+    with get_conn() as conn:
+        conn.execute("UPDATE delivered_messages SET replied = 1 WHERE id = ?", (msg_id,))
 
 
 # ── Install nudge tracking ────────────────────────────────────────────────────

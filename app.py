@@ -27,6 +27,7 @@ from database import (
     issue_slack_state, consume_slack_state,
     save_pending, get_pending, delete_pending,
     log_delivered, get_delivered, mark_notion_synced,
+    get_delivered_by_thread_ts, mark_replied,
     get_workspace_config, save_workspace_config, reset_workspace_config,
     save_workspace_notion, store_notion_state, get_team_from_state, delete_notion_state,
     check_and_increment, get_usage,
@@ -854,6 +855,78 @@ def on_mention(event, client):
     handle_incoming(client, event["team"], event["user"], event["channel"], event.get("text",""))
 
 
+@app.event("message")
+def on_triage_reply(event, client, body):
+    """Anonymous reply-back listener.
+
+    Fires when any message is posted. Filters to:
+    - Thread replies only (has thread_ts != ts)
+    - In a known triage channel (hush-public / hush-hr)
+    - Not from a bot (no bot_id / subtype)
+
+    Looks up the original submission by (channel, thread_ts), then DMs
+    the reply back to the original sender with NO identity info.
+    """
+    # Ignore bot messages and system subtypes
+    if event.get("bot_id") or event.get("subtype"):
+        return
+
+    # Must be a thread reply — thread_ts is set and differs from ts
+    thread_ts = event.get("thread_ts")
+    ts        = event.get("ts")
+    if not thread_ts or thread_ts == ts:
+        return  # top-level message — ignore
+
+    channel   = event.get("channel")
+    reply_text = (event.get("text") or "").strip()
+    if not reply_text:
+        return
+
+    team_id = (body.get("team_id")
+               or body.get("team", {}).get("id")
+               or event.get("team", ""))
+
+    # Look up the original submission by triage channel + thread_ts
+    try:
+        record = get_delivered_by_thread_ts(channel, thread_ts)
+    except Exception as e:
+        print(f"[reply_back] DB lookup error: {e}")
+        return
+
+    if not record:
+        return  # Not a tracked triage thread
+
+    source_channel = record["source_channel"]
+    msg_id         = record["id"]
+
+    if not source_channel:
+        print(f"[reply_back] msg_id={msg_id} has no source_channel — cannot DM")
+        return
+
+    # Strip any Slack user/channel mentions from reply text for extra privacy
+    clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
+    clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
+
+    dm_text = f"A response has been posted to your question:\n\n>{clean_reply}"
+
+    try:
+        client.chat_postMessage(
+            channel=source_channel,
+            text=dm_text,
+            blocks=[
+                {"type": "section", "text": {"type": "mrkdwn",
+                 "text": f"💬 *A response has been posted to your question:*\n\n>{clean_reply}"}},
+                {"type": "context", "elements": [
+                    {"type": "mrkdwn", "text": "🔒 Responder identity protected · HushAsk"}
+                ]}
+            ]
+        )
+        mark_replied(msg_id)
+        print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
+    except Exception as e:
+        print(f"[reply_back] Failed to DM reply for msg_id={msg_id}: {e}")
+
+
 @app.command("/ha")
 def handle_ha_command(ack, body, client):
     """Entry point for /ha slash command.
@@ -926,8 +999,25 @@ def _do_route(ack, body, client, route_type):
         conf   = "🔒 Private / HR"
 
     try:
-        msg_id = log_delivered(team_id, target, route_type, message, user_hash)
-        client.chat_postMessage(channel=target, blocks=triage_blocks(message, label, msg_id, has_notion), text="Anonymous message via HushAsk")
+        # Post to triage channel first to capture thread_ts
+        triage_result = client.chat_postMessage(
+            channel=target,
+            blocks=triage_blocks(message, label, 0, has_notion),
+            text="Anonymous message via HushAsk"
+        )
+        triage_ts = triage_result.get("ts")
+        msg_id = log_delivered(team_id, target, route_type, message, user_hash,
+                               source_channel=src, thread_ts=triage_ts)
+        # Update the triage post with the correct msg_id (for Notion sync button)
+        if has_notion and triage_ts:
+            try:
+                client.chat_update(
+                    channel=target, ts=triage_ts,
+                    blocks=triage_blocks(message, label, msg_id, has_notion),
+                    text="Anonymous message via HushAsk"
+                )
+            except Exception as upd_e:
+                print(f"[route_{route_type}] triage update error: {upd_e}")
         delete_pending(token)
         if msg_ts:
             client.chat_update(channel=src, ts=msg_ts, blocks=confirmed_blocks(conf), text="Delivered.")
