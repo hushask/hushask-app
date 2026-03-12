@@ -28,6 +28,7 @@ from database import (
     save_pending, get_pending, delete_pending,
     log_delivered, get_delivered, mark_notion_synced,
     get_delivered_by_thread_ts, mark_replied,
+    save_routing, get_routing,
     get_workspace_config, save_workspace_config, reset_workspace_config,
     save_workspace_notion, store_notion_state, get_team_from_state, delete_notion_state,
     check_and_increment, get_usage,
@@ -886,18 +887,28 @@ def on_triage_reply(event, client, body):
                or body.get("team", {}).get("id")
                or event.get("team", ""))
 
-    # Look up the original submission by triage channel + thread_ts
+    # Look up the original submission — Identity Vault is the primary source
     try:
-        record = get_delivered_by_thread_ts(channel, thread_ts)
+        routing = get_routing(team_id, thread_ts)
+        if routing:
+            source_channel = routing["source_channel"]
+            msg_id = None  # routing_table has no msg_id; fall back to delivered for mark_replied
+            # Also fetch delivered record so we can call mark_replied
+            delivered_record = get_delivered_by_thread_ts(channel, thread_ts)
+            msg_id = delivered_record["id"] if delivered_record else None
+        else:
+            # Fallback: legacy delivered_messages lookup (for records before Identity Vault)
+            record = get_delivered_by_thread_ts(channel, thread_ts)
+            if not record:
+                return  # Not a tracked triage thread
+            source_channel = record["source_channel"]
+            msg_id         = record["id"]
     except Exception as e:
         print(f"[reply_back] DB lookup error: {e}")
         return
 
-    if not record:
+    if not source_channel:
         return  # Not a tracked triage thread
-
-    source_channel = record["source_channel"]
-    msg_id         = record["id"]
 
     if not source_channel:
         print(f"[reply_back] msg_id={msg_id} has no source_channel — cannot DM")
@@ -1008,6 +1019,9 @@ def _do_route(ack, body, client, route_type):
         triage_ts = triage_result.get("ts")
         msg_id = log_delivered(team_id, target, route_type, message, user_hash,
                                source_channel=src, thread_ts=triage_ts)
+        # Identity Vault — map thread_ts → user_hash (no Slack User ID stored)
+        if triage_ts:
+            save_routing(team_id, triage_ts, user_hash, src)
         # Update the triage post with the correct msg_id (for Notion sync button)
         if has_notion and triage_ts:
             try:

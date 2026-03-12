@@ -97,13 +97,58 @@ def init_db():
                 team_id    TEXT PRIMARY KEY,
                 sent_at    TEXT DEFAULT (datetime('now'))
             );
+
+            CREATE TABLE IF NOT EXISTS routing_table (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                team_id        TEXT NOT NULL,
+                thread_ts      TEXT NOT NULL,
+                user_hash      TEXT NOT NULL,
+                source_channel TEXT NOT NULL,
+                created_at     TEXT DEFAULT (datetime('now')),
+                UNIQUE(team_id, thread_ts)
+            );
         """)
     # Migrations for columns added after initial schema
     with get_conn() as conn:
         _add_column_if_missing(conn, "delivered_messages", "replied", "INTEGER DEFAULT 0")
         _add_column_if_missing(conn, "delivered_messages", "source_channel", "TEXT")
         _add_column_if_missing(conn, "delivered_messages", "thread_ts", "TEXT")
+    # Auto-purge expired Identity Vault entries on every startup
+    purge_expired_routing()
     print("[db] Initialized.")
+
+
+# ── Identity Vault (routing_table) ───────────────────────────────────────────
+
+def save_routing(team_id: str, thread_ts: str, user_hash: str, source_channel: str):
+    """Store a thread_ts → user_hash mapping in the Identity Vault."""
+    with get_conn() as conn:
+        conn.execute("""
+            INSERT OR IGNORE INTO routing_table
+                (team_id, thread_ts, user_hash, source_channel)
+            VALUES (?, ?, ?, ?)
+        """, (team_id, thread_ts, user_hash, source_channel))
+
+
+def get_routing(team_id: str, thread_ts: str):
+    """Look up a routing record by team and thread_ts. Returns row or None."""
+    with get_conn() as conn:
+        return conn.execute(
+            "SELECT * FROM routing_table WHERE team_id = ? AND thread_ts = ?",
+            (team_id, thread_ts)
+        ).fetchone()
+
+
+def purge_expired_routing(days: int = 30) -> int:
+    """Delete routing_table entries older than N days (default 30). Returns count deleted."""
+    with get_conn() as conn:
+        cur = conn.execute(
+            f"DELETE FROM routing_table WHERE created_at < datetime('now', '-{days} days')"
+        )
+        deleted = cur.rowcount
+        if deleted:
+            print(f"[db] Identity Vault purge: removed {deleted} expired entries (>{days}d).")
+        return deleted
 
 
 # ── Workspace / Installation ──────────────────────────────────────────────────
