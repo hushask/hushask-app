@@ -391,7 +391,6 @@ def routing_blocks(token, message):
     return [
         {"type": "section", "text": {"type": "mrkdwn", "text": f"*Select a channel for this message:*\n>{preview}"}},
         {"type": "section", "text": {"type": "mrkdwn", "text": "Your Slack identity is not stored or logged."}},
-        {"type": "divider"},
         {"type": "actions", "elements": [
             {"type": "button", "action_id": "route_hr", "style": "primary",
              "text": {"type": "plain_text", "text": "Confidential / HR"}, "value": token},
@@ -1197,11 +1196,11 @@ def _do_route(ack, body, client, route_type):
     if route_type == "public":
         target = config["public_channel"] if (config and config["public_channel"]) else src
         label  = "📢 *Anonymous message — Public:*"
-        conf   = "📢 Public"
+        conf   = "Public"
     else:
         target = config["hr_channel"] if (config and config["hr_channel"]) else src
         label  = "🔒 *Anonymous message — Private / HR:*"
-        conf   = "🔒 Private / HR"
+        conf   = "Confidential / HR"
 
     try:
         # Post to triage channel first to capture thread_ts
