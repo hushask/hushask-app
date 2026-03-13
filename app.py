@@ -44,6 +44,7 @@ from slack_bolt.oauth.oauth_settings import OAuthSettings
 from slack_sdk.oauth.installation_store import InstallationStore
 from slack_sdk.oauth.installation_store.models.installation import Installation
 from slack_sdk.oauth.state_store import OAuthStateStore
+from slack_sdk.errors import SlackApiError
 
 from database import (
     init_db, get_conn,
@@ -234,6 +235,17 @@ def find_or_create_channel(client, name, is_private):
             print(f"[channels] ❌ {msg}")
             return None, msg
         # name_taken → channel already exists; find it
+    except SlackApiError as e:
+        error = e.response.get("error", "unknown")
+        print(f"[channels] conversations_create SlackApiError for '#{name}': {error}")
+        if error != "name_taken":
+            if error in ("missing_scope", "not_allowed_token_type", "restricted_action"):
+                msg = f"Cannot create #{name} (`{error}`). Bot needs `channels:manage` and `groups:write` scopes."
+            else:
+                msg = f"Failed to create #{name}: `{error}`."
+            print(f"[channels] ❌ {msg}")
+            return None, msg
+        # name_taken → fall through to list scan below
     except Exception as e:
         print(f"[channels] conversations_create exception for '#{name}': {e}")
         return None, f"Exception creating #{name}: {e}"
