@@ -387,7 +387,7 @@ ONBOARDING_BLOCKS = [
 ]
 
 def routing_blocks(token, message):
-    preview = message[:280] + "…" if len(message) > 280 else message
+    preview = message[:100] + "…" if len(message) > 100 else message
     return [
         {"type": "section", "text": {"type": "mrkdwn", "text": f"*Select a channel for this message:*\n>{preview}"}},
         {"type": "section", "text": {"type": "mrkdwn", "text": "Your Slack identity is not stored or logged."}},
