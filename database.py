@@ -176,6 +176,27 @@ def get_routing(team_id: str, thread_ts: str):
         ).fetchone()
 
 
+def get_active_thread_for_user(team_id: str, user_hash: str):
+    """Return the most recent routing_table entry for a user hash with a known triage thread.
+
+    Used for 2-way anonymous chat: when a user replies to a delivery DM, we look up
+    their original triage thread so we can post their follow-up anonymously.
+    Returns the routing_table row (with thread_ts) if found, else None.
+    """
+    with get_conn() as conn:
+        return conn.execute(
+            """
+            SELECT rt.thread_ts, dm.target_channel, dm.route_type
+            FROM routing_table rt
+            JOIN delivered_messages dm ON rt.team_id = dm.team_id AND rt.thread_ts = dm.thread_ts
+            WHERE rt.team_id = ? AND rt.user_hash = ?
+            ORDER BY rt.created_at DESC
+            LIMIT 1
+            """,
+            (team_id, user_hash)
+        ).fetchone()
+
+
 def purge_expired_routing(days: int = 30) -> int:
     """Delete routing_table entries older than N days (default 30). Returns count deleted."""
     with get_conn() as conn:

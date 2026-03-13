@@ -50,7 +50,7 @@ from database import (
     save_pending, get_pending, delete_pending, claim_pending,
     log_delivered, get_delivered, mark_notion_synced,
     get_delivered_by_thread_ts, mark_replied, mark_replied_and_purge_source,
-    save_routing, get_routing,
+    save_routing, get_routing, get_active_thread_for_user,
     get_workspace_config, save_workspace_config, reset_workspace_config,
     save_workspace_notion, store_notion_state, get_team_from_state, delete_notion_state,
     check_and_increment, get_usage,
@@ -58,7 +58,13 @@ from database import (
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-HASH_SALT        = os.environ.get("HASH_SALT", "hushask-v1-salt")
+HASH_SALT = os.environ.get("HASH_SALT")
+if not HASH_SALT or HASH_SALT == "hushask-v1-salt":
+    raise RuntimeError(
+        "[HushAsk] FATAL: HASH_SALT environment variable is required and must not use the "
+        "default value. Set a cryptographically random secret (e.g. secrets.token_hex(32)) "
+        "in your deployment environment."
+    )
 FREE_LIMIT       = int(os.environ.get("FREE_LIMIT", "20"))
 API_BASE         = os.environ.get("API_BASE", "https://api.hushask.com")
 HELP_BASE        = os.environ.get("HELP_BASE", "https://hushask.com/help")
@@ -951,10 +957,40 @@ def handle_incoming(client, team_id, user_id, channel_id, text):
     save_pending(token, team_id, channel_id, clean, user_hash, result.get("ts"))
 
 @app.message()
-def on_dm(message, client):
-    if message.get("channel_type") != "im": return
-    if message.get("bot_id") or message.get("subtype"): return
-    handle_incoming(client, message["team"], message["user"], message["channel"], message.get("text",""))
+def on_dm(message, client, say):
+    if message.get("channel_type") != "im":
+        return
+    if message.get("bot_id") or message.get("subtype"):
+        return
+
+    team_id = message["team"] if "team" in message else client.team_info()["team"]["id"]
+    user_id = message["user"]
+    user_hash = hash_user(user_id, team_id)
+    text = message.get("text", "").strip()
+
+    if not text:
+        return
+
+    # 2-Way Chat: Check if this user has an active triage thread
+    active_thread = get_active_thread_for_user(team_id, user_hash)
+    if active_thread:
+        # Post anonymously back to the original triage thread
+        thread_ts = active_thread["thread_ts"]
+        target_channel = active_thread["target_channel"]
+        try:
+            client.chat_postMessage(
+                channel=target_channel,
+                thread_ts=thread_ts,
+                text=f"💬 *Anonymous Sender:* {text}"
+            )
+            say("Your reply has been sent anonymously.")
+        except Exception as e:
+            print(f"[2way] Failed to post anonymous reply: {e}")
+            say("Unable to deliver your reply. Please try again.")
+        return  # Do NOT fall through to new submission flow
+
+    # No active thread — treat as new submission
+    handle_incoming(client, team_id, user_id, message["channel"], text)
 
 @app.event("app_mention")
 def on_mention(event, client):
