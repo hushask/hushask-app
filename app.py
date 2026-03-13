@@ -37,6 +37,8 @@ logging.getLogger().addFilter(_redact_filter)
 logging.getLogger("slack_bolt").addFilter(_redact_filter)
 logging.getLogger("slack_sdk").addFilter(_redact_filter)
 
+logger = logging.getLogger(__name__)
+
 from slack_bolt import App
 from slack_bolt.oauth.oauth_settings import OAuthSettings
 from slack_sdk.oauth.installation_store import InstallationStore
@@ -372,11 +374,21 @@ def push_to_notion(token, database_id, message, route_type):
             {"object":"block","type":"paragraph","paragraph":{"rich_text":[{"type":"text","text":{"content":"Add your answer below ↓"},"annotations":{"italic":True,"color":"gray"}}]}},
         ]
     }
-    try:
-        r = http.post("https://api.notion.com/v1/pages", json=payload, headers=headers, timeout=10)
-        return (True, "") if r.status_code == 200 else (False, r.json().get("message", f"HTTP {r.status_code}"))
-    except Exception as e:
-        return False, str(e)
+    last_err = None
+    for attempt in range(3):
+        try:
+            r = http.post("https://api.notion.com/v1/pages", json=payload, headers=headers, timeout=10)
+            if r.status_code == 200:
+                return True, None
+            if r.status_code in (429, 500, 502, 503, 504):
+                last_err = f"HTTP {r.status_code}"
+                time.sleep(2 ** attempt)  # 1s, 2s, 4s
+                continue
+            return False, r.json().get("message", f"Notion API error: {r.status_code} {r.text[:200]}")
+        except http.RequestException as e:
+            last_err = str(e)
+            time.sleep(2 ** attempt)
+    return False, f"Notion push failed after 3 attempts: {last_err}"
 
 
 # ── Block builders ────────────────────────────────────────────────────────────
@@ -985,7 +997,7 @@ def on_dm(message, client, say):
             )
             say("Your reply has been sent anonymously.")
         except Exception as e:
-            print(f"[2way] Failed to post anonymous reply: {e}")
+            logger.error(f"[2way] Failed to post anonymous reply: {e}")
             say("Unable to deliver your reply. Please try again.")
         return  # Do NOT fall through to new submission flow
 
