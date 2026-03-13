@@ -381,6 +381,11 @@ EXAMPLE_MESSAGES = {
     "example_idea":     "What if we ran a quarterly retrospective open to every team, not just engineering?",
 }
 
+ONBOARDING_BLOCKS = [
+    {"type": "section", "text": {"type": "mrkdwn", "text": "HushAsk: Secure feedback, delivered discreetly. Route to Public or Confidential HR. Synced to Notion."}},
+    {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored."}]},
+]
+
 def routing_blocks(token, message):
     preview = message[:280] + "…" if len(message) > 280 else message
     return [
@@ -388,10 +393,13 @@ def routing_blocks(token, message):
         {"type": "section", "text": {"type": "mrkdwn", "text": "Your Slack identity is not stored or logged."}},
         {"type": "divider"},
         {"type": "actions", "elements": [
-            {"type": "button", "action_id": "route_public", "style": "primary",
-             "text": {"type": "plain_text", "text": "Public"}, "value": token},
-            {"type": "button", "action_id": "route_hr",
-             "text": {"type": "plain_text", "text": "Private / HR"}, "value": token},
+            {"type": "button", "action_id": "route_hr", "style": "primary",
+             "text": {"type": "plain_text", "text": "Confidential / HR"}, "value": token},
+            {"type": "button", "action_id": "route_public",
+             "text": {"type": "plain_text", "text": "Public Channel"}, "value": token},
+        ]},
+        {"type": "context", "elements": [
+            {"type": "mrkdwn", "text": "🤫 Your identity is never stored."}
         ]},
     ]
 
@@ -739,24 +747,8 @@ def _maybe_send_install_nudge(client, user_id: str, team_id: str):
         dm = client.conversations_open(users=user_id)["channel"]["id"]
         client.chat_postMessage(
             channel=dm,
-            text="HushAsk installed. Run /ha to configure routing.",
-            blocks=[
-                {"type": "section", "text": {"type": "mrkdwn", "text":
-                    "*HushAsk installed.* Setup takes ~60 seconds.\n\n"
-                    "Run `/ha` to configure your public and private routing channels."
-                }},
-                {"type": "actions", "elements": [
-                    {"type": "button",
-                     "text": {"type": "plain_text", "text": "Open App Home"},
-                     "action_id": "open_home_nudge",
-                     "style": "primary",
-                     "url": f"slack://app?team={team_id}&id={os.environ.get('SLACK_APP_ID', '')}"}
-                ]},
-                {"type": "context", "elements": [
-                    {"type": "mrkdwn",
-                     "text": f"<{HELP_BASE}|hushask.com/help>"}
-                ]}
-            ]
+            text="HushAsk: Secure feedback, delivered discreetly. Route to Public or Confidential HR. Synced to Notion.",
+            blocks=ONBOARDING_BLOCKS,
         )
         mark_nudge_sent(team_id)
         print(f"[install_nudge] Sent to {re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} for workspace {team_id}")
