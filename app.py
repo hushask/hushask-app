@@ -730,8 +730,7 @@ ADMIN_SETUP_HOME = {
             "accessory": {
                 "type": "button",
                 "text": {"type": "plain_text", "text": "Select Channel", "emoji": False},
-                "action_id": "wizard_open",
-                "style": "primary"
+                "action_id": "wizard_open"
             }
         },
         {
@@ -800,19 +799,21 @@ STANDARD_HOME = {
 
 @app.event("app_home_opened")
 def handle_app_home_opened(event, client, logger, body):
-    user_id = event["user"]
-    # team_id must come from the outer body — it is NOT in the inner event payload.
-    # client.team_info() requires team:read scope which this app does not request.
-    team_id = body.get("team_id") or body.get("team", {}).get("id", "")
-    if not team_id:
-        logger.error("[app_home] No team_id in body — cannot publish home view")
-        return
-
-    # Only publish on the Home tab (not Messages tab)
-    if event.get("tab") != "home":
-        return
-
     try:
+        user_id = event["user"]
+        # team_id must come from the outer body — it is NOT in the inner event payload.
+        # client.team_info() requires team:read scope which this app does not request.
+        team_id = body.get("team_id") or body.get("team", {}).get("id", "")
+        logger.info(f"[app_home] triggered for team={team_id}, tab={event.get('tab')}")
+
+        if not team_id:
+            logger.error("[app_home] No team_id in body — cannot publish home view")
+            return
+
+        # Only publish on the Home tab (not Messages tab)
+        if event.get("tab") != "home":
+            return
+
         config = get_workspace_config(team_id)
         is_configured = bool(
             config
@@ -848,10 +849,22 @@ def handle_app_home_opened(event, client, logger, body):
         else:
             view = STANDARD_HOME
 
-        client.views_publish(user_id=user_id, view=view)
+        try:
+            result = client.views_publish(user_id=user_id, view=view)
+            logger.info(f"[app_home] views_publish result: {result}")
+        except Exception as e:
+            logger.error(f"[app_home] views_publish FAILED: {type(e).__name__}: {e}")
+            # If it's a SlackApiError, log the full response
+            if hasattr(e, 'response'):
+                logger.error(f"[app_home] Slack error response: {e.response}")
+            raise
+
+        logger.info(f"[app_home] published view for user {re.sub(r'U[A-Z0-9]{{8,11}}', '[USER]', user_id)}, team {team_id}")
 
     except Exception as e:
-        logger.error(f"[app_home] Failed to publish home view: {e}")
+        logger.error(f"[app_home] FAILED: {type(e).__name__}: {e}")
+        if hasattr(e, 'response'):
+            logger.error(f"[app_home] Slack response: {e.response}")
 
 
 # Ack the nudge deep-link button so Slack doesn't show an error
