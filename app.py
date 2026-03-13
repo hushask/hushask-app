@@ -709,40 +709,144 @@ def wizard_step3(meta):
     }
 
 
+# ── App Home Block Kit view constants ─────────────────────────────────────────
+
+# STATE 1 — Admin Setup
+ADMIN_SETUP_HOME = {
+    "type": "home",
+    "blocks": [
+        {
+            "type": "header",
+            "text": {"type": "plain_text", "text": "HushAsk — Workspace Setup", "emoji": False}
+        },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "Configure your routing channels to activate HushAsk."}
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*Step 1 — Public Triage Channel*\nSelect the channel where public questions will be routed."},
+            "accessory": {
+                "type": "button",
+                "text": {"type": "plain_text", "text": "Select Channel", "emoji": False},
+                "action_id": "wizard_open",
+                "style": "primary"
+            }
+        },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*Step 2 — Confidential HR Channel*\nSelect the channel for sensitive and HR-related messages."}
+        },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*Step 3 — Notion Sync (optional)*\nConnect a Notion database to archive public Q&A pairs automatically."}
+        },
+        {"type": "divider"},
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Open Setup Wizard", "emoji": False},
+                    "action_id": "open_wizard",
+                    "style": "primary"
+                }
+            ]
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🤫 HushAsk never stores message content in plain text."}]
+        }
+    ]
+}
+
+# STATE 2 — Standard User
+STANDARD_HOME = {
+    "type": "home",
+    "blocks": [
+        {
+            "type": "header",
+            "text": {"type": "plain_text", "text": "HushAsk", "emoji": False}
+        },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "Anonymous message routing for your team."}
+        },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*How it works:*\n1. Send a DM to this bot with your question or feedback\n2. Select a route: Public Knowledge Base or Confidential HR\n3. A leader responds in the triage channel — you receive their reply anonymously"}
+        },
+        {"type": "divider"},
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Send Anonymous Message", "emoji": False},
+                    "action_id": "home_send_dm_prompt",
+                    "style": "primary"
+                }
+            ]
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored or logged."}]
+        }
+    ]
+}
+
 # ── Events & Actions ──────────────────────────────────────────────────────────
 
 @app.event("app_home_opened")
-def handle_home_opened(event, client, body):
+def handle_app_home_opened(event, client, logger):
     user_id = event["user"]
-    # Skip the Messages tab — only publish on the Home tab
-    if event.get("tab") == "messages":
-        return
-    # team_id is always in the outer body, never rely on event["view"]
-    team_id = body.get("team_id", "")
-    if not team_id:
-        print(f"[home] WARNING: no team_id in body for user {re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))}")
+    team_id = event.get("team") or client.team_info()["team"]["id"]
+
+    # Only publish on the Home tab (not Messages tab)
+    if event.get("tab") != "home":
         return
 
-    # ── Stale-read guard ─────────────────────────────────────────────────────
-    # Slack sends app_home_opened whenever the view changes — including after
-    # wizard3 publishes a configured home. If the event's embedded view already
-    # shows a configured home AND the DB agrees, skip this redundant publish.
-    # This prevents the race where a slow is_admin() worker overwrites a fresh
-    # configured home with a stale configured=False snapshot.
-    current_blocks = event.get("view", {}).get("blocks", [])
-    view_looks_configured = any(
-        "Current Configuration" in str(b) for b in current_blocks
-    )
-    if view_looks_configured:
+    try:
         config = get_workspace_config(team_id)
-        if config and config.get("public_channel") and config.get("hr_channel"):
-            print(f"[home] SKIP — view already shows configured state, DB agrees "
-                  f"(pub={config['public_channel']} hr={config['hr_channel']})")
-            return
+        is_configured = bool(
+            config
+            and config.get("public_channel")
+            and config.get("hr_channel")
+        )
 
-    print(f"[home] publishing for user={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} team={team_id}")
-    publish_home(client, user_id, team_id)
-    _maybe_send_install_nudge(client, user_id, team_id)
+        if not is_configured:
+            # Check if user is an admin — show setup wizard to admins only
+            try:
+                user_info = client.users_info(user=user_id)
+                is_admin = user_info["user"].get("is_admin", False) or user_info["user"].get("is_owner", False)
+            except Exception:
+                is_admin = False
+
+            if is_admin:
+                view = ADMIN_SETUP_HOME
+            else:
+                # Non-admin, not configured: show a minimal holding screen
+                view = {
+                    "type": "home",
+                    "blocks": [
+                        {
+                            "type": "section",
+                            "text": {"type": "mrkdwn", "text": "HushAsk is not yet configured for this workspace. Ask your Slack admin to complete setup."}
+                        },
+                        {
+                            "type": "context",
+                            "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored or logged."}]
+                        }
+                    ]
+                }
+        else:
+            view = STANDARD_HOME
+
+        client.views_publish(user_id=user_id, view=view)
+
+    except Exception as e:
+        logger.error(f"[app_home] Failed to publish home view: {e}")
 
 
 # Ack the nudge deep-link button so Slack doesn't show an error
@@ -784,6 +888,27 @@ def _open_wizard(ack, body, client):
 
 app.action("start_setup")(_open_wizard)
 app.action("edit_settings")(_open_wizard)
+# Wire App Home buttons to the same wizard logic
+app.action("open_wizard")(_open_wizard)
+app.action("wizard_open")(_open_wizard)
+
+@app.action("home_send_dm_prompt")
+def handle_home_send_dm_prompt(ack, body, client):
+    ack()
+    user_id = body["user"]["id"]
+    try:
+        client.chat_postMessage(
+            channel=user_id,
+            text="Send me your message and I will route it anonymously.",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "Send me your message and I will route it anonymously."}
+                }
+            ]
+        )
+    except Exception as e:
+        logger.error(f"[home_prompt] Failed to send DM prompt: {e}")
 
 @app.action("reset_config")
 def handle_reset(ack, body, client):
