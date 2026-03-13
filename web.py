@@ -109,10 +109,35 @@ def notion_callback():
         return redirect("/notion/error?reason=exchange_failed")
 
     access_token = data["access_token"]
-    from database import get_team_from_state, delete_notion_state, save_workspace_notion
+    from database import get_team_from_state, delete_notion_state, save_workspace_notion, get_workspace_config
     team_id = get_team_from_state(state) if state else None
 
+    # Fix 4a — Duplicate prevention: if workspace already has a Notion DB, just refresh the token
+    if team_id:
+        existing_config = get_workspace_config(team_id)
+        if existing_config and existing_config.get("notion_database_id"):
+            save_workspace_notion(team_id, access_token, existing_config["notion_database_id"])
+            if state: delete_notion_state(state)
+            return redirect("/notion/connected")
+
+    # Fix 4b — No pages authorized guard: Notion grants a valid token even if no pages selected
+    owner_type     = data.get("owner", {}).get("type", "")
+    workspace_type = data.get("workspace_type", "")
+    if owner_type != "workspace" and not data.get("duplicated_template_id"):
+        test_r = http.post(
+            "https://api.notion.com/v1/search",
+            json={"page_size": 1},
+            headers={"Authorization": f"Bearer {access_token}", "Notion-Version": "2022-06-28"},
+            timeout=10,
+        )
+        test_data = test_r.json() if test_r.status_code == 200 else {}
+        if not test_data.get("results"):
+            return redirect("/notion/error?reason=no_pages_authorized")
+
+    # Fix 4c — Guard against None db_id from _provision_hush_library
     db_id, db_url = _provision_hush_library(access_token)
+    if not db_id:
+        return redirect("/notion/error?reason=database_creation_failed")
     if team_id:
         save_workspace_notion(team_id, access_token, db_id)
         if state: delete_notion_state(state)

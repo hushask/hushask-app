@@ -667,6 +667,19 @@ def wizard_step2_modal(auto_create=True, meta=None):
              "hint":  {"type": "plain_text", "text": "Confidential messages. Bot must be a member first."},
              "optional": False, "element": hr_el},
         ]
+    # Always show HR leaders selector (optional) — invited to private HR channel on create
+    blocks.append({
+        "type": "input",
+        "block_id": "hr_leaders",
+        "optional": True,
+        "label": {"type": "plain_text", "text": "Additional HR Leaders (optional)", "emoji": False},
+        "hint": {"type": "plain_text", "text": "These users will be invited to the confidential HR channel.", "emoji": False},
+        "element": {
+            "type": "multi_users_select",
+            "action_id": "hr_leaders_input",
+            "placeholder": {"type": "plain_text", "text": "Select team members", "emoji": False},
+        },
+    })
     return {
         "type":"modal","callback_id":"wizard_step2",
         "private_metadata":json.dumps(meta),
@@ -937,7 +950,12 @@ def handle_auto_toggle(ack, body, client):
     selected    = body["actions"][0].get("selected_options", [])
     auto_create = any(o["value"] == "auto_create" for o in selected)
     meta        = json.loads(body["view"].get("private_metadata", "{}"))
-    client.views_update(view_id=body["view"]["id"], view=wizard_step2_modal(auto_create=auto_create, meta=meta))
+    # Pass hash for optimistic locking — prevents race-condition view update collisions
+    client.views_update(
+        view_id=body["view"]["id"],
+        hash=body["view"]["hash"],
+        view=wizard_step2_modal(auto_create=auto_create, meta=meta),
+    )
 
 @app.action("notion_oauth_click")
 def handle_notion_oauth_click(ack): ack()
@@ -980,13 +998,15 @@ def wizard2_submit(ack, body):
 @app.view("wizard_step3")
 def wizard3_submit(ack, body, client):
     """Synchronous wizard3 handler — threading disabled for debug visibility.
-    Returns errors dict to ack() so Slack shows inline errors in the modal."""
+    Returns errors dict to ack() so Slack shows inline errors in the modal.
+    On success, explicitly ack with response_action=clear so Slack closes the modal
+    cleanly (avoids 'We had some trouble connecting' on submission)."""
     ui_errors = _wizard3_work(body, client)
     if ui_errors:
         # Show error inside the current modal (Bolt will re-render with field errors)
         ack(response_action="errors", errors=ui_errors)
     else:
-        ack()
+        ack({"response_action": "clear"})
 
 
 def _wizard3_work(body, client):
@@ -1047,6 +1067,23 @@ def _wizard3_work(body, client):
         if ui_errors:
             print(f"[wizard3] ❌ UI errors: {ui_errors}")
             return ui_errors  # wizard3_submit will pass these to ack(errors=...)
+
+        # ── Invite admin + HR leaders to HR channel ──────────────────────────
+        # Only invite when we just auto-created channels (not on reuse or manual select)
+        if meta.get("auto_create") and hr_ch and not (existing and existing["hr_channel"]):
+            try:
+                client.conversations_invite(channel=hr_ch, users=user_id)
+                print(f"[wizard3] invited admin to HR channel {hr_ch}")
+            except Exception as e:
+                print(f"[wizard3] Failed to invite admin to HR channel: {e}")
+
+        hr_leaders = values.get("hr_leaders", {}).get("hr_leaders_input", {}).get("selected_users", [])
+        if hr_leaders and hr_ch:
+            try:
+                client.conversations_invite(channel=hr_ch, users=",".join(hr_leaders))
+                print(f"[wizard3] invited {len(hr_leaders)} HR leader(s) to {hr_ch}")
+            except Exception as e:
+                print(f"[wizard3] Failed to invite HR leaders: {e}")
 
         notion_key = existing["notion_api_key"]      if existing else None
         notion_db  = existing["notion_database_id"]  if existing else None
