@@ -799,9 +799,14 @@ STANDARD_HOME = {
 # ── Events & Actions ──────────────────────────────────────────────────────────
 
 @app.event("app_home_opened")
-def handle_app_home_opened(event, client, logger):
+def handle_app_home_opened(event, client, logger, body):
     user_id = event["user"]
-    team_id = event.get("team") or client.team_info()["team"]["id"]
+    # team_id must come from the outer body — it is NOT in the inner event payload.
+    # client.team_info() requires team:read scope which this app does not request.
+    team_id = body.get("team_id") or body.get("team", {}).get("id", "")
+    if not team_id:
+        logger.error("[app_home] No team_id in body — cannot publish home view")
+        return
 
     # Only publish on the Home tab (not Messages tab)
     if event.get("tab") != "home":
