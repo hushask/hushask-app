@@ -17,7 +17,7 @@ Routes:
 
 import os
 import requests as http
-from flask import Flask, request, redirect, send_from_directory, jsonify
+from flask import Flask, request, redirect, send_from_directory, jsonify, render_template_string
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -86,63 +86,78 @@ def slack_options():
 
 @web.route("/notion/callback")
 def notion_callback():
-    code  = request.args.get("code")
-    state = request.args.get("state")
-    error = request.args.get("error")
-
-    if error or not code:
-        return redirect(f"/notion/error?reason={error or 'missing_code'}")
-
     try:
-        r = http.post(
-            "https://api.notion.com/v1/oauth/token",
-            auth=(NOTION_CLIENT_ID, NOTION_CLIENT_SECRET),
-            json={"grant_type": "authorization_code", "code": code, "redirect_uri": NOTION_REDIRECT},
-            headers={"Content-Type": "application/json"},
-            timeout=15
-        )
-        data = r.json()
-        if r.status_code != 200 or "access_token" not in data:
-            msg = data.get("error_description") or data.get("error") or f"HTTP {r.status_code}"
-            return redirect(f"/notion/error?reason={msg}")
-    except Exception:
-        return redirect("/notion/error?reason=exchange_failed")
+        code  = request.args.get("code")
+        state = request.args.get("state")
+        error = request.args.get("error")
 
-    access_token = data["access_token"]
-    from database import get_team_from_state, delete_notion_state, save_workspace_notion, get_workspace_config
-    team_id = get_team_from_state(state) if state else None
+        if error or not code:
+            return redirect(f"/notion/error?reason={error or 'missing_code'}")
 
-    # Fix 4a — Duplicate prevention: if workspace already has a Notion DB, just refresh the token
-    if team_id:
-        existing_config = get_workspace_config(team_id)
-        if existing_config and existing_config.get("notion_database_id"):
-            save_workspace_notion(team_id, access_token, existing_config["notion_database_id"])
+        try:
+            r = http.post(
+                "https://api.notion.com/v1/oauth/token",
+                auth=(NOTION_CLIENT_ID, NOTION_CLIENT_SECRET),
+                json={"grant_type": "authorization_code", "code": code, "redirect_uri": NOTION_REDIRECT},
+                headers={"Content-Type": "application/json"},
+                timeout=15
+            )
+            data = r.json()
+            if r.status_code != 200 or "access_token" not in data:
+                msg = data.get("error_description") or data.get("error") or f"HTTP {r.status_code}"
+                return redirect(f"/notion/error?reason={msg}")
+        except Exception:
+            return redirect("/notion/error?reason=exchange_failed")
+
+        access_token = data["access_token"]
+        from database import get_team_from_state, delete_notion_state, save_workspace_notion, get_workspace_config
+        team_id = get_team_from_state(state) if state else None
+
+        # Fix 4a — Duplicate prevention: if workspace already has a Notion DB, just refresh the token
+        if team_id:
+            existing_config = get_workspace_config(team_id)
+            if existing_config and existing_config.get("notion_database_id"):
+                save_workspace_notion(team_id, access_token, existing_config["notion_database_id"])
+                if state: delete_notion_state(state)
+                return redirect("/notion/connected")
+
+        # Fix 4b — No pages authorized guard: Notion grants a valid token even if no pages selected
+        owner_type     = data.get("owner", {}).get("type", "")
+        workspace_type = data.get("workspace_type", "")
+        if owner_type != "workspace" and not data.get("duplicated_template_id"):
+            test_r = http.post(
+                "https://api.notion.com/v1/search",
+                json={"page_size": 1},
+                headers={"Authorization": f"Bearer {access_token}", "Notion-Version": "2022-06-28"},
+                timeout=10,
+            )
+            test_data = test_r.json() if test_r.status_code == 200 else {}
+            if not test_data.get("results"):
+                return redirect("/notion/error?reason=no_pages_authorized")
+
+        # Fix 4c — Guard against None db_id from _provision_hush_library
+        db_id, db_url = _provision_hush_library(access_token)
+        if not db_id:
+            return redirect("/notion/error?reason=database_creation_failed")
+        if team_id:
+            save_workspace_notion(team_id, access_token, db_id)
             if state: delete_notion_state(state)
-            return redirect("/notion/connected")
 
-    # Fix 4b — No pages authorized guard: Notion grants a valid token even if no pages selected
-    owner_type     = data.get("owner", {}).get("type", "")
-    workspace_type = data.get("workspace_type", "")
-    if owner_type != "workspace" and not data.get("duplicated_template_id"):
-        test_r = http.post(
-            "https://api.notion.com/v1/search",
-            json={"page_size": 1},
-            headers={"Authorization": f"Bearer {access_token}", "Notion-Version": "2022-06-28"},
-            timeout=10,
-        )
-        test_data = test_r.json() if test_r.status_code == 200 else {}
-        if not test_data.get("results"):
-            return redirect("/notion/error?reason=no_pages_authorized")
+        return redirect("/notion/connected" + (f"?db_url={db_url}" if db_url else ""))
 
-    # Fix 4c — Guard against None db_id from _provision_hush_library
-    db_id, db_url = _provision_hush_library(access_token)
-    if not db_id:
-        return redirect("/notion/error?reason=database_creation_failed")
-    if team_id:
-        save_workspace_notion(team_id, access_token, db_id)
-        if state: delete_notion_state(state)
-
-    return redirect("/notion/connected" + (f"?db_url={db_url}" if db_url else ""))
+    except Exception as e:
+        import traceback
+        import logging as _logging
+        _logging.getLogger(__name__).error(f"[notion_callback] Unhandled exception: {traceback.format_exc()}")
+        return render_template_string("""<!DOCTYPE html>
+<html>
+<head><title>HushAsk — Notion Connection Error</title></head>
+<body style="font-family: sans-serif; max-width: 480px; margin: 80px auto; color: #2C3E50;">
+  <h2>Unable to Connect Notion</h2>
+  <p>An error occurred during authorization. Please return to Slack and try again.</p>
+  <p style="color: #95A5A6; font-size: 13px;">Error: {{ error }}</p>
+</body>
+</html>""", error=str(e)), 200
 
 
 def _provision_hush_library(token):

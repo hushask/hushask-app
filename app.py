@@ -950,12 +950,74 @@ def handle_auto_toggle(ack, body, client):
     selected    = body["actions"][0].get("selected_options", [])
     auto_create = any(o["value"] == "auto_create" for o in selected)
     meta        = json.loads(body["view"].get("private_metadata", "{}"))
-    # Pass hash for optimistic locking — prevents race-condition view update collisions
-    client.views_update(
-        view_id=body["view"]["id"],
-        hash=body["view"]["hash"],
-        view=wizard_step2_modal(auto_create=auto_create, meta=meta),
-    )
+    view_id     = body["view"]["id"]
+    view_hash   = body["view"]["hash"]
+
+    if not auto_create:
+        # Build manual-selection view inline — avoids bad filter values from helper.
+        # Slack requires "public_channel" / "private_channel" (not "public" / "private").
+        existing      = body["view"]["blocks"]
+        checkbox_idx  = next(
+            (i for i, b in enumerate(existing)
+             if b.get("type") == "input" and "auto_create" in str(b)),
+            len(existing) - 1
+        )
+        base_blocks = existing[:checkbox_idx + 1]
+
+        selector_blocks = [
+            {
+                "type": "input",
+                "block_id": "public_channel_select",
+                "label": {"type": "plain_text", "text": "Public Triage Channel", "emoji": False},
+                "element": {
+                    "type": "conversations_select",
+                    "action_id": "public_channel_input",
+                    "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
+                    "filter": {"include": ["public_channel"], "exclude_bot_users": True}
+                }
+            },
+            {
+                "type": "input",
+                "block_id": "hr_channel_select",
+                "label": {"type": "plain_text", "text": "Confidential HR Channel", "emoji": False},
+                "element": {
+                    "type": "conversations_select",
+                    "action_id": "hr_channel_input",
+                    "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
+                    "filter": {"include": ["private_channel"], "exclude_bot_users": True}
+                }
+            }
+        ]
+
+        # Preserve the HR leaders block if it exists in the current view
+        hr_leaders_block = next(
+            (b for b in existing if b.get("block_id") == "hr_leaders"),
+            None
+        )
+
+        updated_view = {
+            "type": "modal",
+            "callback_id": body["view"]["callback_id"],
+            "title": body["view"]["title"],
+            "submit": body["view"]["submit"],
+            "close": body["view"].get("close"),
+            "private_metadata": body["view"].get("private_metadata", "{}"),
+            "blocks": base_blocks + selector_blocks + ([hr_leaders_block] if hr_leaders_block else [])
+        }
+        try:
+            client.views_update(view_id=view_id, hash=view_hash, view=updated_view)
+        except Exception as e:
+            logger.error(f"[wizard] views_update failed: {e}")
+    else:
+        # Restore original view (auto-create re-checked)
+        try:
+            client.views_update(
+                view_id=view_id,
+                hash=view_hash,
+                view=wizard_step2_modal(auto_create=True, meta=meta),
+            )
+        except Exception as e:
+            logger.error(f"[wizard] views_update restore failed: {e}")
 
 @app.action("notion_oauth_click")
 def handle_notion_oauth_click(ack): ack()
@@ -982,11 +1044,23 @@ def wizard2_submit(ack, body):
     auto_create = any(o["value"] == "auto_create" for o in auto_opts)
     pub_ch = hr_ch = ""
     if not auto_create:
-        pub_ch = values.get("block_public_channel", {}).get("public_channel_select", {}).get("selected_conversation") or ""
-        hr_ch  = values.get("block_hr_channel",     {}).get("hr_channel_select",    {}).get("selected_conversation") or ""
-        if not pub_ch or not hr_ch:
-            ack(response_action="errors", errors={"block_public_channel": "Select a channel or enable auto-create.", "block_hr_channel": "Select a channel or enable auto-create."})
-            return
+        if "public_channel_select" in values:
+            # Inline selector blocks (new flow — correct Slack filter types)
+            pub_ch = values.get("public_channel_select", {}).get("public_channel_input", {}).get("selected_conversation") or ""
+            hr_ch  = values.get("hr_channel_select",     {}).get("hr_channel_input",     {}).get("selected_conversation") or ""
+            if not pub_ch or not hr_ch:
+                errors = {}
+                if not pub_ch: errors["public_channel_select"] = "Select a public channel."
+                if not hr_ch:  errors["hr_channel_select"]     = "Select a confidential channel."
+                ack(response_action="errors", errors=errors)
+                return
+        else:
+            # Legacy selector blocks (original helper flow — kept for safety)
+            pub_ch = values.get("block_public_channel", {}).get("public_channel_select", {}).get("selected_conversation") or ""
+            hr_ch  = values.get("block_hr_channel",     {}).get("hr_channel_select",    {}).get("selected_conversation") or ""
+            if not pub_ch or not hr_ch:
+                ack(response_action="errors", errors={"block_public_channel": "Select a channel or enable auto-create.", "block_hr_channel": "Select a channel or enable auto-create."})
+                return
 
     notion_state = secrets.token_hex(16)
     store_notion_state(notion_state, team_id)
@@ -1001,12 +1075,22 @@ def wizard3_submit(ack, body, client):
     Returns errors dict to ack() so Slack shows inline errors in the modal.
     On success, explicitly ack with response_action=clear so Slack closes the modal
     cleanly (avoids 'We had some trouble connecting' on submission)."""
-    ui_errors = _wizard3_work(body, client)
-    if ui_errors:
-        # Show error inside the current modal (Bolt will re-render with field errors)
-        ack(response_action="errors", errors=ui_errors)
-    else:
-        ack({"response_action": "clear"})
+    try:
+        ui_errors = _wizard3_work(body, client)
+        if ui_errors:
+            # Show error inside the current modal (Bolt will re-render with field errors)
+            ack(response_action="errors", errors=ui_errors)
+        else:
+            ack({"response_action": "clear"})
+    except Exception as e:
+        logger.error(f"[wizard3_submit] CRASH: {type(e).__name__}: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        # Must still ack to prevent Slack timeout / "We had trouble connecting" banner
+        try:
+            ack({"response_action": "clear"})
+        except Exception:
+            pass
 
 
 def _wizard3_work(body, client):
