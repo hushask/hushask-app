@@ -611,12 +611,9 @@ def wizard_step1():
             {"type":"header","text":{"type":"plain_text","text":"How HushAsk works","emoji":True}},
             {"type":"divider"},
             {"type":"section","text":{"type":"mrkdwn","text":"Anonymous message routing, with optional Notion sync.\n\n*Flow:*"}},
-            {"type":"section","fields":[
-                {"type":"mrkdwn","text":"*1.  DM the bot*\nSend a message to HushAsk."},
-                {"type":"mrkdwn","text":"*2.  Route it*\n📢 Public or 🔒 Private / HR."},
-                {"type":"mrkdwn","text":"*3.  Triage*\nMessages land in the configured channel."},
-                {"type":"mrkdwn","text":"*4.  Notion sync _(optional)_*\nOne click creates a permanent record."},
-            ]},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "*Step 1 — Submit*\nAn employee DMs the bot with a question or feedback."}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "*Step 2 — Route*\nThey select a destination: Public Knowledge Base or Confidential HR."}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "*Step 3 — Resolve*\nA leader replies in the triage channel. The employee receives the answer anonymously via DM."}},
             {"type":"divider"},
             {"type":"context","elements":[{"type":"mrkdwn","text":"Notion step is optional. ~2 minutes total."}]}
         ]
