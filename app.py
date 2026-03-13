@@ -945,8 +945,9 @@ def handle_reset(ack, body, client):
     publish_home(client, body["user"]["id"], body["team"]["id"])
 
 @app.action("auto_create_check")
-def handle_auto_toggle(ack, body, client):
+def handle_auto_toggle(ack, body, client, logger):
     ack()
+    logger.info(f"[wizard] auto_create_check fired — selected_options: {body['actions'][0].get('selected_options', [])}")
     selected    = body["actions"][0].get("selected_options", [])
     auto_create = any(o["value"] == "auto_create" for o in selected)
     meta        = json.loads(body["view"].get("private_metadata", "{}"))
@@ -1004,10 +1005,14 @@ def handle_auto_toggle(ack, body, client):
             "private_metadata": body["view"].get("private_metadata", "{}"),
             "blocks": base_blocks + selector_blocks + ([hr_leaders_block] if hr_leaders_block else [])
         }
+        logger.info(f"[wizard] views_update blocks count: {len(updated_view['blocks'])}, types: {[b['type'] for b in updated_view['blocks']]}")
         try:
             client.views_update(view_id=view_id, hash=view_hash, view=updated_view)
         except Exception as e:
-            logger.error(f"[wizard] views_update failed: {e}")
+            logger.error(f"[wizard] views_update FAILED: {type(e).__name__}: {e}")
+            if hasattr(e, 'response'):
+                logger.error(f"[wizard] Slack response: {e.response}")
+            raise
     else:
         # Restore original view (auto-create re-checked)
         try:
@@ -1017,7 +1022,10 @@ def handle_auto_toggle(ack, body, client):
                 view=wizard_step2_modal(auto_create=True, meta=meta),
             )
         except Exception as e:
-            logger.error(f"[wizard] views_update restore failed: {e}")
+            logger.error(f"[wizard] views_update restore FAILED: {type(e).__name__}: {e}")
+            if hasattr(e, 'response'):
+                logger.error(f"[wizard] Slack response: {e.response}")
+            raise
 
 @app.action("notion_oauth_click")
 def handle_notion_oauth_click(ack): ack()
@@ -1070,27 +1078,33 @@ def wizard2_submit(ack, body):
     ack(response_action="push", view=wizard_step3(meta))
 
 @app.view("wizard_step3")
-def wizard3_submit(ack, body, client):
-    """Synchronous wizard3 handler — threading disabled for debug visibility.
-    Returns errors dict to ack() so Slack shows inline errors in the modal.
-    On success, explicitly ack with response_action=clear so Slack closes the modal
-    cleanly (avoids 'We had some trouble connecting' on submission)."""
-    try:
-        ui_errors = _wizard3_work(body, client)
-        if ui_errors:
-            # Show error inside the current modal (Bolt will re-render with field errors)
-            ack(response_action="errors", errors=ui_errors)
-        else:
-            ack({"response_action": "clear"})
-    except Exception as e:
-        logger.error(f"[wizard3_submit] CRASH: {type(e).__name__}: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
-        # Must still ack to prevent Slack timeout / "We had trouble connecting" banner
+def wizard3_submit(ack, body, view, client, logger):
+    # MUST be first — closes the modal before Slack's 3s timeout
+    ack({"response_action": "clear"})
+
+    # Defer all work to background thread
+    import threading
+
+    def _do_finish():
         try:
-            ack({"response_action": "clear"})
-        except Exception:
-            pass
+            ui_errors = _wizard3_work(body, client)
+            if ui_errors:
+                # Modal is already closed — log errors, send DM to user instead
+                user_id = body["user"]["id"]
+                error_text = "\n".join(f"• {v}" for v in ui_errors.values())
+                try:
+                    client.chat_postMessage(
+                        channel=user_id,
+                        text=f"Setup could not complete:\n{error_text}\nPlease run /ha to try again."
+                    )
+                except Exception as dm_err:
+                    logger.error(f"[wizard3] could not DM error to user: {dm_err}")
+        except Exception as e:
+            logger.error(f"[wizard3] background work failed: {type(e).__name__}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+
+    threading.Thread(target=_do_finish, daemon=True).start()
 
 
 def _wizard3_work(body, client):

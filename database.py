@@ -168,12 +168,13 @@ def save_routing(team_id: str, thread_ts: str, user_hash: str, source_channel: s
 
 
 def get_routing(team_id: str, thread_ts: str):
-    """Look up a routing record by team and thread_ts. Returns row or None."""
+    """Look up a routing record by team and thread_ts. Returns dict or None."""
     with get_conn() as conn:
-        return conn.execute(
+        row = conn.execute(
             "SELECT * FROM routing_table WHERE team_id = ? AND thread_ts = ?",
             (team_id, thread_ts)
         ).fetchone()
+        return dict(row) if row else None
 
 
 def get_active_thread_for_user(team_id: str, user_hash: str):
@@ -181,10 +182,10 @@ def get_active_thread_for_user(team_id: str, user_hash: str):
 
     Used for 2-way anonymous chat: when a user replies to a delivery DM, we look up
     their original triage thread so we can post their follow-up anonymously.
-    Returns the routing_table row (with thread_ts) if found, else None.
+    Returns a dict (with thread_ts) if found, else None.
     """
     with get_conn() as conn:
-        return conn.execute(
+        row = conn.execute(
             """
             SELECT rt.thread_ts, dm.target_channel, dm.route_type
             FROM routing_table rt
@@ -195,6 +196,7 @@ def get_active_thread_for_user(team_id: str, user_hash: str):
             """,
             (team_id, user_hash)
         ).fetchone()
+        return dict(row) if row else None
 
 
 def purge_expired_routing(days: int = 30) -> int:
@@ -298,9 +300,10 @@ def consume_slack_state(state: str) -> bool:
 
 def get_workspace_config(workspace_id: str):
     with get_conn() as conn:
-        return conn.execute(
+        row = conn.execute(
             "SELECT * FROM workspace_config WHERE workspace_id = ?", (workspace_id,)
         ).fetchone()
+        return dict(row) if row else None
 
 
 def save_workspace_config(workspace_id: str, installer_id: str,
@@ -446,7 +449,8 @@ def save_pending(token, team_id, source_channel, message, user_hash, message_ts=
 
 def get_pending(token):
     with get_conn() as conn:
-        return conn.execute("SELECT * FROM pending_messages WHERE token = ?", (token,)).fetchone()
+        row = conn.execute("SELECT * FROM pending_messages WHERE token = ?", (token,)).fetchone()
+        return dict(row) if row else None
 
 
 def claim_pending(token):
@@ -454,13 +458,14 @@ def claim_pending(token):
 
     Uses DELETE ... RETURNING * so concurrent button clicks cannot both
     claim the same pending message (TOCTOU double-route race fix).
-    Returns the row if it existed, None otherwise.
+    Returns a dict if the row existed, None otherwise.
     """
     with get_conn() as conn:
-        return conn.execute(
+        row = conn.execute(
             "DELETE FROM pending_messages WHERE token = ? RETURNING *",
             (token,)
         ).fetchone()
+        return dict(row) if row else None
 
 
 def delete_pending(token):
@@ -481,7 +486,8 @@ def log_delivered(team_id, target_channel, route_type, message, user_hash,
 
 def get_delivered(msg_id: int):
     with get_conn() as conn:
-        return conn.execute("SELECT * FROM delivered_messages WHERE id = ?", (msg_id,)).fetchone()
+        row = conn.execute("SELECT * FROM delivered_messages WHERE id = ?", (msg_id,)).fetchone()
+        return dict(row) if row else None
 
 
 def mark_notion_synced(msg_id: int):
@@ -492,10 +498,11 @@ def mark_notion_synced(msg_id: int):
 def get_delivered_by_thread_ts(target_channel: str, thread_ts: str):
     """Look up a delivered message by the triage channel and thread timestamp."""
     with get_conn() as conn:
-        return conn.execute(
+        row = conn.execute(
             "SELECT * FROM delivered_messages WHERE target_channel = ? AND thread_ts = ?",
             (target_channel, thread_ts)
         ).fetchone()
+        return dict(row) if row else None
 
 
 def mark_replied(msg_id: int):
