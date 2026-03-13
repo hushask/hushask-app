@@ -382,20 +382,20 @@ EXAMPLE_MESSAGES = {
 }
 
 ONBOARDING_BLOCKS = [
-    {"type": "section", "text": {"type": "mrkdwn", "text": "HushAsk: Secure feedback, delivered discreetly. Route to Public or Confidential HR. Synced to Notion."}},
+    {"type": "section", "text": {"type": "mrkdwn", "text": "HushAsk: Anonymous message routing for Slack. Route to Public or Confidential HR. Synced to Notion."}},
     {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored."}]},
 ]
 
 def routing_blocks(token, message):
     preview = message[:100] + "…" if len(message) > 100 else message
     return [
-        {"type": "section", "text": {"type": "mrkdwn", "text": f"*Select a channel for this message:*\n>{preview}"}},
+        {"type": "section", "text": {"type": "mrkdwn", "text": f"*Message received. Select a route:*\n>{preview}"}},
         {"type": "section", "text": {"type": "mrkdwn", "text": "Your Slack identity is not stored or logged."}},
         {"type": "actions", "elements": [
             {"type": "button", "action_id": "route_hr", "style": "primary",
-             "text": {"type": "plain_text", "text": "Confidential / HR"}, "value": token},
+             "text": {"type": "plain_text", "text": "🔒 Confidential / HR"}, "value": token},
             {"type": "button", "action_id": "route_public",
-             "text": {"type": "plain_text", "text": "Public Channel"}, "value": token},
+             "text": {"type": "plain_text", "text": "Public / Knowledge Base"}, "value": token},
         ]},
         {"type": "context", "elements": [
             {"type": "mrkdwn", "text": "🤫 Your identity is never stored."}
@@ -746,7 +746,7 @@ def _maybe_send_install_nudge(client, user_id: str, team_id: str):
         dm = client.conversations_open(users=user_id)["channel"]["id"]
         client.chat_postMessage(
             channel=dm,
-            text="HushAsk: Secure feedback, delivered discreetly. Route to Public or Confidential HR. Synced to Notion.",
+            text="HushAsk: Anonymous message routing for Slack. Route to Public or Confidential HR. Synced to Notion.",
             blocks=ONBOARDING_BLOCKS,
         )
         mark_nudge_sent(team_id)
@@ -963,13 +963,13 @@ def on_mention(event, client):
 
 def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id):
     """Actually deliver the DM and mark replied. Called directly or after confirm."""
-    dm_text = f"A response has been posted to your question:\n\n>{clean_reply}"
+    dm_text = f"A reply to your anonymous message:\n\n>{clean_reply}"
     client.chat_postMessage(
         channel=source_channel,
         text=dm_text,
         blocks=[
             {"type": "section", "text": {"type": "mrkdwn",
-             "text": f"💬 *A response has been posted to your question:*\n\n>{clean_reply}"}},
+             "text": f"💬 *A reply to your anonymous message:*\n\n>{clean_reply}"}},
             {"type": "context", "elements": [
                 {"type": "mrkdwn", "text": "🔒 Responder identity protected · HushAsk"}
             ]}
@@ -1191,7 +1191,8 @@ def _do_route(ack, body, client, route_type):
         return
 
     config     = get_workspace_config(team_id)
-    has_notion = bool(config and config["notion_api_key"] and config["notion_database_id"])
+    has_notion  = bool(config and config["notion_api_key"] and config["notion_database_id"])
+    show_notion = has_notion and (route_type == "public")  # HR never shows Notion button
 
     if route_type == "public":
         target = config["public_channel"] if (config and config["public_channel"]) else src
@@ -1206,7 +1207,7 @@ def _do_route(ack, body, client, route_type):
         # Post to triage channel first to capture thread_ts
         triage_result = client.chat_postMessage(
             channel=target,
-            blocks=triage_blocks(message, label, 0, has_notion),
+            blocks=triage_blocks(message, label, 0, show_notion),
             text="Anonymous message via HushAsk"
         )
         triage_ts = triage_result.get("ts")
@@ -1225,11 +1226,11 @@ def _do_route(ack, body, client, route_type):
                     VALUES (?, ?, ?, ?)
                 """, (team_id, triage_ts, user_hash, src))
         # Update the triage post with the correct msg_id (for Notion sync button)
-        if has_notion and triage_ts:
+        if show_notion and triage_ts:
             try:
                 client.chat_update(
                     channel=target, ts=triage_ts,
-                    blocks=triage_blocks(message, label, msg_id, has_notion),
+                    blocks=triage_blocks(message, label, msg_id, show_notion),
                     text="Anonymous message via HushAsk"
                 )
             except Exception as upd_e:
@@ -1264,6 +1265,19 @@ def handle_sync_notion(ack, body, client):
     if not delivered:
         client.chat_postEphemeral(channel=channel, user=user_id, text="Message not found.")
         return
+
+    # GUARD: Confidential/HR messages are explicitly excluded from Notion sync
+    if delivered["route_type"] == "hr":
+        try:
+            client.chat_postEphemeral(
+                channel=channel,
+                user=user_id,
+                text="Notion sync is not available for confidential messages."
+            )
+        except Exception:
+            pass
+        return
+
     if delivered["notion_synced"]:
         client.chat_postEphemeral(channel=channel, user=user_id, text="Already synced.")
         return
