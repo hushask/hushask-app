@@ -1632,7 +1632,7 @@ def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id):
             ]}
         ]
     )
-    mark_replied_and_purge_source(msg_id)
+    mark_replied(msg_id)
     print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
 
 
