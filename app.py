@@ -480,6 +480,7 @@ def triage_blocks(message, label, msg_id, has_notion):
     if has_notion:
         blocks.append({"type":"actions","elements":[{"type":"button","action_id":"sync_notion","text":{"type":"plain_text","text":"📄 Sync to Notion","emoji":True},"value":str(msg_id)}]})
     blocks.append({"type":"context","elements":[{"type":"mrkdwn","text":"🔒 Anonymous · HushAsk"}]})
+    blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": "👉 Reply directly in this thread to respond anonymously to the sender."}]})
     return blocks
 
 def limit_blocks(usage, team_id=""):
@@ -1448,62 +1449,169 @@ def handle_incoming(client, team_id, user_id, channel_id, text):
     save_pending(token, team_id, channel_id, clean, user_hash, result.get("ts"))
 
 @app.message()
-def on_dm(message, client, say):
-    if message.get("channel_type") != "im":
-        return
+def handle_message(message, client, body, say):
+    """Single message event entry point. Dispatches to DM or triage reply handler."""
+    # Common guards
     if message.get("bot_id") or message.get("subtype"):
         return
 
-    team_id = message["team"] if "team" in message else client.team_info()["team"]["id"]
-    user_id = message["user"]
-    user_hash = hash_user(user_id, team_id)
-    text = message.get("text", "").strip()
+    channel_type = message.get("channel_type")
+    thread_ts = message.get("thread_ts")
+    ts = message.get("ts")
 
-    if not text:
-        return
+    team_id = (body.get("team_id") or body.get("team", {}).get("id") or message.get("team", ""))
 
-    # Escape hatch — user can force-close their active thread
-    if text.lower().strip() in ("cancel", "end chat"):
-        active = get_active_thread_for_user(team_id, user_hash)
-        if active:
-            close_thread(team_id, active["thread_ts"])
+    if channel_type == "im":
+        # ── DM from employee ──────────────────────────────────────────────────
+        user_id = message["user"]
+        user_hash = hash_user(user_id, team_id)
+        text = message.get("text", "").strip()
+
+        if not text:
+            return
+
+        # Escape hatch — user can force-close their active thread
+        if text.lower().strip() in ("cancel", "end chat"):
+            active = get_active_thread_for_user(team_id, user_hash)
+            if active:
+                close_thread(team_id, active["thread_ts"])
+                try:
+                    client.chat_postMessage(
+                        channel=message["channel"],
+                        text="Previous conversation closed. You may now start a new one."
+                    )
+                except Exception as e:
+                    logger.error(f"[escape] DM reply failed: {e}")
+            else:
+                try:
+                    client.chat_postMessage(
+                        channel=message["channel"],
+                        text="No active conversation to close. Send a message to start a new one."
+                    )
+                except Exception as e:
+                    logger.error(f"[escape] DM reply failed: {e}")
+            return  # Do not proceed to ingestion or 2-way routing
+
+        # 2-Way Chat: Check if this user has an active triage thread
+        active_thread = get_active_thread_for_user(team_id, user_hash)
+        if active_thread:
+            # Post anonymously back to the original triage thread
+            thread_ts = active_thread["thread_ts"]
+            target_channel = active_thread["target_channel"]
             try:
                 client.chat_postMessage(
-                    channel=message["channel"],
-                    text="Previous conversation closed. You may now start a new one."
+                    channel=target_channel,
+                    thread_ts=thread_ts,
+                    text=f"💬 *Anonymous Sender:* {text}"
                 )
+                say("Your reply has been sent anonymously.")
             except Exception as e:
-                logger.error(f"[escape] DM reply failed: {e}")
-        else:
-            try:
-                client.chat_postMessage(
-                    channel=message["channel"],
-                    text="No active conversation to close. Send a message to start a new one."
-                )
-            except Exception as e:
-                logger.error(f"[escape] DM reply failed: {e}")
-        return  # Do not proceed to ingestion or 2-way routing
+                logger.error(f"[2way] Failed to post anonymous reply: {e}")
+                say("Unable to deliver your reply. Please try again.")
+            return  # Do NOT fall through to new submission flow
 
-    # 2-Way Chat: Check if this user has an active triage thread
-    active_thread = get_active_thread_for_user(team_id, user_hash)
-    if active_thread:
-        # Post anonymously back to the original triage thread
-        thread_ts = active_thread["thread_ts"]
-        target_channel = active_thread["target_channel"]
+        # No active thread — treat as new submission
+        handle_incoming(client, team_id, user_id, message["channel"], text)
+
+    elif thread_ts and thread_ts != ts:
+        # ── Thread reply in a channel ─────────────────────────────────────────
+        # Could be a reply to a triage post — check if it's a known triage channel
+        channel    = message.get("channel")
+        reply_text = (message.get("text") or "").strip()
+        if not reply_text:
+            return
+
+        # ── Triage channel scoping ────────────────────────────────────────────
+        # Only process replies in the configured triage channels for this workspace.
         try:
-            client.chat_postMessage(
-                channel=target_channel,
-                thread_ts=thread_ts,
-                text=f"💬 *Anonymous Sender:* {text}"
-            )
-            say("Your reply has been sent anonymously.")
+            ws_config = get_workspace_config(team_id)
         except Exception as e:
-            logger.error(f"[2way] Failed to post anonymous reply: {e}")
-            say("Unable to deliver your reply. Please try again.")
-        return  # Do NOT fall through to new submission flow
+            print(f"[reply_back] Could not fetch workspace config for {team_id}: {e}")
+            return
 
-    # No active thread — treat as new submission
-    handle_incoming(client, team_id, user_id, message["channel"], text)
+        if not ws_config:
+            return  # Workspace not configured
+
+        triage_channels = {ws_config.get("public_channel"), ws_config.get("hr_channel")} - {None, ""}
+        if channel not in triage_channels:
+            return  # Not a triage channel — ignore
+
+        # ── Identity Vault lookup ─────────────────────────────────────────────
+        try:
+            routing = get_routing(team_id, thread_ts)
+            if routing:
+                source_channel = routing["source_channel"]
+                # Also fetch delivered record so we can call mark_replied
+                delivered_record = get_delivered_by_thread_ts(channel, thread_ts)
+                msg_id = delivered_record["id"] if delivered_record else None
+            else:
+                # Fallback: legacy delivered_messages lookup (for records before Identity Vault)
+                record = get_delivered_by_thread_ts(channel, thread_ts)
+                if not record:
+                    return  # Not a tracked triage thread
+                source_channel = record["source_channel"]
+                msg_id         = record["id"]
+
+        except Exception as e:
+            import traceback
+            print(f"[reply_back] DB lookup error: {type(e).__name__}: {e}")
+            print(traceback.format_exc())
+            return
+
+        if not source_channel:
+            print(f"[reply_back] msg_id={msg_id} has no source_channel — cannot DM")
+            return
+
+        # Strip any Slack user/channel mentions from reply text for extra privacy
+        clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
+        clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
+
+        # ── Safety Filter — Name Detection ────────────────────────────────────
+        replier_id = message.get("user", "")
+        try:
+            workspace_names = get_workspace_display_names(client, team_id)
+            normalized_reply = normalize_for_name_check(clean_reply)
+            words = [w for w in normalized_reply.split() if len(w) >= 3]
+            name_hit = next((w for w in words if w in workspace_names), None)
+        except Exception as e:
+            name_hit = None
+
+        if name_hit:
+            # Possible name detected — ask the replier before delivering
+            ctx = json.dumps({
+                "source_channel": source_channel,
+                "clean_reply":    clean_reply,
+                "msg_id":         msg_id,
+            })
+            try:
+                client.chat_postEphemeral(
+                    channel=channel,
+                    user=replier_id,
+                    text="⚠️ Identity Risk: Your reply may contain a name. Deliver anyway?",
+                    blocks=[
+                        {"type": "section", "text": {"type": "mrkdwn",
+                         "text": "⚠️ *Identity Risk*: Your reply may contain a name. Deliver anyway?"}},
+                        {"type": "actions", "elements": [
+                            {"type": "button", "action_id": "reply_deliver_confirm",
+                             "style": "danger",
+                             "text": {"type": "plain_text", "text": "Deliver", "emoji": True},
+                             "value": ctx},
+                            {"type": "button", "action_id": "reply_deliver_cancel",
+                             "text": {"type": "plain_text", "text": "Cancel", "emoji": True},
+                             "value": ctx},
+                        ]},
+                    ]
+                )
+            except Exception as e:
+                print(f"[reply_back] Failed to post safety ephemeral: {e}")
+            return  # Hold delivery pending leader's choice
+
+        # ── Deliver immediately ───────────────────────────────────────────────
+        try:
+            _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
+        except Exception as e:
+            print(f"[reply_back] Failed to DM reply for msg_id={msg_id}: {e}")
+    # else: top-level channel message — ignore
 
 @app.event("app_mention")
 def on_mention(event, client):
@@ -1526,131 +1634,6 @@ def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id):
     )
     mark_replied_and_purge_source(msg_id)
     print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
-
-
-@app.message()
-def on_triage_reply(message, client, body):
-    """Anonymous reply-back listener.
-
-    Fires when any message is posted. Filters to:
-    - Thread replies only (has thread_ts != ts)
-    - In a configured triage channel (public_channel or hr_channel) for this workspace
-    - Not from a bot (no bot_id / subtype)
-
-    Applies a safety filter: if the reply contains a workspace member's name,
-    shows an ephemeral Block Kit prompt to the replier before delivering.
-    Looks up the original submission by (channel, thread_ts) via Identity Vault,
-    then DMs the reply back to the original sender with NO identity info.
-    """
-    # Ignore bot messages and system subtypes
-    if message.get("bot_id") or message.get("subtype"):
-        return
-
-    # Must be a thread reply — thread_ts is set and differs from ts
-    thread_ts = message.get("thread_ts")
-    ts        = message.get("ts")
-    if not thread_ts or thread_ts == ts:
-        return  # top-level message — ignore
-
-    channel    = message.get("channel")
-    reply_text = (message.get("text") or "").strip()
-    if not reply_text:
-        return
-
-    team_id = (body.get("team_id")
-               or body.get("team", {}).get("id")
-               or message.get("team", ""))
-
-    # ── Triage channel scoping ────────────────────────────────────────────────
-    # Only process replies in the configured triage channels for this workspace.
-    try:
-        ws_config = get_workspace_config(team_id)
-    except Exception as e:
-        print(f"[reply_back] Could not fetch workspace config for {team_id}: {e}")
-        return
-
-    if not ws_config:
-        return  # Workspace not configured
-
-    triage_channels = {ws_config.get("public_channel"), ws_config.get("hr_channel")} - {None, ""}
-    if channel not in triage_channels:
-        return  # Not a triage channel — ignore
-
-    # ── Identity Vault lookup ─────────────────────────────────────────────────
-    try:
-        routing = get_routing(team_id, thread_ts)
-        if routing:
-            source_channel = routing["source_channel"]
-            # Also fetch delivered record so we can call mark_replied
-            delivered_record = get_delivered_by_thread_ts(channel, thread_ts)
-            msg_id = delivered_record["id"] if delivered_record else None
-        else:
-            # Fallback: legacy delivered_messages lookup (for records before Identity Vault)
-            record = get_delivered_by_thread_ts(channel, thread_ts)
-            if not record:
-                return  # Not a tracked triage thread
-            source_channel = record["source_channel"]
-            msg_id         = record["id"]
-
-    except Exception as e:
-        import traceback
-        print(f"[reply_back] DB lookup error: {type(e).__name__}: {e}")
-        print(traceback.format_exc())
-        return
-
-    if not source_channel:
-        print(f"[reply_back] msg_id={msg_id} has no source_channel — cannot DM")
-        return
-
-    # Strip any Slack user/channel mentions from reply text for extra privacy
-    clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
-    clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
-
-    # ── Safety Filter — Name Detection ────────────────────────────────────────
-    replier_id = message.get("user", "")
-    try:
-        workspace_names = get_workspace_display_names(client, team_id)
-        normalized_reply = normalize_for_name_check(clean_reply)
-        words = [w for w in normalized_reply.split() if len(w) >= 3]
-        name_hit = next((w for w in words if w in workspace_names), None)
-    except Exception as e:
-        name_hit = None
-
-    if name_hit:
-        # Possible name detected — ask the replier before delivering
-        ctx = json.dumps({
-            "source_channel": source_channel,
-            "clean_reply":    clean_reply,
-            "msg_id":         msg_id,
-        })
-        try:
-            client.chat_postEphemeral(
-                channel=channel,
-                user=replier_id,
-                text="⚠️ Identity Risk: Your reply may contain a name. Deliver anyway?",
-                blocks=[
-                    {"type": "section", "text": {"type": "mrkdwn",
-                     "text": "⚠️ *Identity Risk*: Your reply may contain a name. Deliver anyway?"}},
-                    {"type": "actions", "elements": [
-                        {"type": "button", "action_id": "reply_deliver_confirm",
-                         "style": "danger",
-                         "text": {"type": "plain_text", "text": "Deliver", "emoji": True},
-                         "value": ctx},
-                        {"type": "button", "action_id": "reply_deliver_cancel",
-                         "text": {"type": "plain_text", "text": "Cancel", "emoji": True},
-                         "value": ctx},
-                    ]},
-                ]
-            )
-        except Exception as e:
-            print(f"[reply_back] Failed to post safety ephemeral: {e}")
-        return  # Hold delivery pending leader's choice
-
-    # ── Deliver immediately ───────────────────────────────────────────────────
-    try:
-        _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
-    except Exception as e:
-        print(f"[reply_back] Failed to DM reply for msg_id={msg_id}: {e}")
 
 
 @app.action("reply_deliver_confirm")
