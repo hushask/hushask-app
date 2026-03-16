@@ -50,7 +50,7 @@ from database import (
     init_db, get_conn,
     save_workspace, find_bot_token, is_workspace_pro,
     issue_slack_state, consume_slack_state,
-    save_pending, get_pending, delete_pending, claim_pending,
+    save_pending, get_pending, delete_pending, claim_pending, peek_pending,
     log_delivered, get_delivered, mark_notion_synced,
     get_delivered_by_thread_ts, mark_replied, mark_replied_and_purge_source,
     save_routing, get_routing, get_active_thread_for_user,
@@ -430,6 +430,46 @@ def routing_blocks(token, message):
         {"type": "context", "elements": [
             {"type": "mrkdwn", "text": "🤫 Your identity is never stored."}
         ]},
+    ]
+
+def route_confirmation_blocks(token: str, route_type: str, message: str) -> list:
+    route_labels = {
+        "public": "Public / Knowledge Base",
+        "hr": "Confidential / HR",
+    }
+    label = route_labels.get(route_type, route_type)
+    preview = message[:100] + "…" if len(message) > 100 else message
+    return [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"You selected: *{label}*. Please confirm before sending.\n>{preview}"
+            }
+        },
+        {
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "action_id": "route_confirm",
+                    "style": "primary",
+                    "text": {"type": "plain_text", "text": "Confirm & Send", "emoji": False},
+                    "value": f"{token}|{route_type}"
+                },
+                {
+                    "type": "button",
+                    "action_id": "route_cancel",
+                    "style": "danger",
+                    "text": {"type": "plain_text", "text": "Cancel", "emoji": False},
+                    "value": token
+                }
+            ]
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored."}]
+        }
     ]
 
 def confirmed_blocks(label):
@@ -1812,11 +1852,90 @@ def _do_route(ack, body, client, route_type):
     except Exception as e:
         print(f"[route_{route_type}] error: {e}")
 
+def _intercept_route(ack, body, client, logger, route_type: str):
+    ack()
+    token   = body["actions"][0]["value"]
+    msg_ts  = body["message"]["ts"]
+    channel = body["channel"]["id"]
+
+    pending = peek_pending(token)
+    if not pending:
+        # Already claimed or expired — silently ignore
+        logger.warning("[confirm] peek_pending returned None for token (already claimed?)")
+        return
+
+    message = pending.get("message", "")
+
+    try:
+        client.chat_update(
+            channel=channel,
+            ts=msg_ts,
+            blocks=route_confirmation_blocks(token, route_type, message),
+            text=f"Confirm routing to {route_type}"
+        )
+    except Exception as e:
+        logger.error(f"[confirm] chat_update failed: {e}")
+
+
 @app.action("route_public")
-def handle_public(ack, body, client): _do_route(ack, body, client, "public")
+def handle_route_public_intercept(ack, body, client, logger):
+    _intercept_route(ack, body, client, logger, "public")
+
 
 @app.action("route_hr")
-def handle_hr(ack, body, client): _do_route(ack, body, client, "hr")
+def handle_route_hr_intercept(ack, body, client, logger):
+    _intercept_route(ack, body, client, logger, "hr")
+
+
+@app.action("route_confirm")
+def handle_route_confirm(ack, body, client, logger):
+    ack()
+    raw_value = body["actions"][0]["value"]
+    # value is "{token}|{route_type}"
+    parts = raw_value.rsplit("|", 1)  # rsplit to handle tokens that might contain |
+    if len(parts) != 2:
+        logger.error(f"[confirm] malformed route_confirm value: {raw_value!r}")
+        return
+    token, route_type = parts[0], parts[1]
+
+    # Patch the action value back to the bare token so _do_route reads it correctly
+    body["actions"][0]["value"] = token
+    # Pass a no-op ack — we've already acked above; _do_route also calls ack()
+    _do_route(ack=lambda *a, **kw: None, body=body, client=client, route_type=route_type)
+
+
+@app.action("route_cancel")
+def handle_route_cancel(ack, body, client, logger):
+    ack()
+    token   = body["actions"][0]["value"]
+    msg_ts  = body["message"]["ts"]
+    channel = body["channel"]["id"]
+
+    pending = peek_pending(token)
+    if not pending:
+        logger.warning("[cancel] pending not found for token — message may have been routed already")
+        try:
+            client.chat_update(
+                channel=channel,
+                ts=msg_ts,
+                blocks=[{"type": "section", "text": {"type": "mrkdwn", "text": "This message has already been routed."}}],
+                text="Already routed."
+            )
+        except Exception as e:
+            logger.error(f"[cancel] chat_update failed: {e}")
+        return
+
+    message = pending.get("message", "")
+
+    try:
+        client.chat_update(
+            channel=channel,
+            ts=msg_ts,
+            blocks=routing_blocks(token, message),
+            text="Route your message:"
+        )
+    except Exception as e:
+        logger.error(f"[cancel] chat_update failed: {e}")
 
 
 # ── Notion sync ───────────────────────────────────────────────────────────────

@@ -478,6 +478,16 @@ def claim_pending(token):
         return dict(row) if row else None
 
 
+def peek_pending(token: str) -> dict | None:
+    """Read a pending message by token without consuming it."""
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM pending_messages WHERE token = ?",
+            (token,)
+        ).fetchone()
+        return dict(row) if row else None
+
+
 def delete_pending(token):
     with get_conn() as conn:
         conn.execute("DELETE FROM pending_messages WHERE token = ?", (token,))
