@@ -731,6 +731,74 @@ def wizard_step3(meta):
     }
 
 
+def settings_modal(config: dict) -> dict:
+    cfg = config or {}
+
+    pub_el = {
+        "type": "conversations_select",
+        "action_id": "public_channel_setting_input",
+        "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
+        "filter": {"include": ["public_channel"]},
+    }
+    if cfg.get("public_channel"):
+        pub_el["initial_conversation"] = cfg["public_channel"]
+
+    hr_el = {
+        "type": "conversations_select",
+        "action_id": "hr_channel_setting_input",
+        "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
+        "filter": {"include": ["private_channel"]},
+    }
+    if cfg.get("hr_channel"):
+        hr_el["initial_conversation"] = cfg["hr_channel"]
+
+    notion_connected = bool(cfg.get("notion_database_id"))
+    notion_btn = {
+        "type": "button",
+        "action_id": "settings_notion_toggle",
+        "text": {
+            "type": "plain_text",
+            "text": "Disconnect Notion" if notion_connected else "Connect Notion",
+            "emoji": False,
+        },
+    }
+
+    blocks = [
+        {"type": "header", "text": {"type": "plain_text", "text": "Channel Configuration", "emoji": False}},
+        {
+            "type": "input",
+            "block_id": "public_channel_setting",
+            "label": {"type": "plain_text", "text": "Public Channel", "emoji": False},
+            "element": pub_el,
+        },
+        {
+            "type": "input",
+            "block_id": "hr_channel_setting",
+            "label": {"type": "plain_text", "text": "HR / Confidential Channel", "emoji": False},
+            "element": hr_el,
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*Notion Integration*\nConnect a Notion workspace to automatically document public Q&A."},
+            "accessory": notion_btn,
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🤫 Changes apply immediately to new submissions."}],
+        },
+    ]
+
+    return {
+        "type": "modal",
+        "callback_id": "workspace_settings",
+        "title": {"type": "plain_text", "text": "Workspace Settings", "emoji": False},
+        "submit": {"type": "plain_text", "text": "Save Changes", "emoji": False},
+        "close": {"type": "plain_text", "text": "Cancel", "emoji": False},
+        "blocks": blocks,
+    }
+
+
 # ── App Home Block Kit view constants ─────────────────────────────────────────
 
 # STATE 1 — Admin Setup
@@ -954,7 +1022,7 @@ def _maybe_send_install_nudge(client, user_id: str, team_id: str):
     except Exception as e:
         print(f"[install_nudge] error: {e}")
 
-def _open_wizard(ack, body, client):
+def _open_wizard_setup(ack, body, client):
     ack()
     team_id = body["team"]["id"]
     config  = get_workspace_config(team_id)
@@ -964,11 +1032,94 @@ def _open_wizard(ack, body, client):
                 "notion_api_key": config["notion_api_key"] or "", "notion_database_id": config["notion_database_id"] or ""}
     client.views_open(trigger_id=body["trigger_id"], view=wizard_step1())
 
-app.action("start_setup")(_open_wizard)
-app.action("edit_settings")(_open_wizard)
-# Wire App Home buttons to the same wizard logic
-app.action("open_wizard")(_open_wizard)
-app.action("wizard_open")(_open_wizard)
+app.action("start_setup")(_open_wizard_setup)
+app.action("edit_settings")(_open_wizard_setup)
+# Wire App Home wizard buttons
+app.action("wizard_open")(_open_wizard_setup)
+
+@app.action("open_wizard")
+def _open_wizard(ack, body, client, logger):
+    ack()
+    user_id = body["user"]["id"]
+    team_id = body.get("team", {}).get("id") or body.get("team_id", "")
+    try:
+        config = get_workspace_config(team_id) if team_id else None
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view=settings_modal(config)
+        )
+    except Exception as e:
+        logger.error(f"[settings] failed to open settings modal: {e}")
+
+@app.view("workspace_settings")
+def handle_settings_submit(ack, body, view, client, logger):
+    # Ack first — beats 3s timeout
+    ack({"response_action": "clear"})
+
+    def _do_save():
+        try:
+            team_id = body.get("team", {}).get("id") or body.get("team_id", "")
+            state = view["state"]["values"]
+
+            pub_ch = state.get("public_channel_setting", {}).get("public_channel_setting_input", {}).get("selected_conversation")
+            hr_ch  = state.get("hr_channel_setting",    {}).get("hr_channel_setting_input",    {}).get("selected_conversation")
+
+            if not pub_ch or not hr_ch:
+                logger.warning(f"[settings] incomplete submission — pub={pub_ch} hr={hr_ch}")
+                return
+
+            # Load existing config to preserve other fields (Notion, installer, etc.)
+            existing = get_workspace_config(team_id) or {}
+
+            # save_workspace_config(workspace_id, installer_id, public_channel, hr_channel,
+            #                       notion_api_key=None, notion_database_id=None)
+            # Passing None for notion fields preserves existing values (safe to omit).
+            save_workspace_config(
+                team_id,
+                existing.get("installer_id"),
+                pub_ch,
+                hr_ch,
+                existing.get("notion_api_key"),
+                existing.get("notion_database_id"),
+            )
+            logger.info(f"[settings] workspace config updated — pub={pub_ch} hr={hr_ch}")
+
+        except Exception as e:
+            logger.error(f"[settings] save failed: {type(e).__name__}: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
+
+    import threading
+    threading.Thread(target=_do_save, daemon=True).start()
+
+
+@app.action("settings_notion_toggle")
+def handle_settings_notion_toggle(ack, body, client, logger):
+    ack()
+    user_id = body["user"]["id"]
+    team_id = body.get("team", {}).get("id") or body.get("team_id", "")
+    config  = get_workspace_config(team_id) or {}
+
+    if config.get("notion_database_id"):
+        # Disconnect: clear Notion fields via save_workspace_notion (save_workspace_config
+        # uses `or` logic so passing None would silently preserve existing values)
+        try:
+            from database import save_workspace_notion
+            save_workspace_notion(team_id, None, None)
+            logger.info(f"[settings] Notion disconnected for team {team_id}")
+        except Exception as e:
+            logger.error(f"[settings] Notion disconnect failed: {e}")
+    else:
+        # Connect: send DM with OAuth link
+        try:
+            notion_url = f"{os.environ.get('BASE_URL', 'https://api.hushask.com')}/notion/connect?team_id={team_id}"
+            client.chat_postMessage(
+                channel=user_id,
+                text=f"To connect Notion, visit: {notion_url}"
+            )
+        except Exception as e:
+            logger.error(f"[settings] Notion connect DM failed: {e}")
+
 
 @app.action("home_send_dm_prompt")
 def handle_home_send_dm(ack, body, client, logger):
