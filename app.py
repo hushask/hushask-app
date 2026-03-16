@@ -1528,8 +1528,8 @@ def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id):
     print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
 
 
-@app.event("message")
-def on_triage_reply(event, client, body):
+@app.message()
+def on_triage_reply(message, client, body):
     """Anonymous reply-back listener.
 
     Fires when any message is posted. Filters to:
@@ -1543,25 +1543,23 @@ def on_triage_reply(event, client, body):
     then DMs the reply back to the original sender with NO identity info.
     """
     # Ignore bot messages and system subtypes
-    if event.get("bot_id") or event.get("subtype"):
+    if message.get("bot_id") or message.get("subtype"):
         return
 
     # Must be a thread reply — thread_ts is set and differs from ts
-    thread_ts = event.get("thread_ts")
-    ts        = event.get("ts")
+    thread_ts = message.get("thread_ts")
+    ts        = message.get("ts")
     if not thread_ts or thread_ts == ts:
         return  # top-level message — ignore
 
-    channel    = event.get("channel")
-    reply_text = (event.get("text") or "").strip()
+    channel    = message.get("channel")
+    reply_text = (message.get("text") or "").strip()
     if not reply_text:
         return
 
     team_id = (body.get("team_id")
                or body.get("team", {}).get("id")
-               or event.get("team", ""))
-
-    print(f"[triage_reply] received: channel={channel}, thread_ts={thread_ts}, ts={ts}")
+               or message.get("team", ""))
 
     # ── Triage channel scoping ────────────────────────────────────────────────
     # Only process replies in the configured triage channels for this workspace.
@@ -1575,7 +1573,6 @@ def on_triage_reply(event, client, body):
         return  # Workspace not configured
 
     triage_channels = {ws_config.get("public_channel"), ws_config.get("hr_channel")} - {None, ""}
-    print(f"[triage_reply] triage_channels={triage_channels}, channel in set={channel in triage_channels}")
     if channel not in triage_channels:
         return  # Not a triage channel — ignore
 
@@ -1594,7 +1591,7 @@ def on_triage_reply(event, client, body):
                 return  # Not a tracked triage thread
             source_channel = record["source_channel"]
             msg_id         = record["id"]
-        print(f"[triage_reply] routing={routing}, source_channel={source_channel}")
+
     except Exception as e:
         import traceback
         print(f"[reply_back] DB lookup error: {type(e).__name__}: {e}")
@@ -1610,19 +1607,17 @@ def on_triage_reply(event, client, body):
     clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
 
     # ── Safety Filter — Name Detection ────────────────────────────────────────
-    replier_id = event.get("user", "")
+    replier_id = message.get("user", "")
     try:
         workspace_names = get_workspace_display_names(client, team_id)
         normalized_reply = normalize_for_name_check(clean_reply)
         words = [w for w in normalized_reply.split() if len(w) >= 3]
         name_hit = next((w for w in words if w in workspace_names), None)
     except Exception as e:
-        print(f"[reply_back] name-check error (proceeding without filter): {e}")
         name_hit = None
 
     if name_hit:
         # Possible name detected — ask the replier before delivering
-        print(f"[reply_back] Name hit '{name_hit}' in reply by {replier_id} — showing safety prompt")
         ctx = json.dumps({
             "source_channel": source_channel,
             "clean_reply":    clean_reply,
@@ -1653,7 +1648,6 @@ def on_triage_reply(event, client, body):
 
     # ── Deliver immediately ───────────────────────────────────────────────────
     try:
-        print(f"[triage_reply] sending DM to source_channel={source_channel}, reply={clean_reply[:50]!r}")
         _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
     except Exception as e:
         print(f"[reply_back] Failed to DM reply for msg_id={msg_id}: {e}")
