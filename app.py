@@ -475,12 +475,49 @@ def route_confirmation_blocks(token: str, route_type: str, message: str) -> list
 def confirmed_blocks(label):
     return [{"type":"section","text":{"type":"mrkdwn","text":f"Sent. Routed to: *{label}*"}}]
 
-def triage_blocks(message, label, msg_id, has_notion):
-    blocks = [{"type":"section","text":{"type":"mrkdwn","text":f"{label}\n\n{message}"}}]
+def triage_blocks(message, label, msg_id, has_notion, thread_ts, channel_id):
+    blocks = [
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": f"{label}\n\n{message}"}
+        }
+    ]
     if has_notion:
-        blocks.append({"type":"actions","elements":[{"type":"button","action_id":"sync_notion","text":{"type":"plain_text","text":"📄 Sync to Notion","emoji":True},"value":str(msg_id)}]})
-    blocks.append({"type":"context","elements":[{"type":"mrkdwn","text":"🔒 Anonymous · HushAsk"}]})
-    blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": "👉 *Internal Thread* — Discuss the case here. To reply to the sender, hover over your final message, click ··· and select *Reply to Employee*."}]})
+        blocks.append({
+            "type": "actions",
+            "elements": [
+                {
+                    "type": "button",
+                    "action_id": "sync_notion",
+                    "text": {"type": "plain_text", "text": "📄 Sync to Notion", "emoji": True},
+                    "value": str(msg_id)
+                }
+            ]
+        })
+    blocks.append({
+        "type": "context",
+        "elements": [{"type": "mrkdwn", "text": "🔒 Anonymous · HushAsk"}]
+    })
+    blocks.append({
+        "type": "actions",
+        "elements": [
+            {
+                "type": "button",
+                "action_id": "reply_to_employee_btn",
+                "text": {"type": "plain_text", "text": "Reply to Employee", "emoji": False},
+                "value": f"{thread_ts}|{channel_id}"
+            }
+        ]
+    })
+    blocks.append({
+        "type": "context",
+        "elements": [
+            {
+                "type": "mrkdwn",
+                "text": "🤫 Thread replies are internal only · Bot messages show the employee conversation · HushAsk"
+            }
+        ]
+    })
     return blocks
 
 def limit_blocks(usage, team_id=""):
@@ -1502,7 +1539,37 @@ def handle_message(message, client, body, say):
                 client.chat_postMessage(
                     channel=target_channel,
                     thread_ts=thread_ts,
-                    text=f"💬 *Anonymous Sender:* {text}"
+                    text=f"Message from employee",
+                    attachments=[
+                        {
+                            "color": "#5865F2",
+                            "blocks": [
+                                {
+                                    "type": "section",
+                                    "text": {"type": "mrkdwn", "text": "*Message from employee*"}
+                                },
+                                {
+                                    "type": "section",
+                                    "text": {"type": "mrkdwn", "text": f"> {text}"}
+                                },
+                                {
+                                    "type": "actions",
+                                    "elements": [
+                                        {
+                                            "type": "button",
+                                            "action_id": "reply_to_employee_btn",
+                                            "text": {"type": "plain_text", "text": "Reply to Employee", "emoji": False},
+                                            "value": f"{thread_ts}|{target_channel}"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "context",
+                                    "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]
+                                }
+                            ]
+                        }
+                    ]
                 )
                 say("Your reply has been sent anonymously.")
             except Exception as e:
@@ -1515,117 +1582,12 @@ def handle_message(message, client, body, say):
 
     # else: top-level channel message or non-DM thread reply — ignore
 
-@app.shortcut("reply_to_employee")
-def handle_reply_shortcut(ack, body, client, logger):
-    """Message shortcut: admin selects a thread message → DMs it to the anonymous employee."""
-    ack()
-
-    msg = body.get("message", {})
-    channel_id = body.get("channel", {}).get("id", "")
-    team_id = body.get("team", {}).get("id", "") or body.get("team_id", "")
-
-    # thread_ts is the parent message ts. If admin clicks a threaded reply, thread_ts is set.
-    # If they click the parent triage post itself, use ts as thread_ts.
-    thread_ts = msg.get("thread_ts") or msg.get("ts", "")
-    reply_text = (msg.get("text") or "").strip()
-
-    if not reply_text:
-        logger.warning("[shortcut] reply_to_employee triggered with empty message text")
-        return
-
-    if not thread_ts:
-        logger.warning("[shortcut] reply_to_employee: could not determine thread_ts")
-        return
-
-    # Look up the routing record to find the employee's DM channel
-    try:
-        routing = get_routing(team_id, thread_ts)
-    except Exception as e:
-        logger.error(f"[shortcut] get_routing failed: {e}")
-        return
-
-    if not routing:
-        logger.warning(f"[shortcut] no routing record for thread_ts={thread_ts}")
-        # Post ephemeral to the triggering admin
-        try:
-            client.chat_postEphemeral(
-                channel=channel_id,
-                user=body["user"]["id"],
-                text="No active anonymous session found for this thread."
-            )
-        except Exception:
-            pass
-        return
-
-    source_channel = routing.get("source_channel")
-    if not source_channel:
-        logger.warning(f"[shortcut] routing record exists but source_channel is NULL for thread_ts={thread_ts}")
-        try:
-            client.chat_postEphemeral(
-                channel=channel_id,
-                user=body["user"]["id"],
-                text="This conversation has been closed. The employee's channel is no longer available."
-            )
-        except Exception:
-            pass
-        return
-
-    # Strip Slack mentions for privacy
-    clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
-    clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
-
-    # Deliver to employee DM
-    try:
-        client.chat_postMessage(
-            channel=source_channel,
-            text=f"A reply to your anonymous message:\n\n>{clean_reply}",
-            blocks=[
-                {"type": "section", "text": {"type": "mrkdwn",
-                 "text": f"💬 *A reply to your anonymous message:*\n\n>{clean_reply}"}},
-                {"type": "context", "elements": [
-                    {"type": "mrkdwn", "text": "🔒 Responder identity protected · HushAsk"}
-                ]}
-            ]
-        )
-        logger.info(f"[shortcut] reply delivered to {source_channel} for thread_ts={thread_ts}")
-    except Exception as e:
-        logger.error(f"[shortcut] DM delivery failed: {e}")
-        try:
-            client.chat_postEphemeral(
-                channel=channel_id,
-                user=body["user"]["id"],
-                text="Failed to deliver your reply. Please try again."
-            )
-        except Exception:
-            pass
-        return
-
-    # Post confirmation thread reply in triage channel
-    preview = clean_reply[:60] + ("…" if len(clean_reply) > 60 else "")
-    try:
-        client.chat_postMessage(
-            channel=channel_id,
-            thread_ts=thread_ts,
-            text=f"✅ Sent to employee: \"{preview}\""
-        )
-    except Exception as e:
-        logger.error(f"[shortcut] confirmation post failed: {e}")
-
-    # Mark the delivered message as replied (uses existing msg lookup)
-    try:
-        delivered = get_delivered_by_thread_ts(channel_id, thread_ts)
-        if delivered:
-            mark_replied(delivered["id"])
-    except Exception as e:
-        logger.error(f"[shortcut] mark_replied failed: {e}")
-
-
 @app.event("app_mention")
 def on_mention(event, client):
     handle_incoming(client, event["team"], event["user"], event["channel"], event.get("text",""))
 
 
-def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id):
+def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id, triage_channel: str, thread_ts: str):
     """Actually deliver the DM and mark replied. Called directly or after confirm."""
     dm_text = f"A reply to your anonymous message:\n\n>{clean_reply}"
     client.chat_postMessage(
@@ -1641,6 +1603,35 @@ def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id):
     )
     mark_replied(msg_id)
     print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
+    # Post green confirmation in triage thread
+    preview = clean_reply[:60] + ("…" if len(clean_reply) > 60 else "")
+    try:
+        client.chat_postMessage(
+            channel=triage_channel,
+            thread_ts=thread_ts,
+            text=f"Reply sent to employee",
+            attachments=[
+                {
+                    "color": "#2EB67D",
+                    "blocks": [
+                        {
+                            "type": "section",
+                            "text": {"type": "mrkdwn", "text": "*Reply sent to employee*"}
+                        },
+                        {
+                            "type": "section",
+                            "text": {"type": "mrkdwn", "text": f"> {preview}"}
+                        },
+                        {
+                            "type": "context",
+                            "elements": [{"type": "mrkdwn", "text": "🤫 Delivered anonymously · HushAsk"}]
+                        }
+                    ]
+                }
+            ]
+        )
+    except Exception as e:
+        logger.error(f"[reply_back] confirmation post failed: {e}")
 
 
 @app.action("reply_deliver_confirm")
@@ -1652,7 +1643,9 @@ def handle_reply_deliver_confirm(ack, body, client, respond):
         source_channel = ctx["source_channel"]
         clean_reply    = ctx["clean_reply"]
         msg_id         = ctx.get("msg_id")
-        _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
+        triage_channel = ctx.get("triage_channel", "")
+        thread_ts_val  = ctx.get("thread_ts", "")
+        _deliver_reply_dm(client, source_channel, clean_reply, msg_id, triage_channel, thread_ts_val)
         # Remove the ephemeral prompt via respond (chat_delete silently fails for ephemerals)
         respond(delete_original=True)
     except Exception as e:
@@ -1668,6 +1661,110 @@ def handle_reply_deliver_cancel(ack, body, client, respond):
         respond(delete_original=True)
     except Exception as e:
         print(f"[reply_deliver_cancel] Error: {e}")
+
+
+# Action IDs: reply_to_employee_btn
+@app.action("reply_to_employee_btn")
+def handle_reply_btn(ack, body, client, logger):
+    ack()
+    value = body["actions"][0]["value"]
+    try:
+        thread_ts, channel_id = value.rsplit("|", 1)
+    except ValueError:
+        logger.error(f"[reply_btn] invalid value format: {value}")
+        return
+
+    trigger_id = body.get("trigger_id")
+    if not trigger_id:
+        logger.error("[reply_btn] no trigger_id in body")
+        return
+
+    try:
+        client.views_open(
+            trigger_id=trigger_id,
+            view={
+                "type": "modal",
+                "callback_id": "reply_to_employee_modal",
+                "private_metadata": json.dumps({"thread_ts": thread_ts, "channel_id": channel_id}),
+                "title": {"type": "plain_text", "text": "Reply to Employee", "emoji": False},
+                "submit": {"type": "plain_text", "text": "Send Reply", "emoji": False},
+                "close": {"type": "plain_text", "text": "Cancel", "emoji": False},
+                "blocks": [
+                    {
+                        "type": "context",
+                        "elements": [
+                            {
+                                "type": "mrkdwn",
+                                "text": "Your reply will be delivered anonymously. The employee will not know who sent it."
+                            }
+                        ]
+                    },
+                    {
+                        "type": "input",
+                        "block_id": "reply_input",
+                        "label": {"type": "plain_text", "text": "Your reply", "emoji": False},
+                        "element": {
+                            "type": "plain_text_input",
+                            "action_id": "reply_text",
+                            "multiline": True
+                        }
+                    }
+                ]
+            }
+        )
+    except Exception as e:
+        logger.error(f"[reply_btn] views_open failed: {e}")
+
+
+@app.view("reply_to_employee_modal")
+def handle_reply_modal(ack, body, client, logger):
+    ack()
+
+    try:
+        meta = json.loads(body["view"]["private_metadata"])
+        thread_ts = meta["thread_ts"]
+        channel_id = meta["channel_id"]
+    except Exception as e:
+        logger.error(f"[reply_modal] failed to parse private_metadata: {e}")
+        return
+
+    reply_text = (
+        body["view"]["state"]["values"]
+        .get("reply_input", {})
+        .get("reply_text", {})
+        .get("value", "")
+        or ""
+    ).strip()
+
+    if not reply_text:
+        return
+
+    team_id = body.get("team", {}).get("id", "") or body.get("team_id", "")
+
+    try:
+        routing = get_routing(team_id, thread_ts)
+    except Exception as e:
+        logger.error(f"[reply_modal] get_routing failed: {e}")
+        return
+
+    if not routing or not routing.get("source_channel"):
+        logger.warning(f"[reply_modal] no routing or source_channel for thread_ts={thread_ts}")
+        return
+
+    source_channel = routing["source_channel"]
+
+    # Strip mentions
+    clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
+    clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
+
+    # Look up msg_id for mark_replied
+    try:
+        delivered = get_delivered_by_thread_ts(channel_id, thread_ts)
+        msg_id = delivered["id"] if delivered else None
+    except Exception:
+        msg_id = None
+
+    _deliver_reply_dm(client, source_channel, clean_reply, msg_id, channel_id, thread_ts)
 
 
 @app.command("/ha")
@@ -1756,7 +1853,7 @@ def _do_route(ack, body, client, route_type):
         # Post to triage channel first to capture thread_ts
         triage_result = client.chat_postMessage(
             channel=target,
-            blocks=triage_blocks(message, label, 0, show_notion),
+            blocks=triage_blocks(message, label, 0, show_notion, "", target),
             text="Anonymous message via HushAsk"
         )
         triage_ts = triage_result.get("ts")
@@ -1830,7 +1927,7 @@ def _do_route(ack, body, client, route_type):
             try:
                 client.chat_update(
                     channel=target, ts=triage_ts,
-                    blocks=triage_blocks(message, label, msg_id, show_notion) + close_blocks,
+                    blocks=triage_blocks(message, label, msg_id, show_notion, triage_ts, target) + close_blocks,
                     text="Anonymous message via HushAsk"
                 )
             except Exception as upd_e:
