@@ -783,9 +783,8 @@ ADMIN_SETUP_HOME = {
 }
 
 # STATE 2 — Standard User
-STANDARD_HOME = {
-    "type": "home",
-    "blocks": [
+def build_standard_home(is_admin: bool = False) -> dict:
+    blocks = [
         {
             "type": "header",
             "text": {"type": "plain_text", "text": "HushAsk", "emoji": False}
@@ -796,7 +795,10 @@ STANDARD_HOME = {
         },
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "*How it works:*\n1. Send a DM to this bot with your question or feedback\n2. Select a route: Public Knowledge Base or Confidential HR\n3. A leader responds in the triage channel — you receive their reply anonymously"}
+            "text": {
+                "type": "mrkdwn",
+                "text": "*How it works:*\n1. Send a DM to this bot with your question or feedback\n2. Select a route: Public Knowledge Base or Confidential HR\n3. A leader responds in the triage channel — you receive their reply anonymously"
+            }
         },
         {"type": "divider"},
         {
@@ -815,7 +817,33 @@ STANDARD_HOME = {
             "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored or logged."}]
         }
     ]
-}
+
+    if is_admin:
+        blocks += [
+            {"type": "divider"},
+            {
+                "type": "section",
+                "text": {"type": "mrkdwn", "text": "*Configuration*"}
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Update channel routing, Notion integration, or workspace settings."
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {"type": "plain_text", "text": "Open Setup Wizard", "emoji": False},
+                    "action_id": "open_wizard"
+                }
+            },
+            {
+                "type": "context",
+                "elements": [{"type": "mrkdwn", "text": "🤫 Settings changes take effect immediately."}]
+            }
+        ]
+
+    return {"type": "home", "blocks": blocks}
 
 # ── Events & Actions ──────────────────────────────────────────────────────────
 
@@ -869,7 +897,17 @@ def handle_app_home_opened(event, client, logger, body):
                     ]
                 }
         else:
-            view = STANDARD_HOME
+            # Configured workspace — check admin status for Settings section
+            try:
+                user_info = client.users_info(user=user_id)
+                is_admin = (
+                    user_info["user"].get("is_admin", False)
+                    or user_info["user"].get("is_owner", False)
+                )
+            except Exception:
+                is_admin = False
+
+            view = build_standard_home(is_admin=is_admin)
 
         try:
             result = client.views_publish(user_id=user_id, view=view)
