@@ -199,6 +199,16 @@ def get_active_thread_for_user(team_id: str, user_hash: str):
         return dict(row) if row else None
 
 
+def close_thread(team_id: str, thread_ts: str) -> None:
+    """Remove the active thread record, preventing further 2-way routing."""
+    with get_conn() as conn:
+        conn.execute(
+            "DELETE FROM routing_table WHERE team_id = ? AND thread_ts = ?",
+            (team_id, thread_ts)
+        )
+        conn.commit()
+
+
 def purge_expired_routing(days: int = 30) -> int:
     """Delete routing_table entries older than N days (default 30). Returns count deleted."""
     with get_conn() as conn:

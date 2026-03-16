@@ -56,7 +56,7 @@ from database import (
     save_routing, get_routing, get_active_thread_for_user,
     get_workspace_config, save_workspace_config, reset_workspace_config,
     save_workspace_notion, store_notion_state, get_team_from_state, delete_notion_state,
-    check_and_increment, get_usage,
+    check_and_increment, get_usage, close_thread,
 )
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -1668,6 +1668,147 @@ def handle_sync_notion(ack, body, client):
         except: pass
     else:
         client.chat_postEphemeral(channel=channel, user=user_id, text=f"⚠️ Notion sync failed: {err}")
+
+
+# ── Thread Closure (Phase 6.6) ────────────────────────────────────────────────
+
+def _get_source_channel(team_id: str, thread_ts: str, target_channel: str = None) -> str | None:
+    """Return the DM channel for the anonymous user associated with a triage thread.
+
+    Checks routing_table first (preferred). Falls back to delivered_messages if
+    routing_table.source_channel was NULLed by the post-delivery purge.
+    """
+    routing = get_routing(team_id, thread_ts)
+    if routing and routing.get("source_channel"):
+        return routing["source_channel"]
+    # Fallback — delivered_messages still holds source_channel for unread threads
+    if target_channel:
+        record = get_delivered_by_thread_ts(target_channel, thread_ts)
+        if record and record.get("source_channel"):
+            return record["source_channel"]
+    return None
+
+
+def _sync_thread_to_notion(client, team_id: str, channel: str, thread_ts: str, logger) -> None:
+    """Fetch the full triage thread and push Q&A to Notion.
+
+    Reuses push_to_notion() — the single source of Notion API logic.
+    The original anonymous submission is the question; non-bot replies form the answer.
+    """
+    config = get_workspace_config(team_id)
+    if not config or not config.get("notion_database_id") or not config.get("notion_api_key"):
+        logger.warning(f"[close] no Notion config for team {team_id}, skipping sync")
+        return
+
+    try:
+        result = client.conversations_replies(channel=channel, ts=thread_ts)
+        messages = result.get("messages", [])
+    except Exception as e:
+        logger.error(f"[close] conversations_replies failed: {e}")
+        return
+
+    if not messages:
+        return
+
+    question = messages[0].get("text", "")
+    replies  = [m.get("text", "") for m in messages[1:] if not m.get("bot_id")]
+    answer   = "\n".join(replies) if replies else "(no reply)"
+
+    # Compose a single text block for Notion: reuse push_to_notion (no duplication)
+    combined = f"Q: {question}\n\nA: {answer}"
+    ok, err = push_to_notion(config["notion_api_key"], config["notion_database_id"], combined, "public")
+    if ok:
+        logger.info(f"[close] Notion sync succeeded for thread {thread_ts}")
+    else:
+        logger.error(f"[close] Notion sync failed: {err}")
+
+
+def _do_thread_close(body, client, logger, sync_notion: bool) -> None:
+    """Core logic for both thread_close_only and thread_close_sync actions."""
+    try:
+        action       = body["actions"][0]
+        data         = json.loads(action["value"])
+        team_id      = data["team_id"]
+        thread_ts    = data["thread_ts"]
+        target_channel = data["target_channel"]
+        route_type   = data["route_type"]
+        msg_ts       = data["msg_ts"]
+        user_hash    = data["user_hash"]  # noqa: F841 — reserved for audit logging
+    except Exception as e:
+        logger.error(f"[close] failed to parse action value: {e}")
+        return
+
+    # 1. Delete active thread from DB (kills 2-way routing)
+    try:
+        close_thread(team_id, thread_ts)
+        logger.info(f"[close] thread {thread_ts} closed for team {team_id}")
+    except Exception as e:
+        logger.error(f"[close] DB close failed: {e}")
+
+    # 2. DM the anonymous user
+    try:
+        source = _get_source_channel(team_id, thread_ts, target_channel)
+        if source:
+            client.chat_postMessage(
+                channel=source,
+                text="This conversation has been closed by leadership. You may now send a new message to start a fresh thread."
+            )
+        else:
+            logger.warning(f"[close] no source_channel for thread {thread_ts} — DM skipped")
+    except Exception as e:
+        logger.error(f"[close] DM notification failed: {e}")
+
+    # 3. Optionally sync to Notion (public route only)
+    if sync_notion and route_type == "public":
+        try:
+            _sync_thread_to_notion(client, team_id, target_channel, thread_ts, logger)
+        except Exception as e:
+            logger.error(f"[close] Notion sync failed: {e}")
+
+    # 4. Update the triage message — replace action blocks with closed state
+    try:
+        result = client.conversations_replies(
+            channel=target_channel,
+            ts=thread_ts,
+            limit=1
+        )
+        original_msg = result["messages"][0] if result.get("messages") else None
+        if original_msg:
+            current_blocks = original_msg.get("blocks", [])
+            # Strip trailing action blocks (close button section)
+            clean_blocks = []
+            for block in current_blocks:
+                if block.get("type") == "actions":
+                    break  # stop at first actions block in the close section
+                clean_blocks.append(block)
+            # Remove trailing divider if present
+            while clean_blocks and clean_blocks[-1].get("type") == "divider":
+                clean_blocks.pop()
+            # Append closed state
+            clean_blocks += [
+                {"type": "divider"},
+                {"type": "section", "text": {"type": "mrkdwn", "text": "🔒 Conversation closed."}}
+            ]
+            client.chat_update(
+                channel=target_channel,
+                ts=msg_ts,
+                blocks=clean_blocks,
+                text="🔒 Conversation closed."
+            )
+    except Exception as e:
+        logger.error(f"[close] message update failed: {e}")
+
+
+@app.action("thread_close_only")
+def handle_thread_close_only(ack, body, client, logger):
+    ack()
+    _do_thread_close(body, client, logger, sync_notion=False)
+
+
+@app.action("thread_close_sync")
+def handle_thread_close_sync(ack, body, client, logger):
+    ack()
+    _do_thread_close(body, client, logger, sync_notion=True)
 
 
 # ── Bootstrap ─────────────────────────────────────────────────────────────────
