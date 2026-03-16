@@ -1331,6 +1331,28 @@ def on_dm(message, client, say):
     if not text:
         return
 
+    # Escape hatch — user can force-close their active thread
+    if text.lower().strip() in ("cancel", "end chat"):
+        active = get_active_thread_for_user(team_id, user_hash)
+        if active:
+            close_thread(team_id, active["thread_ts"])
+            try:
+                client.chat_postMessage(
+                    channel=message["channel"],
+                    text="Previous conversation closed. You may now start a new one."
+                )
+            except Exception as e:
+                logger.error(f"[escape] DM reply failed: {e}")
+        else:
+            try:
+                client.chat_postMessage(
+                    channel=message["channel"],
+                    text="No active conversation to close. Send a message to start a new one."
+                )
+            except Exception as e:
+                logger.error(f"[escape] DM reply failed: {e}")
+        return  # Do not proceed to ingestion or 2-way routing
+
     # 2-Way Chat: Check if this user has an active triage thread
     active_thread = get_active_thread_for_user(team_id, user_hash)
     if active_thread:
