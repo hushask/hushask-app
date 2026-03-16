@@ -1241,6 +1241,13 @@ def _wizard3_work(body, client):
 
         # ── Invite admin + HR leaders to HR channel ──────────────────────────
         # Only invite when we just auto-created channels (not on reuse or manual select)
+        if meta.get("auto_create") and pub_ch and not (existing and existing["public_channel"]):
+            try:
+                client.conversations_invite(channel=pub_ch, users=user_id)
+                print(f"[wizard3] invited admin to public channel {pub_ch}")
+            except Exception as e:
+                print(f"[wizard3] Failed to invite admin to public channel: {e}")
+
         if meta.get("auto_create") and hr_ch and not (existing and existing["hr_channel"]):
             try:
                 client.conversations_invite(channel=hr_ch, users=user_id)
