@@ -971,22 +971,30 @@ app.action("open_wizard")(_open_wizard)
 app.action("wizard_open")(_open_wizard)
 
 @app.action("home_send_dm_prompt")
-def handle_home_send_dm_prompt(ack, body, client):
+def handle_home_send_dm(ack, body, client, logger):
     ack()
     user_id = body["user"]["id"]
     try:
+        # Open (or retrieve existing) DM with the user
+        result = client.conversations_open(users=user_id)
+        dm_channel = result["channel"]["id"]
+        # Post the DM prompt
         client.chat_postMessage(
-            channel=user_id,
-            text="Send me your message and I will route it anonymously.",
+            channel=dm_channel,
+            text="Send your anonymous message and select a route when prompted.",
             blocks=[
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": "Send me your message and I will route it anonymously."}
+                    "text": {"type": "mrkdwn", "text": "Send your message below. When you're ready, type anything to get started."}
+                },
+                {
+                    "type": "context",
+                    "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored or logged."}]
                 }
             ]
         )
     except Exception as e:
-        logger.error(f"[home_prompt] Failed to send DM prompt: {e}")
+        logger.error(f"[home_cta] failed to open DM: {e}")
 
 @app.action("reset_config")
 def handle_reset(ack, body, client):
@@ -1504,38 +1512,32 @@ def handle_reply_deliver_cancel(ack, body, client, respond):
 
 
 @app.command("/ha")
-def handle_ha_command(ack, body, client):
-    """Entry point for /ha slash command.
-    - No text: open the setup wizard (admin) or show routing prompt (user)
-    - With text: route the text as an anonymous message
+def handle_ha_command(ack, body, client, logger):
+    """Entry point for /ha slash command — DM-first UX.
+    Redirects the user to their HushAsk DM with an anonymous message prompt.
+    NOTE: /ha must be registered in the Slack app manifest by the workspace admin.
     """
-    ack()
+    ack()  # Must ack within 3 seconds
     user_id = body["user_id"]
-    team_id = body["team_id"]
-    text    = (body.get("text") or "").strip()
-    print(f"[/ha] user={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} team={team_id} text={repr(text)}")
-
-    config      = get_workspace_config(team_id)
-    installer_id = config["installer_id"] if config else None
-
-    if not text:
-        # No text — open wizard for admin/installer, routing hint for everyone else
-        if is_admin(client, user_id) or user_id == installer_id:
-            _open_wizard(ack=lambda **_: None, body=body, client=client)
-        else:
-            dm = client.conversations_open(users=user_id)["channel"]["id"]
-            client.chat_postMessage(
-                channel=dm,
-                text="DM me your message to route it anonymously.",
-                blocks=[
-                    {"type": "section", "text": {"type": "mrkdwn",
-                     "text": "DM me your message to route it anonymously, or use `/ha your message` inline."}},
-                ]
-            )
-    else:
-        # Text provided — route it as an anonymous message
-        dm = client.conversations_open(users=user_id)["channel"]["id"]
-        handle_incoming(client, team_id, user_id, dm, text)
+    try:
+        result = client.conversations_open(users=user_id)
+        dm_channel = result["channel"]["id"]
+        client.chat_postMessage(
+            channel=dm_channel,
+            text="Send your anonymous message and select a route when prompted.",
+            blocks=[
+                {
+                    "type": "section",
+                    "text": {"type": "mrkdwn", "text": "Send your message below. When you're ready, type anything to get started."}
+                },
+                {
+                    "type": "context",
+                    "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored or logged."}]
+                }
+            ]
+        )
+    except Exception as e:
+        logger.error(f"[/ha] failed to open DM: {e}")
 
 
 # ── Routing actions ───────────────────────────────────────────────────────────
@@ -1804,7 +1806,7 @@ def _do_thread_close(body, client, logger, sync_notion: bool) -> None:
         if source:
             client.chat_postMessage(
                 channel=source,
-                text="This conversation has been closed by leadership. You may now send a new message to start a fresh thread."
+                text="This conversation has been closed. Your next message will start a new conversation."
             )
         else:
             logger.warning(f"[close] no source_channel for thread {thread_ts} — DM skipped")
