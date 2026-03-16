@@ -480,7 +480,7 @@ def triage_blocks(message, label, msg_id, has_notion):
     if has_notion:
         blocks.append({"type":"actions","elements":[{"type":"button","action_id":"sync_notion","text":{"type":"plain_text","text":"📄 Sync to Notion","emoji":True},"value":str(msg_id)}]})
     blocks.append({"type":"context","elements":[{"type":"mrkdwn","text":"🔒 Anonymous · HushAsk"}]})
-    blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": "👉 Reply directly in this thread to respond anonymously to the sender."}]})
+    blocks.append({"type": "context", "elements": [{"type": "mrkdwn", "text": "👉 *Internal Thread* — Discuss the case here. To reply to the sender, hover over your final message, click ··· and select *Reply to Employee*."}]})
     return blocks
 
 def limit_blocks(usage, team_id=""):
@@ -1513,105 +1513,112 @@ def handle_message(message, client, body, say):
         # No active thread — treat as new submission
         handle_incoming(client, team_id, user_id, message["channel"], text)
 
-    elif thread_ts and thread_ts != ts:
-        # ── Thread reply in a channel ─────────────────────────────────────────
-        # Could be a reply to a triage post — check if it's a known triage channel
-        channel    = message.get("channel")
-        reply_text = (message.get("text") or "").strip()
-        if not reply_text:
-            return
+    # else: top-level channel message or non-DM thread reply — ignore
 
-        # ── Triage channel scoping ────────────────────────────────────────────
-        # Only process replies in the configured triage channels for this workspace.
+@app.shortcut("reply_to_employee")
+def handle_reply_shortcut(ack, body, client, logger):
+    """Message shortcut: admin selects a thread message → DMs it to the anonymous employee."""
+    ack()
+
+    msg = body.get("message", {})
+    channel_id = body.get("channel", {}).get("id", "")
+    team_id = body.get("team", {}).get("id", "") or body.get("team_id", "")
+
+    # thread_ts is the parent message ts. If admin clicks a threaded reply, thread_ts is set.
+    # If they click the parent triage post itself, use ts as thread_ts.
+    thread_ts = msg.get("thread_ts") or msg.get("ts", "")
+    reply_text = (msg.get("text") or "").strip()
+
+    if not reply_text:
+        logger.warning("[shortcut] reply_to_employee triggered with empty message text")
+        return
+
+    if not thread_ts:
+        logger.warning("[shortcut] reply_to_employee: could not determine thread_ts")
+        return
+
+    # Look up the routing record to find the employee's DM channel
+    try:
+        routing = get_routing(team_id, thread_ts)
+    except Exception as e:
+        logger.error(f"[shortcut] get_routing failed: {e}")
+        return
+
+    if not routing:
+        logger.warning(f"[shortcut] no routing record for thread_ts={thread_ts}")
+        # Post ephemeral to the triggering admin
         try:
-            ws_config = get_workspace_config(team_id)
-        except Exception as e:
-            print(f"[reply_back] Could not fetch workspace config for {team_id}: {e}")
-            return
+            client.chat_postEphemeral(
+                channel=channel_id,
+                user=body["user"]["id"],
+                text="No active anonymous session found for this thread."
+            )
+        except Exception:
+            pass
+        return
 
-        if not ws_config:
-            return  # Workspace not configured
-
-        triage_channels = {ws_config.get("public_channel"), ws_config.get("hr_channel")} - {None, ""}
-        if channel not in triage_channels:
-            return  # Not a triage channel — ignore
-
-        # ── Identity Vault lookup ─────────────────────────────────────────────
+    source_channel = routing.get("source_channel")
+    if not source_channel:
+        logger.warning(f"[shortcut] routing record exists but source_channel is NULL for thread_ts={thread_ts}")
         try:
-            routing = get_routing(team_id, thread_ts)
-            if routing:
-                source_channel = routing["source_channel"]
-                # Also fetch delivered record so we can call mark_replied
-                delivered_record = get_delivered_by_thread_ts(channel, thread_ts)
-                msg_id = delivered_record["id"] if delivered_record else None
-            else:
-                # Fallback: legacy delivered_messages lookup (for records before Identity Vault)
-                record = get_delivered_by_thread_ts(channel, thread_ts)
-                if not record:
-                    return  # Not a tracked triage thread
-                source_channel = record["source_channel"]
-                msg_id         = record["id"]
+            client.chat_postEphemeral(
+                channel=channel_id,
+                user=body["user"]["id"],
+                text="This conversation has been closed. The employee's channel is no longer available."
+            )
+        except Exception:
+            pass
+        return
 
-        except Exception as e:
-            import traceback
-            print(f"[reply_back] DB lookup error: {type(e).__name__}: {e}")
-            print(traceback.format_exc())
-            return
+    # Strip Slack mentions for privacy
+    clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
+    clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
 
-        if not source_channel:
-            print(f"[reply_back] msg_id={msg_id} has no source_channel — cannot DM")
-            return
-
-        # Strip any Slack user/channel mentions from reply text for extra privacy
-        clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
-        clean_reply = re.sub(r"<#[A-Z0-9]+\|?[^>]*>", "[a channel]", clean_reply)
-
-        # ── Safety Filter — Name Detection ────────────────────────────────────
-        replier_id = message.get("user", "")
+    # Deliver to employee DM
+    try:
+        client.chat_postMessage(
+            channel=source_channel,
+            text=f"A reply to your anonymous message:\n\n>{clean_reply}",
+            blocks=[
+                {"type": "section", "text": {"type": "mrkdwn",
+                 "text": f"💬 *A reply to your anonymous message:*\n\n>{clean_reply}"}},
+                {"type": "context", "elements": [
+                    {"type": "mrkdwn", "text": "🔒 Responder identity protected · HushAsk"}
+                ]}
+            ]
+        )
+        logger.info(f"[shortcut] reply delivered to {source_channel} for thread_ts={thread_ts}")
+    except Exception as e:
+        logger.error(f"[shortcut] DM delivery failed: {e}")
         try:
-            workspace_names = get_workspace_display_names(client, team_id)
-            normalized_reply = normalize_for_name_check(clean_reply)
-            words = [w for w in normalized_reply.split() if len(w) >= 3]
-            name_hit = next((w for w in words if w in workspace_names), None)
-        except Exception as e:
-            name_hit = None
+            client.chat_postEphemeral(
+                channel=channel_id,
+                user=body["user"]["id"],
+                text="Failed to deliver your reply. Please try again."
+            )
+        except Exception:
+            pass
+        return
 
-        if name_hit:
-            # Possible name detected — ask the replier before delivering
-            ctx = json.dumps({
-                "source_channel": source_channel,
-                "clean_reply":    clean_reply,
-                "msg_id":         msg_id,
-            })
-            try:
-                client.chat_postEphemeral(
-                    channel=channel,
-                    user=replier_id,
-                    text="⚠️ Identity Risk: Your reply may contain a name. Deliver anyway?",
-                    blocks=[
-                        {"type": "section", "text": {"type": "mrkdwn",
-                         "text": "⚠️ *Identity Risk*: Your reply may contain a name. Deliver anyway?"}},
-                        {"type": "actions", "elements": [
-                            {"type": "button", "action_id": "reply_deliver_confirm",
-                             "style": "danger",
-                             "text": {"type": "plain_text", "text": "Deliver", "emoji": True},
-                             "value": ctx},
-                            {"type": "button", "action_id": "reply_deliver_cancel",
-                             "text": {"type": "plain_text", "text": "Cancel", "emoji": True},
-                             "value": ctx},
-                        ]},
-                    ]
-                )
-            except Exception as e:
-                print(f"[reply_back] Failed to post safety ephemeral: {e}")
-            return  # Hold delivery pending leader's choice
+    # Post confirmation thread reply in triage channel
+    preview = clean_reply[:60] + ("…" if len(clean_reply) > 60 else "")
+    try:
+        client.chat_postMessage(
+            channel=channel_id,
+            thread_ts=thread_ts,
+            text=f"✅ Sent to employee: \"{preview}\""
+        )
+    except Exception as e:
+        logger.error(f"[shortcut] confirmation post failed: {e}")
 
-        # ── Deliver immediately ───────────────────────────────────────────────
-        try:
-            _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
-        except Exception as e:
-            print(f"[reply_back] Failed to DM reply for msg_id={msg_id}: {e}")
-    # else: top-level channel message — ignore
+    # Mark the delivered message as replied (uses existing msg lookup)
+    try:
+        delivered = get_delivered_by_thread_ts(channel_id, thread_ts)
+        if delivered:
+            mark_replied(delivered["id"])
+    except Exception as e:
+        logger.error(f"[shortcut] mark_replied failed: {e}")
+
 
 @app.event("app_mention")
 def on_mention(event, client):
