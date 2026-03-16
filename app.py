@@ -1598,16 +1598,69 @@ def _do_route(ack, body, client, route_type):
                         (team_id, thread_ts, user_hash, source_channel)
                     VALUES (?, ?, ?, ?)
                 """, (team_id, triage_ts, user_hash, src))
-        # Update the triage post with the correct msg_id (for Notion sync button)
-        if show_notion and triage_ts:
+        # Update the triage post with correct msg_id + close blocks
+        if triage_ts:
+            close_value = json.dumps({
+                "user_hash": user_hash,
+                "thread_ts": triage_ts,
+                "team_id": team_id,
+                "target_channel": target,
+                "route_type": route_type,
+                "msg_ts": triage_ts
+            })
+            if route_type == "public":
+                close_blocks = [
+                    {"type": "divider"},
+                    {
+                        "type": "actions",
+                        "elements": [
+                            {
+                                "type": "button",
+                                "action_id": "thread_close_sync",
+                                "style": "primary",
+                                "text": {"type": "plain_text", "text": "Close & Sync to Notion"},
+                                "value": close_value
+                            },
+                            {
+                                "type": "button",
+                                "action_id": "thread_close_only",
+                                "text": {"type": "plain_text", "text": "Close Only"},
+                                "value": close_value
+                            }
+                        ]
+                    },
+                    {
+                        "type": "context",
+                        "elements": [{"type": "mrkdwn", "text": "🤫 Closing this thread will notify the anonymous sender."}]
+                    }
+                ]
+            else:  # hr
+                close_blocks = [
+                    {"type": "divider"},
+                    {
+                        "type": "actions",
+                        "elements": [
+                            {
+                                "type": "button",
+                                "action_id": "thread_close_only",
+                                "text": {"type": "plain_text", "text": "Close Conversation"},
+                                "value": close_value
+                            }
+                        ]
+                    },
+                    {
+                        "type": "context",
+                        "elements": [{"type": "mrkdwn", "text": "🤫 Closing this thread will notify the anonymous sender."}]
+                    }
+                ]
             try:
                 client.chat_update(
                     channel=target, ts=triage_ts,
-                    blocks=triage_blocks(message, label, msg_id, show_notion),
+                    blocks=triage_blocks(message, label, msg_id, show_notion) + close_blocks,
                     text="Anonymous message via HushAsk"
                 )
             except Exception as upd_e:
-                print(f"[route_{route_type}] triage update error: {upd_e}")
+                logger.error(f"[route] failed to append close block: {upd_e}")
         # pending already removed by claim_pending — no delete_pending needed
         if msg_ts:
             client.chat_update(channel=src, ts=msg_ts, blocks=confirmed_blocks(conf), text="Delivered.")
