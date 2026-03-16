@@ -1561,6 +1561,8 @@ def on_triage_reply(event, client, body):
                or body.get("team", {}).get("id")
                or event.get("team", ""))
 
+    print(f"[triage_reply] received: channel={channel}, thread_ts={thread_ts}, ts={ts}")
+
     # ── Triage channel scoping ────────────────────────────────────────────────
     # Only process replies in the configured triage channels for this workspace.
     try:
@@ -1573,6 +1575,7 @@ def on_triage_reply(event, client, body):
         return  # Workspace not configured
 
     triage_channels = {ws_config.get("public_channel"), ws_config.get("hr_channel")} - {None, ""}
+    print(f"[triage_reply] triage_channels={triage_channels}, channel in set={channel in triage_channels}")
     if channel not in triage_channels:
         return  # Not a triage channel — ignore
 
@@ -1591,8 +1594,11 @@ def on_triage_reply(event, client, body):
                 return  # Not a tracked triage thread
             source_channel = record["source_channel"]
             msg_id         = record["id"]
+        print(f"[triage_reply] routing={routing}, source_channel={source_channel}")
     except Exception as e:
-        print(f"[reply_back] DB lookup error: {e}")
+        import traceback
+        print(f"[reply_back] DB lookup error: {type(e).__name__}: {e}")
+        print(traceback.format_exc())
         return
 
     if not source_channel:
@@ -1647,6 +1653,7 @@ def on_triage_reply(event, client, body):
 
     # ── Deliver immediately ───────────────────────────────────────────────────
     try:
+        print(f"[triage_reply] sending DM to source_channel={source_channel}, reply={clean_reply[:50]!r}")
         _deliver_reply_dm(client, source_channel, clean_reply, msg_id)
     except Exception as e:
         print(f"[reply_back] Failed to DM reply for msg_id={msg_id}: {e}")
@@ -1769,7 +1776,7 @@ def _do_route(ack, body, client, route_type):
             text="Anonymous message via HushAsk"
         )
         triage_ts = triage_result.get("ts")
-        # Atomic transaction — both records visible at once, race window closed
+        # Atomic transaction — delivered_messages insert
         with get_conn() as conn:
             cur = conn.execute("""
                 INSERT INTO delivered_messages
@@ -1777,12 +1784,10 @@ def _do_route(ack, body, client, route_type):
                 VALUES (?, ?, ?, ?, ?, ?, ?)
             """, (team_id, target, route_type, message, user_hash, src, triage_ts))
             msg_id = cur.lastrowid
-            if triage_ts:
-                conn.execute("""
-                    INSERT OR IGNORE INTO routing_table
-                        (team_id, thread_ts, user_hash, source_channel)
-                    VALUES (?, ?, ?, ?)
-                """, (team_id, triage_ts, user_hash, src))
+        # Save routing OUTSIDE conn block — save_routing() manages its own connection
+        if triage_ts:
+            save_routing(team_id, triage_ts, user_hash, src)
+            logger.info(f"[route] routing_table saved: team={team_id}, thread_ts={triage_ts}, src={src}")
         # Update the triage post with correct msg_id + close blocks
         if triage_ts:
             close_value = json.dumps({
