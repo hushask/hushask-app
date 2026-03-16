@@ -811,25 +811,7 @@ ADMIN_SETUP_HOME = {
         },
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "Configure your routing channels to activate HushAsk."}
-        },
-        {"type": "divider"},
-        {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Step 1 — Public Triage Channel*\nSelect the channel where public questions will be routed."},
-            "accessory": {
-                "type": "button",
-                "text": {"type": "plain_text", "text": "Select Channel", "emoji": False},
-                "action_id": "wizard_open"
-            }
-        },
-        {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Step 2 — Confidential HR Channel*\nSelect the channel for sensitive and HR-related messages."}
-        },
-        {
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Step 3 — Notion Sync (optional)*\nConnect a Notion database to archive public Q&A pairs automatically."}
+            "text": {"type": "mrkdwn", "text": "Configure your routing channels to activate HushAsk for your team."}
         },
         {"type": "divider"},
         {
@@ -837,8 +819,8 @@ ADMIN_SETUP_HOME = {
             "elements": [
                 {
                     "type": "button",
-                    "text": {"type": "plain_text", "text": "Open Setup Wizard", "emoji": False},
-                    "action_id": "open_wizard",
+                    "text": {"type": "plain_text", "text": "Start Setup", "emoji": False},
+                    "action_id": "start_setup",
                     "style": "primary"
                 }
             ]
@@ -1170,6 +1152,7 @@ def handle_reset(ack, body, client):
 
 @app.action("auto_create_check")
 def handle_auto_toggle(ack, body, client, logger):
+    print("=== CHECKBOX HANDLER CALLED ===")
     ack()
     view = body["view"]
     view_id = view["id"]
