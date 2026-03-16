@@ -1853,7 +1853,10 @@ def _do_route(ack, body, client, route_type):
         # Post to triage channel first to capture thread_ts
         triage_result = client.chat_postMessage(
             channel=target,
-            blocks=triage_blocks(message, label, "", route_type, "", target),
+            blocks=[
+                {"type": "section", "text": {"type": "mrkdwn", "text": f"{label}\n\n{message}"}},
+                {"type": "context", "elements": [{"type": "mrkdwn", "text": "🔒 Anonymous · HushAsk"}]}
+            ],
             text="Anonymous message via HushAsk"
         )
         triage_ts = triage_result.get("ts")
