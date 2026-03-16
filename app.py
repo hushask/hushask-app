@@ -644,7 +644,7 @@ def wizard_step2_modal(auto_create=True, meta=None):
         {"type":"header","text":{"type":"plain_text","text":"Triage Channels"}},
         {"type":"section","text":{"type":"mrkdwn","text":"Two channels required: *Public* (general) and *Private* (HR/confidential)."}},
         {"type":"divider"},
-        {"type":"input","block_id":"block_auto_create","label":{"type":"plain_text","text":"Channel setup"},"optional":True,"element":auto_el},
+        {"type":"input","block_id":"block_auto_create","dispatch_action":True,"label":{"type":"plain_text","text":"Channel setup"},"optional":True,"element":auto_el},
     ]
     if auto_create:
         blocks.append({"type":"section","text":{"type":"mrkdwn","text":"`#hush-public` and `#hush-hr` will be created if they don't exist. Uncheck to select existing channels."}})
@@ -1020,85 +1020,77 @@ def handle_reset(ack, body, client):
 @app.action("auto_create_check")
 def handle_auto_toggle(ack, body, client, logger):
     ack()
-    logger.info(f"[wizard] auto_create_check fired — selected_options: {body['actions'][0].get('selected_options', [])}")
-    selected    = body["actions"][0].get("selected_options", [])
-    auto_create = any(o["value"] == "auto_create" for o in selected)
-    meta        = json.loads(body["view"].get("private_metadata", "{}"))
-    view_id     = body["view"]["id"]
-    view_hash   = body["view"]["hash"]
+    view = body["view"]
+    view_id = view["id"]
+    view_hash = view["hash"]
+    is_checked = bool(body["actions"][0].get("selected_options"))
 
-    if not auto_create:
-        # Build manual-selection view inline — avoids bad filter values from helper.
-        # Slack requires "public_channel" / "private_channel" (not "public" / "private").
-        existing      = body["view"]["blocks"]
-        checkbox_idx  = next(
-            (i for i, b in enumerate(existing)
-             if b.get("type") == "input" and "auto_create" in str(b)),
-            len(existing) - 1
-        )
-        base_blocks = existing[:checkbox_idx + 1]
+    logger.info(f"[wizard] auto_create_check fired — checked={is_checked}, view_id={view_id}")
 
-        selector_blocks = [
+    try:
+        meta = json.loads(view.get("private_metadata", "{}"))
+    except Exception:
+        meta = {}
+
+    if is_checked:
+        # Restore the original wizard step 2 modal (auto-create mode)
+        updated_view = wizard_step2_modal(auto_create=True, meta=meta)
+    else:
+        # Unchecked — inject channel pickers inline
+        current_blocks = view.get("blocks", [])
+
+        channel_picker_blocks = [
             {
                 "type": "input",
                 "block_id": "public_channel_select",
-                "label": {"type": "plain_text", "text": "Public Triage Channel", "emoji": False},
+                "label": {"type": "plain_text", "text": "Public Channel", "emoji": False},
                 "element": {
                     "type": "conversations_select",
                     "action_id": "public_channel_input",
-                    "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
-                    "filter": {"include": ["public_channel"], "exclude_bot_users": True}
+                    "placeholder": {"type": "plain_text", "text": "Select a public channel"},
+                    "filter": {"include": ["public_channel"]}
                 }
             },
             {
                 "type": "input",
                 "block_id": "hr_channel_select",
-                "label": {"type": "plain_text", "text": "Confidential HR Channel", "emoji": False},
+                "label": {"type": "plain_text", "text": "HR / Confidential Channel", "emoji": False},
                 "element": {
                     "type": "conversations_select",
                     "action_id": "hr_channel_input",
-                    "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
-                    "filter": {"include": ["private_channel"], "exclude_bot_users": True}
+                    "placeholder": {"type": "plain_text", "text": "Select a private channel"},
+                    "filter": {"include": ["private_channel"]}
                 }
             }
         ]
 
-        # Preserve the HR leaders block if it exists in the current view
-        hr_leaders_block = next(
-            (b for b in existing if b.get("block_id") == "hr_leaders"),
-            None
-        )
+        # Keep all non-channel-picker blocks (including checkbox + hr_leaders) + add pickers
+        base_blocks = [b for b in current_blocks if b.get("block_id") not in ("public_channel_select", "hr_channel_select")]
+        new_blocks = base_blocks + channel_picker_blocks
 
         updated_view = {
             "type": "modal",
-            "callback_id": body["view"]["callback_id"],
-            "title": body["view"]["title"],
-            "submit": body["view"]["submit"],
-            "close": body["view"].get("close"),
-            "private_metadata": body["view"].get("private_metadata", "{}"),
-            "blocks": base_blocks + selector_blocks + ([hr_leaders_block] if hr_leaders_block else [])
+            "callback_id": view.get("callback_id", "wizard_step2"),
+            "title": view.get("title", {"type": "plain_text", "text": "Setup HushAsk"}),
+            "submit": view.get("submit", {"type": "plain_text", "text": "Next"}),
+            "close": view.get("close", {"type": "plain_text", "text": "Cancel"}),
+            "private_metadata": view.get("private_metadata", "{}"),
+            "blocks": new_blocks
         }
-        logger.info(f"[wizard] views_update blocks count: {len(updated_view['blocks'])}, types: {[b['type'] for b in updated_view['blocks']]}")
-        try:
-            client.views_update(view_id=view_id, hash=view_hash, view=updated_view)
-        except Exception as e:
-            logger.error(f"[wizard] views_update FAILED: {type(e).__name__}: {e}")
-            if hasattr(e, 'response'):
-                logger.error(f"[wizard] Slack response: {e.response}")
-            raise
-    else:
-        # Restore original view (auto-create re-checked)
-        try:
-            client.views_update(
-                view_id=view_id,
-                hash=view_hash,
-                view=wizard_step2_modal(auto_create=True, meta=meta),
-            )
-        except Exception as e:
-            logger.error(f"[wizard] views_update restore FAILED: {type(e).__name__}: {e}")
-            if hasattr(e, 'response'):
-                logger.error(f"[wizard] Slack response: {e.response}")
-            raise
+
+    try:
+        logger.info(f"[wizard] calling views_update — block count: {len(updated_view.get('blocks', []))}")
+        client.views_update(
+            view_id=view_id,
+            hash=view_hash,
+            view=updated_view
+        )
+        logger.info(f"[wizard] views_update succeeded")
+    except Exception as e:
+        logger.error(f"[wizard] views_update FAILED: {type(e).__name__}: {e}")
+        if hasattr(e, 'response'):
+            logger.error(f"[wizard] Slack error response: {e.response}")
+        raise
 
 @app.action("notion_oauth_click")
 def handle_notion_oauth_click(ack): ack()
