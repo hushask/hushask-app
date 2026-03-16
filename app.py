@@ -981,15 +981,30 @@ def handle_home_send_dm(ack, body, client, logger):
         # Post the DM prompt
         client.chat_postMessage(
             channel=dm_channel,
-            text="Send your anonymous message and select a route when prompted.",
+            text="What would you like to share? Type your message and send it here.",
             blocks=[
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": "Send your message below. When you're ready, type anything to get started."}
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "What would you like to share?"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "Type your message and send it here. Once received, you will select a route — public knowledge base or confidential HR."
+                    }
                 },
                 {
                     "type": "context",
-                    "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored or logged."}]
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": "🤫 Your identity is never stored or logged."
+                        }
+                    ]
                 }
             ]
         )
@@ -1524,15 +1539,30 @@ def handle_ha_command(ack, body, client, logger):
         dm_channel = result["channel"]["id"]
         client.chat_postMessage(
             channel=dm_channel,
-            text="Send your anonymous message and select a route when prompted.",
+            text="What would you like to share? Type your message and send it here.",
             blocks=[
                 {
                     "type": "section",
-                    "text": {"type": "mrkdwn", "text": "Send your message below. When you're ready, type anything to get started."}
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "What would you like to share?"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "Type your message and send it here. Once received, you will select a route — public knowledge base or confidential HR."
+                    }
                 },
                 {
                     "type": "context",
-                    "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored or logged."}]
+                    "elements": [
+                        {
+                            "type": "mrkdwn",
+                            "text": "🤫 Your identity is never stored or logged."
+                        }
+                    ]
                 }
             ]
         )
