@@ -475,50 +475,62 @@ def route_confirmation_blocks(token: str, route_type: str, message: str) -> list
 def confirmed_blocks(label):
     return [{"type":"section","text":{"type":"mrkdwn","text":f"Sent. Routed to: *{label}*"}}]
 
-def triage_blocks(message, label, msg_id, has_notion, thread_ts, channel_id):
-    blocks = [
+def triage_blocks(message, label, close_value, route_type, thread_ts, channel_id):
+    reply_btn = {
+        "type": "button",
+        "action_id": "reply_to_employee_btn",
+        "text": {"type": "plain_text", "text": "Reply to Employee", "emoji": False},
+        "value": f"{thread_ts}|{channel_id}"
+    }
+    if route_type == "public":
+        action_elements = [
+            reply_btn,
+            {
+                "type": "button",
+                "action_id": "thread_close_sync",
+                "style": "primary",
+                "text": {"type": "plain_text", "text": "Close & Sync to Notion", "emoji": False},
+                "value": close_value
+            },
+            {
+                "type": "button",
+                "action_id": "thread_close_only",
+                "text": {"type": "plain_text", "text": "Close Only", "emoji": False},
+                "value": close_value
+            }
+        ]
+    else:  # hr
+        action_elements = [
+            reply_btn,
+            {
+                "type": "button",
+                "action_id": "thread_close_only",
+                "text": {"type": "plain_text", "text": "Close Conversation", "emoji": False},
+                "value": close_value
+            }
+        ]
+    return [
         {
             "type": "section",
             "text": {"type": "mrkdwn", "text": f"{label}\n\n{message}"}
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🔒 Anonymous · HushAsk"}]
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "👉 *Internal Thread* — Discuss the case here. To reply to the sender, click *Reply to Employee*."}]
+        },
+        {
+            "type": "actions",
+            "elements": action_elements
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🤫 Closing this thread will notify the anonymous sender · HushAsk"}]
         }
     ]
-    if has_notion:
-        blocks.append({
-            "type": "actions",
-            "elements": [
-                {
-                    "type": "button",
-                    "action_id": "sync_notion",
-                    "text": {"type": "plain_text", "text": "📄 Sync to Notion", "emoji": True},
-                    "value": str(msg_id)
-                }
-            ]
-        })
-    blocks.append({
-        "type": "context",
-        "elements": [{"type": "mrkdwn", "text": "🔒 Anonymous · HushAsk"}]
-    })
-    blocks.append({
-        "type": "actions",
-        "elements": [
-            {
-                "type": "button",
-                "action_id": "reply_to_employee_btn",
-                "text": {"type": "plain_text", "text": "Reply to Employee", "emoji": False},
-                "value": f"{thread_ts}|{channel_id}"
-            }
-        ]
-    })
-    blocks.append({
-        "type": "context",
-        "elements": [
-            {
-                "type": "mrkdwn",
-                "text": "🤫 Thread replies are internal only · Bot messages show the employee conversation · HushAsk"
-            }
-        ]
-    })
-    return blocks
 
 def limit_blocks(usage, team_id=""):
     url = upgrade_link(team_id) if team_id else UPGRADE_URL
@@ -1553,17 +1565,6 @@ def handle_message(message, client, body, say):
                                     "text": {"type": "mrkdwn", "text": f"> {text}"}
                                 },
                                 {
-                                    "type": "actions",
-                                    "elements": [
-                                        {
-                                            "type": "button",
-                                            "action_id": "reply_to_employee_btn",
-                                            "text": {"type": "plain_text", "text": "Reply to Employee", "emoji": False},
-                                            "value": f"{thread_ts}|{target_channel}"
-                                        }
-                                    ]
-                                },
-                                {
                                     "type": "context",
                                     "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]
                                 }
@@ -1837,8 +1838,7 @@ def _do_route(ack, body, client, route_type):
         return
 
     config     = get_workspace_config(team_id)
-    has_notion  = bool(config and config["notion_api_key"] and config["notion_database_id"])
-    show_notion = has_notion and (route_type == "public")  # HR never shows Notion button
+    has_notion  = bool(config and config["notion_api_key"] and config["notion_database_id"])  # noqa: F841 — reserved
 
     if route_type == "public":
         target = config["public_channel"] if (config and config["public_channel"]) else src
@@ -1853,7 +1853,7 @@ def _do_route(ack, body, client, route_type):
         # Post to triage channel first to capture thread_ts
         triage_result = client.chat_postMessage(
             channel=target,
-            blocks=triage_blocks(message, label, 0, show_notion, "", target),
+            blocks=triage_blocks(message, label, "", route_type, "", target),
             text="Anonymous message via HushAsk"
         )
         triage_ts = triage_result.get("ts")
@@ -1869,7 +1869,7 @@ def _do_route(ack, body, client, route_type):
         if triage_ts:
             save_routing(team_id, triage_ts, user_hash, src)
             logger.info(f"[route] routing_table saved: team={team_id}, thread_ts={triage_ts}, src={src}")
-        # Update the triage post with correct msg_id + close blocks
+        # Update the triage post with close controls
         if triage_ts:
             close_value = json.dumps({
                 "user_hash": user_hash,
@@ -1879,59 +1879,14 @@ def _do_route(ack, body, client, route_type):
                 "route_type": route_type,
                 "msg_ts": triage_ts
             })
-            if route_type == "public":
-                close_blocks = [
-                    {"type": "divider"},
-                    {
-                        "type": "actions",
-                        "elements": [
-                            {
-                                "type": "button",
-                                "action_id": "thread_close_sync",
-                                "style": "primary",
-                                "text": {"type": "plain_text", "text": "Close & Sync to Notion"},
-                                "value": close_value
-                            },
-                            {
-                                "type": "button",
-                                "action_id": "thread_close_only",
-                                "text": {"type": "plain_text", "text": "Close Only"},
-                                "value": close_value
-                            }
-                        ]
-                    },
-                    {
-                        "type": "context",
-                        "elements": [{"type": "mrkdwn", "text": "🤫 Closing this thread will notify the anonymous sender."}]
-                    }
-                ]
-            else:  # hr
-                close_blocks = [
-                    {"type": "divider"},
-                    {
-                        "type": "actions",
-                        "elements": [
-                            {
-                                "type": "button",
-                                "action_id": "thread_close_only",
-                                "text": {"type": "plain_text", "text": "Close Conversation"},
-                                "value": close_value
-                            }
-                        ]
-                    },
-                    {
-                        "type": "context",
-                        "elements": [{"type": "mrkdwn", "text": "🤫 Closing this thread will notify the anonymous sender."}]
-                    }
-                ]
             try:
                 client.chat_update(
                     channel=target, ts=triage_ts,
-                    blocks=triage_blocks(message, label, msg_id, show_notion, triage_ts, target) + close_blocks,
+                    blocks=triage_blocks(message, label, close_value, route_type, triage_ts, target),
                     text="Anonymous message via HushAsk"
                 )
             except Exception as upd_e:
-                logger.error(f"[route] failed to append close block: {upd_e}")
+                logger.error(f"[route] failed to update triage post: {upd_e}")
         # pending already removed by claim_pending — no delete_pending needed
         if msg_ts:
             client.chat_update(channel=src, ts=msg_ts, blocks=confirmed_blocks(conf), text="Delivered.")
