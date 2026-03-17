@@ -834,10 +834,13 @@ def settings_modal(config: dict) -> dict:
         "type": "conversations_select",
         "action_id": "hr_channel_setting_input",
         "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
-        "filter": {"include": ["private_channel"]},
+        "filter": {"include": ["private_channel", "mpim"]},
     }
     if cfg.get("hr_channel"):
-        hr_el["initial_conversation"] = cfg["hr_channel"]
+        try:
+            hr_el["initial_conversation"] = cfg["hr_channel"]
+        except Exception:
+            pass  # degrade gracefully if channel isn't accessible
 
     notion_connected = bool(cfg.get("notion_database_id"))
     notion_btn = {
@@ -848,6 +851,7 @@ def settings_modal(config: dict) -> dict:
             "text": "Disconnect Notion" if notion_connected else "Connect Notion",
             "emoji": False,
         },
+        "value": "notion_toggle",
     }
 
     blocks = [
@@ -1111,14 +1115,19 @@ def _open_wizard(ack, body, client, logger):
     ack()
     user_id = body["user"]["id"]
     team_id = body.get("team", {}).get("id") or body.get("team_id", "")
+    logger.info(f"[wizard] open_wizard fired: user={user_id}, team={team_id}, trigger_id_present={bool(body.get('trigger_id'))}")
     try:
         config = get_workspace_config(team_id) if team_id else None
+        logger.info(f"[wizard] config fetched: {config}")
+        view = settings_modal(config)
+        logger.info(f"[wizard] modal built successfully, opening...")
         client.views_open(
             trigger_id=body["trigger_id"],
-            view=settings_modal(config)
+            view=view
         )
+        logger.info(f"[wizard] views_open succeeded")
     except Exception as e:
-        logger.error(f"[settings] failed to open settings modal: {e}")
+        logger.error(f"[wizard] FAILED: {type(e).__name__}: {e}", exc_info=True)
 
 @app.view("workspace_settings")
 def handle_settings_submit(ack, body, view, client, logger):
