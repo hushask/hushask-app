@@ -524,10 +524,6 @@ def triage_blocks(message, label, close_value, route_type, thread_ts, channel_id
             "text": {"type": "mrkdwn", "text": f"{label}\n\n{message}"}
         },
         {
-            "type": "context",
-            "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]
-        },
-        {
             "type": "actions",
             "elements": action_elements
         },
