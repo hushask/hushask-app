@@ -968,7 +968,6 @@ def build_standard_home(is_admin: bool = False, config=None, team_id=None) -> di
                 "text": "*How it works:*\n1. Send a DM to this bot with your question or feedback\n2. Select a route: Public Knowledge Base or Confidential HR\n3. A leader responds in the triage channel — you receive their reply anonymously"
             }
         },
-        {"type": "divider"},
         {
             "type": "actions",
             "elements": [
@@ -1052,7 +1051,6 @@ def admin_settings_blocks(config, team_id):
             "text": {"type": "mrkdwn", "text": "HR / Confidential"},
             "accessory": hr_el,
         },
-        {"type": "divider"},
         {
             "type": "section",
             "text": {"type": "mrkdwn", "text": "*Notion integration*"},
