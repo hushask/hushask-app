@@ -84,6 +84,26 @@ def slack_options():
 
 # ── Notion OAuth ───────────────────────────────────────────────────────────────
 
+@web.route("/notion/connect")
+def notion_connect():
+    """OAuth kickoff — browser GET, no Slack headers required."""
+    team_id = request.args.get("team_id", "")
+    if not team_id or not NOTION_CLIENT_ID:
+        return "Missing configuration", 400
+    import secrets
+    from database import store_notion_state
+    state = secrets.token_urlsafe(32)
+    store_notion_state(state, team_id)
+    notion_auth_url = (
+        f"https://api.notion.com/v1/oauth/authorize"
+        f"?client_id={NOTION_CLIENT_ID}"
+        f"&response_type=code"
+        f"&owner=user"
+        f"&redirect_uri={NOTION_REDIRECT}"
+        f"&state={state}"
+    )
+    return redirect(notion_auth_url)
+
 @web.route("/notion/callback")
 def notion_callback():
     try:

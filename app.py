@@ -692,7 +692,7 @@ def publish_home(client, user_id, team_id):
     is_privileged = admin or user_id == installer_id or (installer_id is None and config is not None)
 
     if is_privileged or is_configured:
-        view = build_standard_home(is_admin=admin) if is_configured else home_unconfigured()
+        view = build_standard_home(is_admin=admin, config=config, team_id=team_id) if is_configured else home_unconfigured()
     else:
         view = home_welcome()
     client.views_publish(user_id=user_id, view=view)
@@ -924,7 +924,7 @@ ADMIN_SETUP_HOME = {
 }
 
 # STATE 2 — Standard User
-def build_standard_home(is_admin: bool = False) -> dict:
+def build_standard_home(is_admin: bool = False, config=None, team_id=None) -> dict:
     blocks = [
         {
             "type": "header",
@@ -959,19 +959,15 @@ def build_standard_home(is_admin: bool = False) -> dict:
         }
     ]
 
-    if is_admin:
+    if is_admin and config:
+        blocks += admin_settings_blocks(config, team_id or "")
+    elif is_admin:
+        # Fallback: no config yet, show wizard button
         blocks += [
             {"type": "divider"},
             {
                 "type": "section",
-                "text": {"type": "mrkdwn", "text": "*Configuration*"}
-            },
-            {
-                "type": "section",
-                "text": {
-                    "type": "mrkdwn",
-                    "text": "Update channel routing, Notion integration, or workspace settings."
-                },
+                "text": {"type": "mrkdwn", "text": "Update channel routing, Notion integration, or workspace settings."},
                 "accessory": {
                     "type": "button",
                     "text": {"type": "plain_text", "text": "Open Setup Wizard", "emoji": False},
@@ -985,6 +981,72 @@ def build_standard_home(is_admin: bool = False) -> dict:
         ]
 
     return {"type": "home", "blocks": blocks}
+
+
+def admin_settings_blocks(config, team_id):
+    """Inline settings blocks for the admin App Home section."""
+    cfg = config or {}
+    pub_ch = cfg.get("public_channel")
+    hr_ch = cfg.get("hr_channel")
+    notion_connected = bool(cfg.get("notion_database_id"))
+    base_url = os.environ.get("BASE_URL", "https://api.hushask.com")
+    notion_url = f"{base_url}/notion/connect?team_id={team_id}"
+
+    pub_el = {
+        "type": "conversations_select",
+        "action_id": "home_public_channel_select",
+        "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
+        "filter": {"include": ["public"]},
+    }
+    if pub_ch:
+        pub_el["initial_conversation"] = pub_ch
+
+    hr_el = {
+        "type": "conversations_select",
+        "action_id": "home_hr_channel_select",
+        "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
+        "filter": {"include": ["private"]},
+    }
+    if hr_ch:
+        hr_el["initial_conversation"] = hr_ch
+
+    notion_btn = {
+        "type": "button",
+        "action_id": "home_notion_disconnect" if notion_connected else "home_notion_connect",
+        "text": {
+            "type": "plain_text",
+            "text": "Disconnect Notion" if notion_connected else "Connect Notion",
+            "emoji": False,
+        },
+        "value": "disconnect" if notion_connected else "connect",
+    }
+    if not notion_connected:
+        notion_btn["url"] = notion_url
+
+    return [
+        {"type": "divider"},
+        {"type": "section", "text": {"type": "mrkdwn", "text": "*Configuration*"}},
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "Public Knowledge Base"},
+            "accessory": pub_el,
+        },
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "HR / Confidential"},
+            "accessory": hr_el,
+        },
+        {"type": "divider"},
+        {
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*Notion Integration*"},
+            "accessory": notion_btn,
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🤫 Channel changes apply immediately."}],
+        },
+    ]
 
 # ── Events & Actions ──────────────────────────────────────────────────────────
 
@@ -1268,6 +1330,83 @@ def handle_home_send_dm(ack, body, client, logger):
 @app.view("home_dm_sent_modal")
 def handle_home_dm_sent_modal(ack):
     ack()
+
+
+@app.action("home_public_channel_select")
+def handle_home_public_channel_select(ack, body, action, client, logger):
+    ack()
+    team_id = body.get("team", {}).get("id") or body.get("team_id", "")
+    user_id = body["user"]["id"]
+    selected = action.get("selected_conversation")
+    if selected and team_id:
+        try:
+            cfg = get_workspace_config(team_id) or {}
+            save_workspace_config(
+                team_id,
+                cfg.get("installer_id", ""),
+                selected,
+                cfg.get("hr_channel", ""),
+                cfg.get("notion_api_key"),
+                cfg.get("notion_database_id"),
+            )
+            logger.info(f"[home_settings] public channel updated to {selected}")
+        except Exception as e:
+            logger.error(f"[home_settings] public channel save failed: {e}")
+    try:
+        publish_home(client, user_id, team_id)
+    except Exception as e:
+        logger.error(f"[home_settings] publish_home after pub channel failed: {e}")
+
+
+@app.action("home_hr_channel_select")
+def handle_home_hr_channel_select(ack, body, action, client, logger):
+    ack()
+    team_id = body.get("team", {}).get("id") or body.get("team_id", "")
+    user_id = body["user"]["id"]
+    selected = action.get("selected_conversation")
+    if selected and team_id:
+        try:
+            cfg = get_workspace_config(team_id) or {}
+            save_workspace_config(
+                team_id,
+                cfg.get("installer_id", ""),
+                cfg.get("public_channel", ""),
+                selected,
+                cfg.get("notion_api_key"),
+                cfg.get("notion_database_id"),
+            )
+            logger.info(f"[home_settings] HR channel updated to {selected}")
+        except Exception as e:
+            logger.error(f"[home_settings] HR channel save failed: {e}")
+    try:
+        publish_home(client, user_id, team_id)
+    except Exception as e:
+        logger.error(f"[home_settings] publish_home after HR channel failed: {e}")
+
+
+@app.action("home_notion_connect")
+def handle_home_notion_connect(ack):
+    """URL button — Slack fires action on click; just ack."""
+    ack()
+
+
+@app.action("home_notion_disconnect")
+def handle_home_notion_disconnect(ack, body, client, logger):
+    ack()
+    team_id = body.get("team", {}).get("id") or body.get("team_id", "")
+    user_id = body["user"]["id"]
+    if team_id:
+        try:
+            from database import save_workspace_notion
+            save_workspace_notion(team_id, None, None)
+            logger.info(f"[home_settings] Notion disconnected for {team_id}")
+        except Exception as e:
+            logger.error(f"[home_settings] Notion disconnect failed: {e}")
+    try:
+        publish_home(client, user_id, team_id)
+    except Exception as e:
+        logger.error(f"[home_settings] publish_home after Notion disconnect failed: {e}")
+
 
 @app.action("reset_config")
 def handle_reset(ack, body, client):
