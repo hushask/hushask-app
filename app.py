@@ -377,7 +377,6 @@ def push_to_notion(token, database_id, message, route_type):
             "Name": {"title": [{"text": {"content": message[:80] + ("…" if len(message) > 80 else "")}}]},
             "Route": {"select": {"name": label}},
             "Status": {"select": {"name": "New"}},
-            "Synced At": {"date": {"start": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")}},
         },
         "children": [
             {"object":"block","type":"callout","callout":{"rich_text":[{"type":"text","text":{"content":f"Route: {label} · Sender identity protected 🔒"}}],"icon":{"emoji":"🔒"},"color":"gray_background"}},
@@ -391,11 +390,18 @@ def push_to_notion(token, database_id, message, route_type):
     for attempt in range(3):
         try:
             r = http.post("https://api.notion.com/v1/pages", json=payload, headers=headers, timeout=10)
+            print(f"[notion] push attempt {attempt+1}: HTTP {r.status_code} — {r.text[:300]}")
             if r.status_code == 200:
                 return True, None
+            if r.status_code == 400:
+                # Try with status type instead of select for Status field
+                if attempt == 0:
+                    payload["properties"]["Status"] = {"status": {"name": "In progress"}}
+                    continue
+                return False, r.json().get("message", f"Notion API 400: {r.text[:200]}")
             if r.status_code in (429, 500, 502, 503, 504):
                 last_err = f"HTTP {r.status_code}"
-                time.sleep(2 ** attempt)  # 1s, 2s, 4s
+                time.sleep(2 ** attempt)
                 continue
             return False, r.json().get("message", f"Notion API error: {r.status_code} {r.text[:200]}")
         except http.RequestException as e:
@@ -685,11 +691,30 @@ def publish_home(client, user_id, team_id):
     notion_db     = config["notion_database_id"]  if config else None
     is_configured = bool(pub_ch and hr_ch)
 
+    # ── Step 2b: also check Slack app installer from workspaces table ─────────
+    slack_installer_id = None
+    try:
+        from database import get_conn
+        with get_conn() as _conn:
+            row = _conn.execute(
+                "SELECT installer_user_id FROM workspaces WHERE team_id = ?", (team_id,)
+            ).fetchone()
+            if row:
+                slack_installer_id = row[0]
+    except Exception:
+        pass
+
+    is_privileged = (
+        admin
+        or user_id == installer_id
+        or user_id == slack_installer_id
+        or (installer_id is None and config is not None)
+    )
+
     print(f"[publish_home] build={BUILD_ID} user={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(user_id))} team={team_id} db={DB_PATH} | "
           f"configured={is_configured} pub={pub_ch} hr={hr_ch} "
-          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} installer={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(installer_id))}")
-
-    is_privileged = admin or user_id == installer_id or (installer_id is None and config is not None)
+          f"notion_key={bool(notion_key)} notion_db={bool(notion_db)} "
+          f"admin={admin} is_privileged={is_privileged} installer={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(installer_id))} slack_installer={re.sub(r'U[A-Z0-9]{8,11}', '[REDACTED_USER]', str(slack_installer_id))}")
 
     if is_privileged or is_configured:
         view = build_standard_home(is_admin=is_privileged, config=config, team_id=team_id) if is_configured else home_unconfigured()
@@ -961,24 +986,6 @@ def build_standard_home(is_admin: bool = False, config=None, team_id=None) -> di
 
     if is_admin and config:
         blocks += admin_settings_blocks(config, team_id or "")
-    elif is_admin:
-        # Fallback: no config yet, show wizard button
-        blocks += [
-            {"type": "divider"},
-            {
-                "type": "section",
-                "text": {"type": "mrkdwn", "text": "Update channel routing, Notion integration, or workspace settings."},
-                "accessory": {
-                    "type": "button",
-                    "text": {"type": "plain_text", "text": "Open Setup Wizard", "emoji": False},
-                    "action_id": "open_wizard"
-                }
-            },
-            {
-                "type": "context",
-                "elements": [{"type": "mrkdwn", "text": "🤫 Settings changes take effect immediately."}]
-            }
-        ]
 
     return {"type": "home", "blocks": blocks}
 
@@ -1340,14 +1347,15 @@ def handle_home_public_channel_select(ack, body, action, client, logger):
     selected = action.get("selected_conversation")
     if selected and team_id:
         try:
+            # Fresh read to avoid wiping concurrently-written values
             cfg = get_workspace_config(team_id) or {}
             save_workspace_config(
                 team_id,
-                cfg.get("installer_id", ""),
+                cfg.get("installer_id") or "",
                 selected,
-                cfg.get("hr_channel", ""),
-                cfg.get("notion_api_key"),
-                cfg.get("notion_database_id"),
+                cfg.get("hr_channel") or "",
+                cfg.get("notion_api_key") or None,
+                cfg.get("notion_database_id") or None,
             )
             logger.info(f"[home_settings] public channel updated to {selected}")
         except Exception as e:
@@ -1369,11 +1377,11 @@ def handle_home_hr_channel_select(ack, body, action, client, logger):
             cfg = get_workspace_config(team_id) or {}
             save_workspace_config(
                 team_id,
-                cfg.get("installer_id", ""),
-                cfg.get("public_channel", ""),
+                cfg.get("installer_id") or "",
+                cfg.get("public_channel") or "",
                 selected,
-                cfg.get("notion_api_key"),
-                cfg.get("notion_database_id"),
+                cfg.get("notion_api_key") or None,
+                cfg.get("notion_database_id") or None,
             )
             logger.info(f"[home_settings] HR channel updated to {selected}")
         except Exception as e:
