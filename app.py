@@ -1043,14 +1043,14 @@ def admin_settings_blocks(config, team_id):
         },
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "Public knowledge base"},
-            "accessory": pub_el,
+            "text": {"type": "mrkdwn", "text": "*Public knowledge base*"}
         },
+        {"type": "actions", "elements": [pub_el]},
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "HR / Confidential"},
-            "accessory": hr_el,
+            "text": {"type": "mrkdwn", "text": "*HR / Confidential*"}
         },
+        {"type": "actions", "elements": [hr_el]},
         {
             "type": "section",
             "text": {"type": "mrkdwn", "text": "*Notion integration*"},
