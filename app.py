@@ -825,7 +825,7 @@ def settings_modal(config: dict) -> dict:
         "type": "conversations_select",
         "action_id": "public_channel_setting_input",
         "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
-        "filter": {"include": ["public_channel"]},
+        "filter": {"include": ["public"]},
     }
     if cfg.get("public_channel"):
         pub_el["initial_conversation"] = cfg["public_channel"]
@@ -834,7 +834,7 @@ def settings_modal(config: dict) -> dict:
         "type": "conversations_select",
         "action_id": "hr_channel_setting_input",
         "placeholder": {"type": "plain_text", "text": "Select a channel", "emoji": False},
-        "filter": {"include": ["private_channel", "mpim"]},
+        "filter": {"include": ["private"]},
     }
     if cfg.get("hr_channel"):
         try:
