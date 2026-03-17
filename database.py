@@ -538,6 +538,17 @@ def get_delivered_by_thread_ts(target_channel: str, thread_ts: str):
         return dict(row) if row else None
 
 
+def get_delivered_by_thread(team_id: str, thread_ts: str):
+    """Return the first delivered_messages row for a given thread."""
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute(
+            "SELECT * FROM delivered_messages WHERE team_id = ? AND thread_ts = ? LIMIT 1",
+            (team_id, thread_ts)
+        ).fetchone()
+        return dict(row) if row else None
+
+
 def mark_replied(msg_id: int):
     with get_conn() as conn:
         conn.execute("UPDATE delivered_messages SET replied = 1 WHERE id = ?", (msg_id,))

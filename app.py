@@ -52,7 +52,7 @@ from database import (
     issue_slack_state, consume_slack_state,
     save_pending, get_pending, delete_pending, claim_pending, peek_pending,
     log_delivered, get_delivered, mark_notion_synced,
-    get_delivered_by_thread_ts, mark_replied, mark_replied_and_purge_source,
+    get_delivered_by_thread_ts, get_delivered_by_thread, mark_replied, mark_replied_and_purge_source,
     save_routing, get_routing, get_active_thread_for_user,
     get_workspace_config, save_workspace_config, reset_workspace_config,
     save_workspace_notion, store_notion_state, get_team_from_state, delete_notion_state,
@@ -692,7 +692,7 @@ def publish_home(client, user_id, team_id):
     is_privileged = admin or user_id == installer_id or (installer_id is None and config is not None)
 
     if is_privileged or is_configured:
-        view = build_standard_home(is_admin=admin, config=config, team_id=team_id) if is_configured else home_unconfigured()
+        view = build_standard_home(is_admin=is_privileged, config=config, team_id=team_id) if is_configured else home_unconfigured()
     else:
         view = home_welcome()
     client.views_publish(user_id=user_id, view=view)
@@ -2431,33 +2431,26 @@ def _get_source_channel(team_id: str, thread_ts: str, target_channel: str = None
     return None
 
 
-def _sync_thread_to_notion(client, team_id: str, channel: str, thread_ts: str, logger) -> None:
-    """Fetch the full triage thread and push Q&A to Notion.
+def _sync_thread_to_notion(client, team_id, channel, thread_ts, logger):
+    """Sync a closed public thread to the workspace's Notion DB.
 
-    Reuses push_to_notion() — the single source of Notion API logic.
-    The original anonymous submission is the question; non-bot replies form the answer.
+    Uses delivered_messages as the primary source to avoid needing
+    channels:history scope.
     """
     config = get_workspace_config(team_id)
     if not config or not config.get("notion_database_id") or not config.get("notion_api_key"):
         logger.warning(f"[close] no Notion config for team {team_id}, skipping sync")
         return
 
-    try:
-        result = client.conversations_replies(channel=channel, ts=thread_ts)
-        messages = result.get("messages", [])
-    except Exception as e:
-        logger.error(f"[close] conversations_replies failed: {e}")
+    from database import get_delivered_by_thread
+    delivered = get_delivered_by_thread(team_id, thread_ts)
+    if not delivered:
+        logger.warning(f"[close] no delivered_messages row for thread {thread_ts}, skipping Notion sync")
         return
 
-    if not messages:
-        return
+    question = delivered["message"]
+    combined = f"Q: {question}\n\n(Thread replies not available — check Slack for full conversation)"
 
-    question = messages[0].get("text", "")
-    replies  = [m.get("text", "") for m in messages[1:] if not m.get("bot_id")]
-    answer   = "\n".join(replies) if replies else "(no reply)"
-
-    # Compose a single text block for Notion: reuse push_to_notion (no duplication)
-    combined = f"Q: {question}\n\nA: {answer}"
     ok, err = push_to_notion(config["notion_api_key"], config["notion_database_id"], combined, "public")
     if ok:
         logger.info(f"[close] Notion sync succeeded for thread {thread_ts}")
@@ -2509,36 +2502,26 @@ def _do_thread_close(body, client, logger, sync_notion: bool) -> None:
 
     # 4. Update the triage message — replace action blocks with closed state
     try:
-        result = client.conversations_replies(
+        from database import get_delivered_by_thread
+        delivered = get_delivered_by_thread(team_id, thread_ts)
+        msg_text = delivered["message"] if delivered else "(message unavailable)"
+        route_label = "📢 Public" if route_type == "public" else "🔒 Confidential / HR"
+        closed_blocks = [
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"*Anonymous message via HushAsk*\n*Route:* {route_label}"}},
+            {"type": "section", "text": {"type": "mrkdwn", "text": f"> {msg_text}"}},
+            {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]},
+            {"type": "divider"},
+            {"type": "section", "text": {"type": "mrkdwn", "text": "🔒 Conversation closed."}},
+        ]
+        client.chat_update(
             channel=target_channel,
-            ts=thread_ts,
-            limit=1
+            ts=msg_ts,
+            blocks=closed_blocks,
+            text="🔒 Conversation closed."
         )
-        original_msg = result["messages"][0] if result.get("messages") else None
-        if original_msg:
-            current_blocks = original_msg.get("blocks", [])
-            # Strip trailing action blocks (close button section)
-            clean_blocks = []
-            for block in current_blocks:
-                if block.get("type") == "actions":
-                    break  # stop at first actions block in the close section
-                clean_blocks.append(block)
-            # Remove trailing divider if present
-            while clean_blocks and clean_blocks[-1].get("type") == "divider":
-                clean_blocks.pop()
-            # Append closed state
-            clean_blocks += [
-                {"type": "divider"},
-                {"type": "section", "text": {"type": "mrkdwn", "text": "🔒 Conversation closed."}}
-            ]
-            client.chat_update(
-                channel=target_channel,
-                ts=msg_ts,
-                blocks=clean_blocks,
-                text="🔒 Conversation closed."
-            )
+        logger.info(f"[close] triage message updated to closed state for {thread_ts}")
     except Exception as e:
-        logger.error(f"[close] message update failed: {e}")
+        logger.error(f"[close] message update failed: {e}", exc_info=True)
 
 
 @app.action("thread_close_only")
