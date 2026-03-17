@@ -1059,80 +1059,18 @@ def admin_settings_blocks(config, team_id):
 
 @app.event("app_home_opened")
 def handle_app_home_opened(event, client, logger, body):
+    """Delegate entirely to publish_home() — single source of truth for all view logic."""
+    if event.get("tab") != "home":
+        return
+    user_id = event["user"]
+    team_id = body.get("team_id") or body.get("team", {}).get("id", "")
+    if not team_id:
+        logger.error("[app_home] No team_id in body — cannot publish home view")
+        return
     try:
-        user_id = event["user"]
-        # team_id must come from the outer body — it is NOT in the inner event payload.
-        # client.team_info() requires team:read scope which this app does not request.
-        team_id = body.get("team_id") or body.get("team", {}).get("id", "")
-        logger.info(f"[app_home] triggered for team={team_id}, tab={event.get('tab')}")
-
-        if not team_id:
-            logger.error("[app_home] No team_id in body — cannot publish home view")
-            return
-
-        # Only publish on the Home tab (not Messages tab)
-        if event.get("tab") != "home":
-            return
-
-        config = get_workspace_config(team_id)
-        is_configured = bool(
-            config
-            and config.get("public_channel")
-            and config.get("hr_channel")
-        )
-
-        if not is_configured:
-            # Check if user is an admin — show setup wizard to admins only
-            try:
-                user_info = client.users_info(user=user_id)
-                is_admin = user_info["user"].get("is_admin", False) or user_info["user"].get("is_owner", False)
-            except Exception:
-                is_admin = False
-
-            if is_admin:
-                view = ADMIN_SETUP_HOME
-            else:
-                # Non-admin, not configured: show a minimal holding screen
-                view = {
-                    "type": "home",
-                    "blocks": [
-                        {
-                            "type": "section",
-                            "text": {"type": "mrkdwn", "text": "HushAsk is not yet configured for this workspace. Ask your Slack admin to complete setup."}
-                        },
-                        {
-                            "type": "context",
-                            "elements": [{"type": "mrkdwn", "text": "🤫 Your identity is never stored or logged."}]
-                        }
-                    ]
-                }
-        else:
-            # Configured workspace — check admin status for Settings section
-            try:
-                user_info = client.users_info(user=user_id)
-                is_admin = (
-                    user_info["user"].get("is_admin", False)
-                    or user_info["user"].get("is_owner", False)
-                )
-            except Exception:
-                is_admin = False
-
-            view = build_standard_home(is_admin=is_admin)
-
-        try:
-            result = client.views_publish(user_id=user_id, view=view)
-            logger.info(f"[app_home] views_publish result: {result}")
-        except Exception as e:
-            logger.error(f"[app_home] views_publish FAILED: {type(e).__name__}: {e}")
-            # If it's a SlackApiError, log the full response
-            if hasattr(e, 'response'):
-                logger.error(f"[app_home] Slack error response: {e.response}")
-            raise
-
-        logger.info(f"[app_home] published view for user {re.sub(r'U[A-Z0-9]{{8,11}}', '[USER]', user_id)}, team {team_id}")
-
+        publish_home(client, user_id, team_id)
     except Exception as e:
-        logger.error(f"[app_home] FAILED: {type(e).__name__}: {e}")
+        logger.error(f"[app_home] publish_home FAILED: {type(e).__name__}: {e}")
         if hasattr(e, 'response'):
             logger.error(f"[app_home] Slack response: {e.response}")
 
