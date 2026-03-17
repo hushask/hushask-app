@@ -368,13 +368,14 @@ def get_workspace_display_names(client, team_id: str) -> list:
 
 # ── Notion ────────────────────────────────────────────────────────────────────
 
-def push_to_notion(token, database_id, message, route_type):
+def push_to_notion(token, database_id, message, route_type, title_override=None):
     label = "📢 Public" if route_type == "public" else "🔒 Confidential / HR"
+    title = title_override if title_override else (message[:80] + ("…" if len(message) > 80 else ""))
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json", "Notion-Version": "2022-06-28"}
     payload = {
         "parent": {"database_id": database_id},
         "properties": {
-            "Name": {"title": [{"text": {"content": message[:80] + ("…" if len(message) > 80 else "")}}]},
+            "Name": {"title": [{"text": {"content": title}}]},
             "Route": {"select": {"name": label}},
             "Status": {"select": {"name": "New"}},
         },
@@ -2479,7 +2480,151 @@ def handle_thread_close_only(ack, body, client, logger):
 @app.action("thread_close_sync")
 def handle_thread_close_sync(ack, body, client, logger):
     ack()
-    _do_thread_close(body, client, logger, sync_notion=True)
+    try:
+        action = body["actions"][0]
+        data = json.loads(action["value"])
+        trigger_id = body.get("trigger_id")
+        if not trigger_id:
+            logger.error("[close_sync] no trigger_id — falling back to direct close")
+            _do_thread_close(body, client, logger, sync_notion=True)
+            return
+
+        # Build auto-title from first 8 words of message
+        raw_msg = data.get("msg_text", "")
+        if not raw_msg:
+            # fallback: look up from delivered_messages
+            from database import get_delivered_by_thread
+            delivered = get_delivered_by_thread(data.get("team_id", ""), data.get("thread_ts", ""))
+            raw_msg = delivered["message"] if delivered else ""
+        words = raw_msg.split()
+        auto_title = " ".join(words[:8]).rstrip(".,!?;:") + (" (auto)" if len(words) > 8 else "")
+
+        client.views_open(
+            trigger_id=trigger_id,
+            view={
+                "type": "modal",
+                "callback_id": "notion_title_modal",
+                "private_metadata": action["value"],  # pass full JSON string through
+                "title": {"type": "plain_text", "text": "Archive this thread", "emoji": False},
+                "submit": {"type": "plain_text", "text": "Save and Close", "emoji": False},
+                "close": {"type": "plain_text", "text": "Cancel", "emoji": False},
+                "blocks": [
+                    {
+                        "type": "input",
+                        "block_id": "notion_title_block",
+                        "optional": True,
+                        "label": {"type": "plain_text", "text": "Summary title", "emoji": False},
+                        "hint": {"type": "plain_text", "text": "Becomes the entry title in Notion. Leave blank to use auto-title.", "emoji": False},
+                        "element": {
+                            "type": "plain_text_input",
+                            "action_id": "notion_title_input",
+                            "placeholder": {"type": "plain_text", "text": "e.g. Salary review question — March 2026", "emoji": False},
+                            "initial_value": auto_title,
+                            "max_length": 255,
+                        },
+                    },
+                    {
+                        "type": "context",
+                        "elements": [{"type": "mrkdwn", "text": "🤫 The Notion entry will be created when you click Save and Close."}],
+                    },
+                ],
+            }
+        )
+    except Exception as e:
+        logger.error(f"[close_sync] modal open failed: {e} — falling back to direct close")
+        _do_thread_close(body, client, logger, sync_notion=True)
+
+
+@app.view("notion_title_modal")
+def handle_notion_title_modal(ack, body, view, client, logger):
+    ack({"response_action": "clear"})
+
+    def _do_sync():
+        try:
+            data = json.loads(view["private_metadata"])
+            team_id = data["team_id"]
+            thread_ts = data["thread_ts"]
+            target_channel = data["target_channel"]
+            route_type = data["route_type"]
+            msg_ts = data["msg_ts"]
+
+            # Get title from form (optional field — may be empty)
+            title_val = (
+                view.get("state", {})
+                    .get("values", {})
+                    .get("notion_title_block", {})
+                    .get("notion_title_input", {})
+                    .get("value") or ""
+            ).strip()
+
+            # Fallback auto-title
+            if not title_val:
+                from database import get_delivered_by_thread
+                delivered = get_delivered_by_thread(team_id, thread_ts)
+                raw_msg = delivered["message"] if delivered else "(no message)"
+                words = raw_msg.split()
+                title_val = " ".join(words[:8]).rstrip(".,!?;:") + (" (auto)" if len(words) > 8 else "")
+
+            # 1. Close DB session
+            from database import close_thread
+            close_thread(team_id, thread_ts)
+
+            # 2. DM the anonymous employee
+            from database import get_delivered_by_thread
+            delivered = get_delivered_by_thread(team_id, thread_ts)
+            if delivered:
+                source = delivered.get("source_channel")
+                if source:
+                    try:
+                        client.chat_postMessage(
+                            channel=source,
+                            text="This conversation has been closed. Your next message will start a new conversation."
+                        )
+                    except Exception as e:
+                        logger.warning(f"[notion_modal] employee DM failed: {e}")
+
+            # 3. Sync to Notion with the provided title
+            config = get_workspace_config(team_id)
+            if config and config.get("notion_api_key") and config.get("notion_database_id"):
+                if route_type == "public":
+                    raw_msg = delivered["message"] if delivered else ""
+                    ok, err = push_to_notion(
+                        config["notion_api_key"],
+                        config["notion_database_id"],
+                        raw_msg,
+                        route_type,
+                        title_override=title_val,
+                    )
+                    if ok:
+                        logger.info(f"[notion_modal] Notion sync succeeded: {title_val}")
+                    else:
+                        logger.error(f"[notion_modal] Notion sync failed: {err}")
+
+            # 4. Update triage message to closed state
+            msg_text = delivered["message"] if delivered else "(message unavailable)"
+            route_label = "📢 Public" if route_type == "public" else "🔒 Confidential / HR"
+            closed_blocks = [
+                {"type": "section", "text": {"type": "mrkdwn", "text": f"*Anonymous message via HushAsk*\n*Route:* {route_label}"}},
+                {"type": "section", "text": {"type": "mrkdwn", "text": f"> {msg_text}"}},
+                {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]},
+                {"type": "divider"},
+                {"type": "section", "text": {"type": "mrkdwn", "text": f"🔒 Conversation closed. Archived as: _{title_val}_"}},
+            ]
+            try:
+                client.chat_update(
+                    channel=target_channel,
+                    ts=msg_ts,
+                    blocks=closed_blocks,
+                    text="🔒 Conversation closed."
+                )
+            except Exception as e:
+                logger.error(f"[notion_modal] triage update failed: {e}")
+
+        except Exception as e:
+            logger.error(f"[notion_modal] _do_sync failed: {e}", exc_info=True)
+
+    import threading
+    threading.Thread(target=_do_sync, daemon=True).start()
 
 
 # ── Bootstrap ─────────────────────────────────────────────────────────────────
