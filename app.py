@@ -177,7 +177,8 @@ def is_admin(client, user_id):
     try:
         u = client.users_info(user=user_id)["user"]
         return bool(u.get("is_admin") or u.get("is_owner") or u.get("is_primary_owner"))
-    except:
+    except Exception as e:
+        logger.warning(f"[is_admin] check failed for user: {type(e).__name__}")
         return False
 
 def channel_display(client, cid):
@@ -431,7 +432,7 @@ def routing_blocks(token, message):
         {"type": "section", "text": {"type": "mrkdwn", "text": "Your Slack identity is not stored or logged."}},
         {"type": "actions", "elements": [
             {"type": "button", "action_id": "route_hr", "style": "primary",
-             "text": {"type": "plain_text", "text": "🔒 Confidential / HR"}, "value": token},
+             "text": {"type": "plain_text", "text": "Confidential / HR"}, "value": token},
             {"type": "button", "action_id": "route_public",
              "text": {"type": "plain_text", "text": "Public / Knowledge Base"}, "value": token},
         ]},
@@ -524,7 +525,7 @@ def triage_blocks(message, label, close_value, route_type, thread_ts, channel_id
         },
         {
             "type": "context",
-            "elements": [{"type": "mrkdwn", "text": "🔒 Anonymous · HushAsk"}]
+            "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]
         },
         {
             "type": "actions",
@@ -567,7 +568,7 @@ def _alert_installer_limit(client, team_id: str, usage: int):
                 ]}
             ]
         )
-        print(f"[limit_alert] Sent admin DM to {installer_id} for workspace {team_id} ({usage}/{FREE_LIMIT})")
+        print(f"[limit_alert] Sent admin DM to [REDACTED] for workspace {team_id} ({usage}/{FREE_LIMIT})")
     except Exception as e:
         print(f"[limit_alert] Failed to DM installer for {team_id}: {e}")
 
@@ -592,9 +593,9 @@ def home_welcome():
             {"type":"section","text":{"type":"mrkdwn","text":"Send any question, idea, or concern to the right channel — anonymously. Identity is hashed and never stored."}},
             {"type":"divider"},
             {"type":"section","text":{"type":"mrkdwn","text":"Examples — click to route through the bot:"}},
-            {"type":"section","text":{"type":"mrkdwn","text":"💻 *Tech*\n_\"Our deploy process feels fragile — has anyone proposed a more reliable approach?\"_"},"accessory":{"type":"button","action_id":"example_tech","text":{"type":"plain_text","text":"Send this","emoji":True}}},
-            {"type":"section","text":{"type":"mrkdwn","text":"🧑‍💼 *HR*\n_\"I'd like to discuss my compensation but I'm not sure who to talk to.\"_"},"accessory":{"type":"button","action_id":"example_feedback","text":{"type":"plain_text","text":"Send this","emoji":True}}},
-            {"type":"section","text":{"type":"mrkdwn","text":"💡 *Idea*\n_\"What if we ran a quarterly retrospective open to every team, not just engineering?\"_"},"accessory":{"type":"button","action_id":"example_idea","text":{"type":"plain_text","text":"Send this","emoji":True}}},
+            {"type":"section","text":{"type":"mrkdwn","text":"💻 *Tech*\n_\"Our deploy process feels fragile — has anyone proposed a more reliable approach?\"_"},"accessory":{"type":"button","action_id":"example_tech","text":{"type":"plain_text","text":"Send This","emoji":True}}},
+            {"type":"section","text":{"type":"mrkdwn","text":"🧑‍💼 *HR*\n_\"I'd like to discuss my compensation but I'm not sure who to talk to.\"_"},"accessory":{"type":"button","action_id":"example_feedback","text":{"type":"plain_text","text":"Send This","emoji":True}}},
+            {"type":"section","text":{"type":"mrkdwn","text":"💡 *Idea*\n_\"What if we ran a quarterly retrospective open to every team, not just engineering?\"_"},"accessory":{"type":"button","action_id":"example_idea","text":{"type":"plain_text","text":"Send This","emoji":True}}},
             {"type":"divider"},
             {"type":"context","elements":[{"type":"mrkdwn","text":f"🔒 Slack ID is SHA-256 hashed — never stored in plaintext. · <{HELP_BASE}/privacy-and-hashing.html|Learn more>"}]}
         ]
@@ -644,7 +645,7 @@ def home_configured(config, client, team_id):
 
     buttons = [
         {"type":"button","action_id":"edit_settings","style":"primary","text":{"type":"plain_text","text":"Edit","emoji":True}},
-        {"type":"button","action_id":"reset_config","style":"danger","text":{"type":"plain_text","text":"Reset","emoji":True},"confirm":{"title":{"type":"plain_text","text":"Reset configuration?"},"text":{"type":"mrkdwn","text":"Clears routing and Notion settings. Message history preserved."},"confirm":{"type":"plain_text","text":"Reset"},"deny":{"type":"plain_text","text":"Cancel"},"style":"danger"}},
+        {"type":"button","action_id":"reset_config","style":"danger","text":{"type":"plain_text","text":"Reset","emoji":True},"confirm":{"title":{"type":"plain_text","text":"Reset Configuration?"},"text":{"type":"mrkdwn","text":"Clears routing and Notion settings. Message history preserved."},"confirm":{"type":"plain_text","text":"Reset"},"deny":{"type":"plain_text","text":"Cancel"},"style":"danger"}},
     ]
     if not pro:
         buttons.append({"type":"button","action_id":"upgrade_click","text":{"type":"plain_text","text":"Upgrade to Pro","emoji":True},"url":upgrade_link(team_id),"style":"primary"})
@@ -702,8 +703,8 @@ def publish_home(client, user_id, team_id):
             ).fetchone()
             if row:
                 slack_installer_id = row[0]
-    except Exception:
-        pass
+    except Exception as e:
+        logger.debug(f"[publish_home] workspaces installer lookup failed: {type(e).__name__}")
 
     is_privileged = (
         admin
@@ -784,11 +785,11 @@ def wizard_step2_modal(auto_create=True, meta=None):
             {"type": "divider"},
             {"type": "section", "text": {"type": "mrkdwn", "text": "Bot must be a member of both channels. Run `/invite @HushAsk` after setup."}},
             {"type": "input", "block_id": "block_public_channel",
-             "label": {"type": "plain_text", "text": "Public Channel"},
+             "label": {"type": "plain_text", "text": "Public channel"},
              "hint":  {"type": "plain_text", "text": "Public anonymous messages land here."},
              "optional": False, "element": pub_el},
             {"type": "input", "block_id": "block_hr_channel",
-             "label": {"type": "plain_text", "text": "Private / HR Channel"},
+             "label": {"type": "plain_text", "text": "Private / HR channel"},
              "hint":  {"type": "plain_text", "text": "Confidential messages. Bot must be a member first."},
              "optional": False, "element": hr_el},
         ]
@@ -797,7 +798,7 @@ def wizard_step2_modal(auto_create=True, meta=None):
         "type": "input",
         "block_id": "hr_leaders",
         "optional": True,
-        "label": {"type": "plain_text", "text": "Additional HR Leaders (optional)", "emoji": False},
+        "label": {"type": "plain_text", "text": "Additional HR leaders (optional)", "emoji": False},
         "hint": {"type": "plain_text", "text": "These users will be invited to the confidential HR channel.", "emoji": False},
         "element": {
             "type": "multi_users_select",
@@ -830,7 +831,7 @@ def wizard_step3(meta):
         vault_blocks = [
             {"type":"section","text":{"type":"mrkdwn","text":f"Enter your Notion token and database ID. <{HELP_BASE}/setting-up-notion.html|Setup guide →>"}},
             {"type":"divider"},
-            {"type":"input","block_id":"block_notion_token","label":{"type":"plain_text","text":"Notion API Token"},"optional":True,"element":{"type":"plain_text_input","action_id":"notion_token_input","placeholder":{"type":"plain_text","text":"secret_..."},"initial_value":meta.get("notion_api_key","")}},
+            {"type":"input","block_id":"block_notion_token","label":{"type":"plain_text","text":"Notion API token"},"optional":True,"element":{"type":"plain_text_input","action_id":"notion_token_input","placeholder":{"type":"plain_text","text":"secret_..."},"initial_value":meta.get("notion_api_key","")}},
             {"type":"input","block_id":"block_notion_db","label":{"type":"plain_text","text":"Database ID"},"optional":True,"element":{"type":"plain_text_input","action_id":"notion_db_input","placeholder":{"type":"plain_text","text":"32-char ID"},"initial_value":meta.get("notion_database_id","")}},
             {"type":"context","elements":[{"type":"mrkdwn","text":"Optional. Configure later from Settings."}]}
         ]
@@ -881,7 +882,7 @@ def settings_modal(config: dict) -> dict:
     }
 
     blocks = [
-        {"type": "header", "text": {"type": "plain_text", "text": "Channel Configuration", "emoji": False}},
+        {"type": "header", "text": {"type": "plain_text", "text": "Channel configuration", "emoji": False}},
         {
             "type": "input",
             "block_id": "public_channel_setting",
@@ -891,13 +892,13 @@ def settings_modal(config: dict) -> dict:
         {
             "type": "input",
             "block_id": "hr_channel_setting",
-            "label": {"type": "plain_text", "text": "HR / Confidential Channel", "emoji": False},
+            "label": {"type": "plain_text", "text": "HR / Confidential channel", "emoji": False},
             "element": hr_el,
         },
         {"type": "divider"},
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Notion Integration*\nConnect a Notion workspace to automatically document public Q&A."},
+            "text": {"type": "mrkdwn", "text": "*Notion integration*\nConnect a Notion workspace to automatically document public Q&A."},
             "accessory": notion_btn,
         },
         {
@@ -1036,7 +1037,7 @@ def admin_settings_blocks(config, team_id):
         {"type": "section", "text": {"type": "mrkdwn", "text": "*Configuration*"}},
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "Public Knowledge Base"},
+            "text": {"type": "mrkdwn", "text": "Public knowledge base"},
             "accessory": pub_el,
         },
         {
@@ -1047,7 +1048,7 @@ def admin_settings_blocks(config, team_id):
         {"type": "divider"},
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Notion Integration*"},
+            "text": {"type": "mrkdwn", "text": "*Notion integration*"},
             "accessory": notion_btn,
         },
         {
@@ -1252,7 +1253,7 @@ def handle_home_send_dm(ack, body, client, logger):
                     "type": "modal",
                     "callback_id": "home_dm_sent_modal",
                     "title": {"type": "plain_text", "text": "Message Sent", "emoji": False},
-                    "close": {"type": "plain_text", "text": "Got it", "emoji": False},
+                    "close": {"type": "plain_text", "text": "Got It", "emoji": False},
                     "blocks": [
                         {
                             "type": "section",
@@ -1284,6 +1285,23 @@ def handle_home_public_channel_select(ack, body, action, client, logger):
     team_id = body.get("team", {}).get("id") or body.get("team_id", "")
     user_id = body["user"]["id"]
     selected = action.get("selected_conversation")
+
+    # Guard: public and HR channels cannot be the same
+    cfg_check = get_workspace_config(team_id) or {}
+    if selected and selected == cfg_check.get("hr_channel"):
+        channel_id = body.get("container", {}).get("channel_id", "")
+        if channel_id:
+            try:
+                client.chat_postEphemeral(
+                    channel=channel_id,
+                    user=user_id,
+                    text="Public and HR channels cannot be the same. Please select a different channel."
+                )
+            except Exception:
+                pass
+        publish_home(client, user_id, team_id)
+        return
+
     if selected and team_id:
         try:
             # Fresh read to avoid wiping concurrently-written values
@@ -1311,6 +1329,23 @@ def handle_home_hr_channel_select(ack, body, action, client, logger):
     team_id = body.get("team", {}).get("id") or body.get("team_id", "")
     user_id = body["user"]["id"]
     selected = action.get("selected_conversation")
+
+    # Guard: HR and public channels cannot be the same
+    cfg_check = get_workspace_config(team_id) or {}
+    if selected and selected == cfg_check.get("public_channel"):
+        channel_id = body.get("container", {}).get("channel_id", "")
+        if channel_id:
+            try:
+                client.chat_postEphemeral(
+                    channel=channel_id,
+                    user=user_id,
+                    text="HR and public channels cannot be the same. Please select a different channel."
+                )
+            except Exception:
+                pass
+        publish_home(client, user_id, team_id)
+        return
+
     if selected and team_id:
         try:
             cfg = get_workspace_config(team_id) or {}
@@ -1363,7 +1398,6 @@ def handle_reset(ack, body, client):
 
 @app.action("auto_create_check")
 def handle_auto_toggle(ack, body, client, logger):
-    print("=== CHECKBOX HANDLER CALLED ===")
     ack()
     view = body["view"]
     view_id = view["id"]
@@ -1426,12 +1460,18 @@ def wizard2_submit(ack, body):
             ack(response_action="errors", errors={"block_public_channel": "Select a channel or enable auto-create.", "block_hr_channel": "Select a channel or enable auto-create."})
             return
 
+    # Compute state token BEFORE ack — but DON'T write to DB yet
     notion_state = secrets.token_hex(16)
-    store_notion_state(notion_state, team_id)
     meta.update({"team_id": team_id, "auto_create": auto_create,
                  "public_channel": pub_ch, "hr_channel": hr_ch, "notion_state": notion_state})
     print(f"[wizard2] meta built: auto_create={auto_create} pub={pub_ch} hr={hr_ch} — pushing step 3")
+    # ack() FIRST — must happen before any I/O that could block
     ack(response_action="push", view=wizard_step3(meta))
+    # Persist state AFTER ack (non-blocking from Slack's perspective)
+    try:
+        store_notion_state(notion_state, team_id)
+    except Exception as e:
+        print(f"[wizard2] store_notion_state failed: {e}")
 
 @app.view("wizard_step3")
 def wizard3_submit(ack, body, view, client, logger):
@@ -1497,6 +1537,7 @@ def _wizard3_work(body, client):
         pub_ch = meta.get("public_channel", "")
         hr_ch  = meta.get("hr_channel", "")
 
+        pub_err = hr_err = None
         if meta.get("auto_create"):
             if existing and existing["public_channel"] and existing["hr_channel"]:
                 pub_ch = existing["public_channel"]
@@ -1626,6 +1667,14 @@ def handle_message(message, client, body, say):
         text = message.get("text", "").strip()
 
         if not text:
+            if message.get("files") or message.get("subtype") == "file_share":
+                try:
+                    client.chat_postMessage(
+                        channel=message["channel"],
+                        text="File attachments are not supported. Please send a text message."
+                    )
+                except Exception:
+                    pass
             return
 
         # Escape hatch — user can force-close their active thread
@@ -1671,7 +1720,7 @@ def handle_message(message, client, body, say):
                 try:
                     client.chat_postMessage(
                         channel=message["channel"],
-                        text="Previous conversation closed. You may now start a new one."
+                        text="This conversation has been closed. Your next message will start a new conversation."
                     )
                 except Exception as e:
                     logger.error(f"[escape] DM reply failed: {e}")
@@ -1896,7 +1945,7 @@ def handle_message_deleted(event, client, body, logger):
         if employee_channel:
             client.chat_postMessage(
                 channel=employee_channel,
-                text="✅ *Message Retracted:* Your message has been successfully removed from the triage channel, and this conversation is now permanently closed. Your next message will start a new conversation."
+                text="*Message retracted.* Your message has been removed from the triage channel. This conversation has been closed. Your next message will start a new conversation."
             )
     except Exception as e:
         logger.error(f"[retract_sync] employee DM confirmation failed: {e}")
@@ -2067,8 +2116,19 @@ def handle_reply_modal(ack, body, client, logger):
         logger.error(f"[reply_modal] get_routing failed: {e}")
         return
 
-    if not routing or not routing.get("source_channel"):
-        logger.warning(f"[reply_modal] no routing or source_channel for thread_ts={thread_ts}")
+    if routing is None:
+        try:
+            client.chat_postEphemeral(
+                channel=channel_id,
+                user=body["user"]["id"],
+                text="This conversation has been closed. The reply could not be delivered."
+            )
+        except Exception:
+            pass
+        return
+
+    if not routing.get("source_channel"):
+        logger.warning(f"[reply_modal] no source_channel for thread_ts={thread_ts}")
         return
 
     source_channel = routing["source_channel"]
@@ -2084,7 +2144,18 @@ def handle_reply_modal(ack, body, client, logger):
     except Exception:
         msg_id = None
 
-    _deliver_reply_dm(client, source_channel, clean_reply, msg_id, channel_id, thread_ts)
+    try:
+        _deliver_reply_dm(client, source_channel, clean_reply, msg_id, channel_id, thread_ts)
+    except Exception as e:
+        logger.error(f"[reply_modal] _deliver_reply_dm failed: {e}", exc_info=True)
+        try:
+            client.chat_postEphemeral(
+                channel=channel_id,
+                user=body["user"]["id"],
+                text="Reply could not be delivered. The employee may have blocked the bot or the conversation was already closed."
+            )
+        except Exception:
+            pass
 
 
 @app.command("/ha")
@@ -2174,7 +2245,7 @@ def _do_route(ack, body, client, route_type):
             channel=target,
             blocks=[
                 {"type": "section", "text": {"type": "mrkdwn", "text": f"{label}\n\n{message}"}},
-                {"type": "context", "elements": [{"type": "mrkdwn", "text": "🔒 Anonymous · HushAsk"}]}
+                {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]}
             ],
             text="Anonymous message via HushAsk"
         )
@@ -2396,13 +2467,23 @@ def _sync_thread_to_notion(client, team_id, channel, thread_ts, logger):
         return
 
     question = delivered["message"]
-    combined = f"Q: {question}\n\n(Thread replies not available — check Slack for full conversation)"
+    combined = f"{question}\n\n(Full thread available in Slack)"
 
     ok, err = push_to_notion(config["notion_api_key"], config["notion_database_id"], combined, "public")
     if ok:
         logger.info(f"[close] Notion sync succeeded for thread {thread_ts}")
     else:
         logger.error(f"[close] Notion sync failed: {err}")
+        try:
+            installer_id = find_installer_user_id(team_id)
+            if installer_id:
+                dm = client.conversations_open(users=installer_id)["channel"]["id"]
+                client.chat_postMessage(
+                    channel=dm,
+                    text=f"Notion sync failed for a conversation. Error: {err}\n\nCheck your Notion connection in the HushAsk App Home."
+                )
+        except Exception:
+            pass
 
 
 def _do_thread_close(body, client, logger, sync_notion: bool) -> None:
@@ -2505,7 +2586,7 @@ def handle_thread_close_sync(ack, body, client, logger):
                 "type": "modal",
                 "callback_id": "notion_title_modal",
                 "private_metadata": action["value"],  # pass full JSON string through
-                "title": {"type": "plain_text", "text": "Archive this thread", "emoji": False},
+                "title": {"type": "plain_text", "text": "Archive This Thread", "emoji": False},
                 "submit": {"type": "plain_text", "text": "Save and Close", "emoji": False},
                 "close": {"type": "plain_text", "text": "Cancel", "emoji": False},
                 "blocks": [
@@ -2588,17 +2669,27 @@ def handle_notion_title_modal(ack, body, view, client, logger):
             if config and config.get("notion_api_key") and config.get("notion_database_id"):
                 if route_type == "public":
                     raw_msg = delivered["message"] if delivered else ""
-                    ok, err = push_to_notion(
-                        config["notion_api_key"],
-                        config["notion_database_id"],
-                        raw_msg,
-                        route_type,
-                        title_override=title_val,
-                    )
-                    if ok:
-                        logger.info(f"[notion_modal] Notion sync succeeded: {title_val}")
+                    if not raw_msg:
+                        logger.warning(f"[notion_modal] no message content for thread {thread_ts} — skipping Notion sync")
+                        try:
+                            installer_id = find_installer_user_id(team_id)
+                            if installer_id:
+                                dm = client.conversations_open(users=installer_id)["channel"]["id"]
+                                client.chat_postMessage(channel=dm, text="Notion entry could not be created: the original message content is no longer available.")
+                        except Exception:
+                            pass
                     else:
-                        logger.error(f"[notion_modal] Notion sync failed: {err}")
+                        ok, err = push_to_notion(
+                            config["notion_api_key"],
+                            config["notion_database_id"],
+                            raw_msg,
+                            route_type,
+                            title_override=title_val,
+                        )
+                        if ok:
+                            logger.info(f"[notion_modal] Notion sync succeeded: {title_val}")
+                        else:
+                            logger.error(f"[notion_modal] Notion sync failed: {err}")
 
             # 4. Update triage message to closed state
             msg_text = delivered["message"] if delivered else "(message unavailable)"
