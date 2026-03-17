@@ -162,6 +162,23 @@ def notion_callback():
         if team_id:
             save_workspace_notion(team_id, access_token, db_id)
             if state: delete_notion_state(state)
+            # Refresh App Home so the Notion button flips to "Disconnect"
+            try:
+                from database import get_conn
+                import sqlite3
+                with get_conn() as _conn:
+                    _conn.row_factory = sqlite3.Row
+                    ws = _conn.execute(
+                        "SELECT bot_token, installer_user_id FROM workspaces WHERE team_id = ?",
+                        (team_id,)
+                    ).fetchone()
+                if ws and ws["bot_token"] and ws["installer_user_id"]:
+                    from slack_sdk import WebClient as _WebClient
+                    from app import publish_home as _publish_home
+                    _client = _WebClient(token=ws["bot_token"])
+                    _publish_home(_client, ws["installer_user_id"], team_id)
+            except Exception as _e:
+                print(f"[notion_callback] App Home refresh failed (non-fatal): {_e}")
 
         return redirect("/notion/connected" + (f"?db_url={db_url}" if db_url else ""))
 
@@ -445,7 +462,7 @@ def notion_connected():
 <body><div class="card">
   <div class="icon">✅</div>
   <h1>Notion Connected</h1>
-  <p><strong>Hush Library</strong> database created. Return to Slack and click <em>Save &amp; Finish</em>.{link}</p>
+  <p><strong>Hush Library</strong> is ready. Your Slack App Home has been updated — you can close this tab.{link}</p>
   <span class="badge ok">Connected</span>
 </div></body></html>"""
 
