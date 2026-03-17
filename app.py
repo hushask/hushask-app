@@ -482,9 +482,16 @@ def triage_blocks(message, label, close_value, route_type, thread_ts, channel_id
         "text": {"type": "plain_text", "text": "Reply to Employee", "emoji": False},
         "value": f"{thread_ts}|{channel_id}"
     }
+    discuss_btn = {
+        "type": "button",
+        "action_id": "discuss_in_thread",
+        "text": {"type": "plain_text", "text": "Discuss in Thread", "emoji": False},
+        "value": f"{thread_ts}|{channel_id}"
+    }
     if route_type == "public":
         action_elements = [
             reply_btn,
+            discuss_btn,
             {
                 "type": "button",
                 "action_id": "thread_close_sync",
@@ -502,6 +509,7 @@ def triage_blocks(message, label, close_value, route_type, thread_ts, channel_id
     else:  # hr
         action_elements = [
             reply_btn,
+            discuss_btn,
             {
                 "type": "button",
                 "action_id": "thread_close_only",
@@ -517,10 +525,6 @@ def triage_blocks(message, label, close_value, route_type, thread_ts, channel_id
         {
             "type": "context",
             "elements": [{"type": "mrkdwn", "text": "🔒 Anonymous · HushAsk"}]
-        },
-        {
-            "type": "context",
-            "elements": [{"type": "mrkdwn", "text": "👉 *Internal Thread* — Discuss the case here. To reply to the sender, click *Reply to Employee*."}]
         },
         {
             "type": "actions",
@@ -1715,6 +1719,28 @@ def handle_reply_btn(ack, body, client, logger):
         )
     except Exception as e:
         logger.error(f"[reply_btn] views_open failed: {e}")
+
+
+@app.action("discuss_in_thread")
+def handle_discuss_in_thread(ack, body, client, logger):
+    ack()
+    value = body["actions"][0]["value"]
+    try:
+        thread_ts, channel_id = value.rsplit("|", 1)
+    except ValueError:
+        logger.error(f"[discuss] invalid value format: {value}")
+        return
+
+    user_id = body["user"]["id"]
+    try:
+        client.chat_postEphemeral(
+            channel=channel_id,
+            user=user_id,
+            thread_ts=thread_ts,
+            text="👉 Internal Discussion: Just type your messages directly in this thread below. It is completely private and the sender will not see it."
+        )
+    except Exception as e:
+        logger.error(f"[discuss] ephemeral post failed: {e}")
 
 
 @app.view("reply_to_employee_modal")
