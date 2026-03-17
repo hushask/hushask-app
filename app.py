@@ -1053,9 +1053,9 @@ def admin_settings_blocks(config, team_id):
         {"type": "actions", "elements": [hr_el]},
         {
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Notion integration*"},
-            "accessory": notion_btn,
+            "text": {"type": "mrkdwn", "text": "*Notion integration*"}
         },
+        {"type": "actions", "elements": [notion_btn]},
         {
             "type": "context",
             "elements": [{"type": "mrkdwn", "text": "🤫 Channel changes apply immediately."}],
