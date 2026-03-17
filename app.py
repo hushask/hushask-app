@@ -1807,6 +1807,17 @@ def handle_message_deleted(event, client, body, logger):
     except Exception as e:
         logger.error(f"[retract_sync] notification post failed: {e}")
 
+    # Step 4: DM the employee a retraction confirmation
+    try:
+        employee_channel = event.get("channel")
+        if employee_channel:
+            client.chat_postMessage(
+                channel=employee_channel,
+                text="✅ *Message Retracted:* Your message has been successfully removed from the triage channel, and this conversation is now permanently closed. Your next message will start a new conversation."
+            )
+    except Exception as e:
+        logger.error(f"[retract_sync] employee DM confirmation failed: {e}")
+
 
 @app.event("app_mention")
 def on_mention(event, client):
