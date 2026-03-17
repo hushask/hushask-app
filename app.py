@@ -1635,7 +1635,7 @@ def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id, tri
         client.chat_postMessage(
             channel=triage_channel,
             thread_ts=thread_ts,
-            text=f"Reply sent to employee",
+            text=" ",
             attachments=[
                 {
                     "color": "#2EB67D",
