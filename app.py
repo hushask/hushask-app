@@ -1576,7 +1576,7 @@ def handle_message(message, client, body, say):
                 client.chat_postMessage(
                     channel=target_channel,
                     thread_ts=thread_ts,
-                    text=f"Message from employee",
+                    text=" ",
                     attachments=[
                         {
                             "color": "#5865F2",
