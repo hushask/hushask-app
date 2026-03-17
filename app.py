@@ -987,6 +987,7 @@ def build_standard_home(is_admin: bool = False, config=None, team_id=None) -> di
     ]
 
     if is_admin and config:
+        blocks.append({"type": "divider"})
         blocks += admin_settings_blocks(config, team_id or "")
 
     return {"type": "home", "blocks": blocks}
@@ -1033,8 +1034,14 @@ def admin_settings_blocks(config, team_id):
         notion_btn["url"] = notion_url
 
     return [
-        {"type": "divider"},
-        {"type": "section", "text": {"type": "mrkdwn", "text": "*Configuration*"}},
+        {
+            "type": "header",
+            "text": {"type": "plain_text", "text": "Configuration", "emoji": False}
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🔒 Admin Settings — only visible to you."}]
+        },
         {
             "type": "section",
             "text": {"type": "mrkdwn", "text": "Public knowledge base"},
