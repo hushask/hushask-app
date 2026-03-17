@@ -1507,7 +1507,7 @@ def handle_example(ack, body, client):
 
 # ── Messaging ─────────────────────────────────────────────────────────────────
 
-def handle_incoming(client, team_id, user_id, channel_id, text):
+def handle_incoming(client, team_id, user_id, channel_id, text, source_message_ts=None):
     if not text or not text.strip():
         client.chat_postMessage(channel=channel_id, text="Send a message to route it anonymously.")
         return
@@ -1521,7 +1521,7 @@ def handle_incoming(client, team_id, user_id, channel_id, text):
     user_hash = hash_user(user_id, team_id)
     token     = make_token(user_id, team_id)
     result    = client.chat_postMessage(channel=channel_id, blocks=routing_blocks(token, clean), text="Route your message:")
-    save_pending(token, team_id, channel_id, clean, user_hash, result.get("ts"))
+    save_pending(token, team_id, channel_id, clean, user_hash, result.get("ts"), source_message_ts)
 
 @app.message()
 def handle_message(message, client, body, say):
@@ -1647,13 +1647,14 @@ def handle_message(message, client, body, say):
             return  # Do NOT fall through to new submission flow
 
         # No active thread — treat as new submission
-        handle_incoming(client, team_id, user_id, message["channel"], text)
+        handle_incoming(client, team_id, user_id, message["channel"], text, message.get("ts"))
 
     # else: top-level channel message or non-DM thread reply — ignore
 
 @app.event({"type": "message", "subtype": "message_changed"})
 def handle_message_changed(event, client, body, logger):
     """Sync native DM edits to the triage channel."""
+    logger.info(f"[edit_sync] raw event received: channel_type={event.get('channel_type')}, ts={event.get('ts')}, message_ts={event.get('message', {}).get('ts')}")
     if event.get("channel_type") != "im":
         return
     team_id = body.get("team_id") or body.get("team", {}).get("id", "")
@@ -1708,6 +1709,7 @@ def handle_message_changed(event, client, body, logger):
 @app.event({"type": "message", "subtype": "message_deleted"})
 def handle_message_deleted(event, client, body, logger):
     """Sync native DM retracts to the triage channel."""
+    logger.info(f"[retract_sync] raw event received: channel_type={event.get('channel_type')}, deleted_ts={event.get('deleted_ts')}")
     if event.get("channel_type") != "im":
         return
     team_id = body.get("team_id") or body.get("team", {}).get("id", "")
@@ -1761,7 +1763,7 @@ def handle_message_deleted(event, client, body, logger):
 
 @app.event("app_mention")
 def on_mention(event, client):
-    handle_incoming(client, event["team"], event["user"], event["channel"], event.get("text",""))
+    handle_incoming(client, event["team"], event["user"], event["channel"], event.get("text",""), event.get("ts"))
 
 
 def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id, triage_channel: str, thread_ts: str):
@@ -2048,12 +2050,15 @@ def _do_route(ack, body, client, route_type):
         if triage_ts:
             save_routing(team_id, triage_ts, user_hash, src)
             logger.info(f"[route] routing_table saved: team={team_id}, thread_ts={triage_ts}, src={src}")
-        if triage_ts and msg_ts:
+        original_msg_ts = pending.get("original_message_ts")
+        if triage_ts and original_msg_ts:
             try:
-                print(f"[route] saving mapping: msg_ts={msg_ts}, triage_ts={triage_ts}")
-                save_message_mapping(team_id, msg_ts, triage_ts, triage_ts, target)
+                print(f"[route] saving mapping: original_msg_ts={original_msg_ts}, triage_ts={triage_ts}")
+                save_message_mapping(team_id, original_msg_ts, triage_ts, triage_ts, target)
             except Exception as e:
                 logger.error(f"[route] save_message_mapping failed: {e}")
+        elif triage_ts:
+            print(f"[route] skipping mapping save — original_msg_ts is None (msg_ts={msg_ts})")
         # Update the triage post with close controls
         if triage_ts:
             close_value = json.dumps({

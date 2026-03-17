@@ -157,6 +157,7 @@ def init_db():
         _add_column_if_missing(conn, "delivered_messages", "replied", "INTEGER DEFAULT 0")
         _add_column_if_missing(conn, "delivered_messages", "source_channel", "TEXT")
         _add_column_if_missing(conn, "delivered_messages", "thread_ts", "TEXT")
+        _add_column_if_missing(conn, "pending_messages", "original_message_ts", "TEXT")
     # Migration: allow NULL source_channel in routing_table (Fix 2 — post-delivery purge)
     _migrate_routing_table_nullable_source()
     # Auto-purge expired Identity Vault entries on every startup
@@ -459,13 +460,14 @@ def get_usage(workspace_id: str) -> int:
 
 # ── Pending / Delivered messages ──────────────────────────────────────────────
 
-def save_pending(token, team_id, source_channel, message, user_hash, message_ts=None):
+def save_pending(token, team_id, source_channel, message, user_hash,
+                 message_ts=None, original_message_ts=None):
     with get_conn() as conn:
         conn.execute("""
             INSERT OR REPLACE INTO pending_messages
-                (token, team_id, source_channel, message, user_hash, message_ts, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M', 'now'))
-        """, (token, team_id, source_channel, message, user_hash, message_ts))
+                (token, team_id, source_channel, message, user_hash, message_ts, original_message_ts, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%d %H:%M', 'now'))
+        """, (token, team_id, source_channel, message, user_hash, message_ts, original_message_ts))
 
 
 def get_pending(token):
