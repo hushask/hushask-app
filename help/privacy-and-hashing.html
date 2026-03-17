@@ -27,6 +27,7 @@
     .data-table td{padding:12px 14px;font-size:14px;color:#ccc;border-bottom:1px solid #1a1a1a;vertical-align:top}
     .yes{color:#28c840;font-weight:600}
     .no{color:#ff5f57;font-weight:600}
+    .purged{color:#febc2e;font-weight:600}
     .callout{background:#1a1a1a;border:1px solid var(--border);border-left:3px solid #FF8C42;border-radius:8px;padding:16px 20px;margin:24px 0;font-size:14px;color:#ccc}
     footer{border-top:1px solid var(--border);padding:28px 48px;text-align:center;color:var(--muted);font-size:13px}
     @media(max-width:768px){nav{padding:16px 20px}.content{padding:40px 20px 60px}h1{font-size:32px}}
@@ -52,7 +53,7 @@
     • <strong>Collision-resistant:</strong> Two different IDs will never produce the same hash.</p>
 
     <div class="callout">
-      🔒 HushAsk adds a private <strong>salt</strong> to your ID before hashing. This means even if someone had a list of all Slack user IDs, they couldn't reverse-engineer which hash belongs to which person.
+      🔒 HushAsk adds a private <strong>salt</strong> — unique to your deployment — to your ID before hashing. This means even if someone had a list of every Slack user ID in existence, they couldn't reverse-engineer which hash belongs to which person.
     </div>
 
     <h2>What we store</h2>
@@ -61,18 +62,26 @@
       <tr><td>Your Slack user ID</td><td class="no">Never</td><td>Discarded immediately after hashing</td></tr>
       <tr><td>Your name or email</td><td class="no">Never</td><td>We don't request this from Slack's API</td></tr>
       <tr><td>Your profile photo</td><td class="no">Never</td><td>Not accessed</td></tr>
-      <tr><td>Message content</td><td class="yes">Yes</td><td>Stored in <code>delivered_messages</code> for Notion sync only</td></tr>
+      <tr><td>Your DM channel ID (<code>source_channel</code>)</td><td class="purged">Purged</td><td>Stored temporarily for routing; deleted from <code>routing_table</code> after the first reply is sent</td></tr>
+      <tr><td>Message content</td><td class="yes">Yes</td><td>Stored for delivery and optional Notion sync</td></tr>
       <tr><td>User hash (16 chars)</td><td class="yes">Yes</td><td>Used only to detect abuse patterns — cannot identify you</td></tr>
-      <tr><td>Target channel ID</td><td class="yes">Yes</td><td>Used for routing and logging only</td></tr>
+      <tr><td>Target channel ID</td><td class="yes">Yes</td><td>Used for routing only</td></tr>
       <tr><td>Timestamp</td><td class="yes">Yes</td><td>Standard delivery metadata</td></tr>
     </table>
 
+    <div class="callout">
+      🛡️ <strong>No message content is logged to application logs.</strong> Message bodies are stored only in the database — never written to server-side log files or monitoring systems.
+    </div>
+
+    <h2>The source_channel purge</h2>
+    <p>When you send a message, HushAsk temporarily stores your DM channel ID (<code>source_channel</code>) so it knows where to deliver any admin reply. As soon as a reply is sent — or the conversation is closed without a reply — this value is deleted from the routing table. After that point, there is no record linking the anonymous post to any DM channel.</p>
+
     <h2>Can admins see who sent a message?</h2>
-    <p>No. The admin Command Center shows delivery counts and routing stats — but never sender identity. Not even the person who installed HushAsk can reverse a hash.</p>
+    <p>No. Admins see the anonymous message in their triage channel and can reply to it — but at no point is sender identity revealed. The reply is routed back to the correct DM entirely through the (temporary) routing record, which is then purged. Not even the person who installed HushAsk can reverse a hash.</p>
 
     <h2>What about Slack itself?</h2>
     <p>Slack may log all events passing through their API, including the original message payload before HushAsk processes it. HushAsk protects your identity within its own systems — but your organization's Slack admin may have access to Slack's audit logs. If complete anonymity from your Slack admin is required, consult your organization's IT policy.</p>
   </div>
-  <footer>A product of HonestAlias. Built with ❤️ by Simon.</footer>
+  <footer>© 2025 HushAsk. All rights reserved.</footer>
 </body>
 </html>

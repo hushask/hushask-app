@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Managing #HR-Whisper — HushAsk Help</title>
+  <title>Managing the Confidential Channel — HushAsk Help</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
@@ -11,7 +11,7 @@
     body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.75;min-height:100vh}
     nav{padding:20px 48px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
     .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-    .logo-badge{width:32px;height:32px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:middle;font-weight:900;font-size:13px;color:white;transform:rotate(-6deg)}
+    .logo-badge{width:32px;height:32px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:white;transform:rotate(-6deg)}
     .logo-name{font-size:16px;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
     nav a.back{color:var(--muted);text-decoration:none;font-size:14px}
     nav a.back:hover{color:var(--text)}
@@ -39,10 +39,14 @@
   <div class="content">
     <div class="tag">HR / Admin · ~4 min</div>
     <h1>Managing the Confidential Channel</h1>
-    <p class="lead">Whether you're using <code>#hush-hr</code>, <code>#hr-whisper</code>, or a custom private channel, this guide covers best practices for managing sensitive anonymous feedback effectively and fairly.</p>
+    <p class="lead">Whether you're using <code>#hush-hr</code> or a custom private channel, this guide covers best practices for managing sensitive anonymous feedback — from first triage to closing a conversation.</p>
 
     <h2>Channel setup</h2>
-    <p>HushAsk's auto-create feature creates <code>#hush-hr</code> as a <strong>private channel</strong>. Only invited members can see it. After creation:</p>
+    <p>Your confidential HR channel is a <strong>private Slack channel</strong> that you select during HushAsk setup. To configure it:</p>
+    <p>1. Open the HushAsk <strong>App Home</strong> tab in Slack<br>
+    2. In the <strong>Configuration</strong> section (admin only), select your HR / Confidential channel from the private channel dropdown<br>
+    3. Only members you explicitly invite to that channel will see messages routed there</p>
+    <p>After setup:</p>
     <p>• Invite only HR staff, HR leadership, and relevant executives<br>
     • Do not invite managers of the teams most likely to send feedback<br>
     • Document who has access in your HR system of record</p>
@@ -51,20 +55,28 @@
       ⚠️ <strong>Keep the circle small.</strong> The fewer people with access to this channel, the more trust employees will have in using it. Err on the side of restricting access.
     </div>
 
+    <h2>What admins see</h2>
+    <p>Every message routed to your confidential channel arrives as an anonymous post with an <strong>indigo left sidebar</strong> — a visual indicator that the message was delivered through HushAsk and the sender's identity is protected. Two action buttons appear with each message:</p>
+    <p>• <strong>Reply to Employee</strong> — sends an anonymous reply directly to the employee's DM thread<br>
+    • <strong>Close Conversation</strong> — marks the thread as resolved and removes active routing</p>
+
+    <h2>What employees can do before a reply</h2>
+    <p>Until an admin sends the first reply, the employee retains full control over their message. If they edit the original message in their DM with HushAsk, the post in your triage channel updates automatically. If they delete it, it is retracted. Once a reply has been sent, the conversation is locked in and edits are no longer synced.</p>
+
     <h2>Triage workflow</h2>
-    <p>Every message that arrives in the confidential channel is anonymous. Here's a recommended triage process:</p>
+    <p>Every message that arrives is anonymous. Here's a recommended triage process:</p>
 
     <div class="practice">
       <h3>1. Acknowledge within 48 hours</h3>
-      <p>Even if you can't act immediately, post a thread reply acknowledging the message was received. Use HushAsk's public channel to post a general acknowledgment if a response is warranted company-wide.</p>
+      <p>Use the <strong>"Reply to Employee"</strong> button to send an acknowledgment directly to the sender's DM — even if you can't act immediately. A simple "We received your message and are looking into it" goes a long way. The reply appears anonymously in their DM thread; they won't know who sent it.</p>
     </div>
     <div class="practice">
       <h3>2. Categorize before acting</h3>
       <p>Not every message requires the same urgency. Classify as: Informational, Requires Follow-up, Legal/Compliance, or Immediate Action. Tackle them in reverse order.</p>
     </div>
     <div class="practice">
-      <h3>3. Sync answered questions to Notion</h3>
-      <p>If a question has a general answer that would benefit others, click <strong>📄 Sync to Notion</strong> on the triage message. This creates a doc in your HushAsk knowledge base — answer it there. No response goes back to the sender (by design).</p>
+      <h3>3. Close when resolved</h3>
+      <p>When the conversation is complete — whether you replied or not — click <strong>"Close Conversation"</strong> to mark it resolved. This clears the active routing record for the thread. Note: the HR route does not sync to Notion. If you need to archive a question for a broader audience, consider routing it through the Public channel instead.</p>
     </div>
     <div class="practice">
       <h3>4. Never attempt to identify the sender</h3>
@@ -72,17 +84,17 @@
     </div>
 
     <h2>What to do with difficult messages</h2>
-    <p><strong>Threats or harassment:</strong> Preserve a screenshot, escalate to legal/compliance, and consult your organization's incident response policy. Remember: HushAsk logs a user hash, not an identity — legal authorities with the appropriate warrant may be able to work with Slack's own audit logs.</p>
+    <p><strong>Threats or harassment:</strong> Preserve a screenshot, escalate to legal/compliance, and consult your organization's incident response policy. Remember: HushAsk stores only a user hash, not an identity — legal authorities with the appropriate warrant may be able to work with Slack's own audit logs.</p>
     <p><strong>Repeated similar messages:</strong> A pattern of similar concerns is a signal, not a nuisance. Treat them as a data point for systemic issues, not individual complaints.</p>
     <p><strong>Vague feedback:</strong> Post a general request in a public channel for anyone with feedback on that topic to be more specific. Don't speculate about the original sender.</p>
 
     <div class="callout">
-      🔒 <strong>Reminder:</strong> HushAsk stores only a 16-character user hash alongside message content. This hash cannot be reversed. If you delete the delivered message from Slack, the content is still in HushAsk's database until manually purged. Contact your HushAsk admin to clear records if needed.
+      🔒 <strong>Reminder:</strong> HushAsk stores only a 16-character user hash alongside message content. This hash cannot be reversed. The DM channel ID used for routing is purged from the system after the first reply is sent — after that, there is no technical link between the anonymous post and any individual.
     </div>
 
     <h2>Monthly review</h2>
     <p>Once a month, review the volume and categories of messages received. Patterns often reveal systemic issues that one-on-ones and all-hands don't surface. Share aggregate trends (never individual messages) with leadership as part of your culture health report.</p>
   </div>
-  <footer>A product of HonestAlias. Built with ❤️ by Simon.</footer>
+  <footer>© 2025 HushAsk. All rights reserved.</footer>
 </body>
 </html>
