@@ -585,7 +585,7 @@ def home_welcome():
             {"type":"section","text":{"type":"mrkdwn","text":"Send any question, idea, or concern to the right channel — anonymously. Identity is hashed and never stored."}},
             {"type":"divider"},
             {"type":"section","text":{"type":"mrkdwn","text":"Examples — click to route through the bot:"}},
-            {"type":"section","text":{"type":"mrkdwn","text":"💻 *Tech*\n_\"Our deploy process feels fragile — has anyone proposed a more reliable approach?\"_"},"accessory":{"type":"button","action_id":"example_tech","text":{"type":"plain_text","text":"Send this","emoji":True},"style":"primary"}},
+            {"type":"section","text":{"type":"mrkdwn","text":"💻 *Tech*\n_\"Our deploy process feels fragile — has anyone proposed a more reliable approach?\"_"},"accessory":{"type":"button","action_id":"example_tech","text":{"type":"plain_text","text":"Send this","emoji":True}}},
             {"type":"section","text":{"type":"mrkdwn","text":"🧑‍💼 *HR*\n_\"I'd like to discuss my compensation but I'm not sure who to talk to.\"_"},"accessory":{"type":"button","action_id":"example_feedback","text":{"type":"plain_text","text":"Send this","emoji":True}}},
             {"type":"section","text":{"type":"mrkdwn","text":"💡 *Idea*\n_\"What if we ran a quarterly retrospective open to every team, not just engineering?\"_"},"accessory":{"type":"button","action_id":"example_idea","text":{"type":"plain_text","text":"Send this","emoji":True}}},
             {"type":"divider"},
@@ -692,7 +692,7 @@ def publish_home(client, user_id, team_id):
     is_privileged = admin or user_id == installer_id or (installer_id is None and config is not None)
 
     if is_privileged or is_configured:
-        view = home_configured(config, client, team_id) if is_configured else home_unconfigured()
+        view = build_standard_home(is_admin=admin) if is_configured else home_unconfigured()
     else:
         view = home_welcome()
     client.views_publish(user_id=user_id, view=view)
@@ -1334,23 +1334,11 @@ def wizard2_submit(ack, body):
     auto_create = any(o["value"] == "auto_create" for o in auto_opts)
     pub_ch = hr_ch = ""
     if not auto_create:
-        if "public_channel_select" in values:
-            # Inline selector blocks (new flow — correct Slack filter types)
-            pub_ch = values.get("public_channel_select", {}).get("public_channel_input", {}).get("selected_conversation") or ""
-            hr_ch  = values.get("hr_channel_select",     {}).get("hr_channel_input",     {}).get("selected_conversation") or ""
-            if not pub_ch or not hr_ch:
-                errors = {}
-                if not pub_ch: errors["public_channel_select"] = "Select a public channel."
-                if not hr_ch:  errors["hr_channel_select"]     = "Select a confidential channel."
-                ack(response_action="errors", errors=errors)
-                return
-        else:
-            # Legacy selector blocks (original helper flow — kept for safety)
-            pub_ch = values.get("block_public_channel", {}).get("public_channel_select", {}).get("selected_conversation") or ""
-            hr_ch  = values.get("block_hr_channel",     {}).get("hr_channel_select",    {}).get("selected_conversation") or ""
-            if not pub_ch or not hr_ch:
-                ack(response_action="errors", errors={"block_public_channel": "Select a channel or enable auto-create.", "block_hr_channel": "Select a channel or enable auto-create."})
-                return
+        pub_ch = values.get("block_public_channel", {}).get("public_channel_select", {}).get("selected_conversation") or ""
+        hr_ch  = values.get("block_hr_channel",     {}).get("hr_channel_select",    {}).get("selected_conversation") or ""
+        if not pub_ch or not hr_ch:
+            ack(response_action="errors", errors={"block_public_channel": "Select a channel or enable auto-create.", "block_hr_channel": "Select a channel or enable auto-create."})
+            return
 
     notion_state = secrets.token_hex(16)
     store_notion_state(notion_state, team_id)
@@ -1835,19 +1823,19 @@ def on_mention(event, client):
 
 def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id, triage_channel: str, thread_ts: str):
     """Actually deliver the DM and mark replied. Called directly or after confirm."""
-    dm_text = f"A reply to your anonymous message:\n\n>{clean_reply}"
     client.chat_postMessage(
         channel=source_channel,
-        text=dm_text,
-        blocks=[
-            {"type": "section", "text": {"type": "mrkdwn",
-             "text": f"💬 *A reply to your anonymous message:*\n\n>{clean_reply}"}},
-            {"type": "context", "elements": [
-                {"type": "mrkdwn", "text": "🔒 Responder identity protected · HushAsk"}
-            ]}
-        ]
+        text=" ",
+        attachments=[{
+            "color": "#5865F2",
+            "blocks": [
+                {"type": "section", "text": {"type": "mrkdwn", "text": "*Reply from leadership*"}},
+                {"type": "section", "text": {"type": "mrkdwn", "text": f"> {clean_reply}"}},
+                {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Delivered anonymously · HushAsk"}]}
+            ]
+        }]
     )
-    mark_replied(msg_id)
+    mark_replied_and_purge_source(msg_id)
     print(f"[reply_back] Delivered reply for msg_id={msg_id} to source_channel={source_channel}")
     # Post green confirmation in triage thread
     preview = clean_reply[:60] + ("…" if len(clean_reply) > 60 else "")
