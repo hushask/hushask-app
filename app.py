@@ -1760,6 +1760,53 @@ def handle_message_deleted(event, client, body, logger):
     except Exception as e:
         logger.error(f"[retract_sync] failed: {e}")
 
+    # Step 1: For thread reply retractions only — strip action row from root triage post
+    if mapping["triage_message_ts"] != mapping["triage_thread_ts"]:
+        try:
+            root_result = client.conversations_replies(
+                channel=mapping["triage_channel"],
+                ts=mapping["triage_thread_ts"],
+                limit=1
+            )
+            if root_result.get("messages"):
+                orig = root_result["messages"][0]
+                clean_blocks = []
+                for block in orig.get("blocks", []):
+                    if block.get("type") == "actions":
+                        break
+                    clean_blocks.append(block)
+                while clean_blocks and clean_blocks[-1].get("type") == "divider":
+                    clean_blocks.pop()
+                clean_blocks += [
+                    {"type": "divider"},
+                    {"type": "section", "text": {"type": "mrkdwn", "text": "🔒 Conversation closed."}}
+                ]
+                client.chat_update(
+                    channel=mapping["triage_channel"],
+                    ts=mapping["triage_thread_ts"],
+                    blocks=clean_blocks,
+                    text="🔒 Conversation closed."
+                )
+        except Exception as e:
+            logger.error(f"[retract_sync] root post teardown failed: {e}")
+
+    # Step 2: Close the DB session
+    try:
+        close_thread(team_id, mapping["triage_thread_ts"])
+        logger.info(f"[retract_sync] thread closed for team={team_id}, thread_ts={mapping['triage_thread_ts']}")
+    except Exception as e:
+        logger.error(f"[retract_sync] close_thread failed: {e}")
+
+    # Step 3: Post closure notification in the triage thread
+    try:
+        client.chat_postMessage(
+            channel=mapping["triage_channel"],
+            thread_ts=mapping["triage_thread_ts"],
+            text="🔒 The sender retracted their message. This conversation has been automatically closed."
+        )
+    except Exception as e:
+        logger.error(f"[retract_sync] notification post failed: {e}")
+
 
 @app.event("app_mention")
 def on_mention(event, client):
