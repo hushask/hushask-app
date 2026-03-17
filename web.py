@@ -430,17 +430,17 @@ def root_file(filename):
 _PAGE_STYLE = """
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:#0d0d0d;color:#f0f0f0;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
-  .card{background:#141414;border:1px solid #222;border-radius:20px;padding:48px 52px;text-align:center;max-width:480px;width:90%}
+  body{background:#F8FAFC;color:#0F172A;font-family:'Inter',sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .card{background:white;border:1px solid #E2E8F0;border-radius:20px;padding:48px 52px;text-align:center;max-width:480px;width:90%}
   .icon{font-size:52px;margin-bottom:24px}
   h1{font-size:26px;font-weight:800;margin-bottom:12px}
-  p{color:#888;font-size:15px;line-height:1.6;margin-bottom:20px}
+  p{color:#475569;font-size:15px;line-height:1.6;margin-bottom:20px}
   .badge{display:inline-block;padding:4px 14px;border-radius:100px;font-size:12px;font-weight:700}
-  .ok{background:#1a3a1a;color:#28c840;border:1px solid #28c840}
-  .err{background:#3a1a1a;color:#ff5f57;border:1px solid #ff5f57}
-  .pro{background:linear-gradient(135deg,#FF8C42,#FF3CAC);color:white;border:none;padding:6px 18px;font-size:13px}
-  a{color:#FF8C42;text-decoration:none}
-  code{font-family:monospace;background:#1a1a1a;padding:2px 6px;border-radius:4px;font-size:13px;color:#FF8C42}
+  .ok{background:#F0FDF4;color:#16A34A;border:1px solid #BBF7D0}
+  .err{background:#FEF2F2;color:#DC2626;border:1px solid #FECACA}
+  .pro{background:#1A2E62;color:white;border:none;padding:6px 18px;font-size:13px}
+  a{color:#2563EB;text-decoration:none}
+  code{font-family:monospace;background:#F1F5F9;border:1px solid #E2E8F0;padding:2px 6px;border-radius:4px;font-size:13px;color:#0F172A}
 </style>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
 """
