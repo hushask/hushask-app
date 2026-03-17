@@ -140,6 +140,17 @@ def init_db():
                 created_at     TEXT DEFAULT (strftime('%Y-%m-%d %H:%M', 'now')),
                 UNIQUE(team_id, thread_ts)
             );
+
+            CREATE TABLE IF NOT EXISTS message_mappings (
+                id                INTEGER PRIMARY KEY AUTOINCREMENT,
+                team_id           TEXT NOT NULL,
+                user_dm_ts        TEXT NOT NULL,
+                triage_thread_ts  TEXT NOT NULL,
+                triage_message_ts TEXT NOT NULL,
+                triage_channel    TEXT NOT NULL,
+                created_at        TEXT DEFAULT (strftime('%Y-%m-%d %H:%M', 'now')),
+                UNIQUE(team_id, user_dm_ts)
+            );
         """)
     # Migrations for columns added after initial schema
     with get_conn() as conn:
@@ -586,3 +597,25 @@ def has_nudge_been_sent(team_id: str) -> bool:
 def mark_nudge_sent(team_id: str):
     with get_conn() as conn:
         conn.execute("INSERT OR IGNORE INTO install_nudges (team_id) VALUES (?)", (team_id,))
+
+
+# ── Message mappings (edit/retract sync) ─────────────────────────────────────
+
+def save_message_mapping(team_id: str, user_dm_ts: str, triage_thread_ts: str,
+                          triage_message_ts: str, triage_channel: str):
+    with get_conn() as conn:
+        conn.execute(
+            """INSERT OR REPLACE INTO message_mappings
+               (team_id, user_dm_ts, triage_thread_ts, triage_message_ts, triage_channel)
+               VALUES (?, ?, ?, ?, ?)""",
+            (team_id, user_dm_ts, triage_thread_ts, triage_message_ts, triage_channel)
+        )
+
+
+def get_message_mapping(team_id: str, user_dm_ts: str):
+    with get_conn() as conn:
+        row = conn.execute(
+            "SELECT * FROM message_mappings WHERE team_id = ? AND user_dm_ts = ?",
+            (team_id, user_dm_ts)
+        ).fetchone()
+        return dict(row) if row else None

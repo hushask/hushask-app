@@ -57,6 +57,7 @@ from database import (
     get_workspace_config, save_workspace_config, reset_workspace_config,
     save_workspace_notion, store_notion_state, get_team_from_state, delete_notion_state,
     check_and_increment, get_usage, close_thread,
+    save_message_mapping, get_message_mapping,
 )
 
 # ── Config ────────────────────────────────────────────────────────────────────
@@ -1525,6 +1526,120 @@ def handle_incoming(client, team_id, user_id, channel_id, text):
 @app.message()
 def handle_message(message, client, body, say):
     """Single message event entry point. Dispatches to DM or triage reply handler."""
+    team_id = (body.get("team_id") or body.get("team", {}).get("id") or message.get("team", ""))
+
+    subtype = message.get("subtype")
+
+    # ── Native edit sync ──────────────────────────────────────────────────────
+    if subtype == "message_changed":
+        if message.get("channel_type") != "im":
+            return
+        changed = message.get("message", {})
+        user_dm_ts = changed.get("ts") or message.get("previous_message", {}).get("ts", "")
+        new_text = (changed.get("text") or "").strip()
+        if not user_dm_ts or not new_text:
+            return
+        mapping = get_message_mapping(team_id, user_dm_ts)
+        if not mapping:
+            return
+        try:
+            if mapping["triage_message_ts"] == mapping["triage_thread_ts"]:
+                # Root post — update the section block text in-place
+                result = client.conversations_replies(
+                    channel=mapping["triage_channel"],
+                    ts=mapping["triage_thread_ts"],
+                    limit=1
+                )
+                if result.get("messages"):
+                    orig = result["messages"][0]
+                    updated_blocks = []
+                    for block in orig.get("blocks", []):
+                        if block.get("type") == "section" and block.get("text", {}).get("type") == "mrkdwn":
+                            label = block["text"]["text"].split("\n\n")[0]
+                            block = {"type": "section", "text": {"type": "mrkdwn",
+                                     "text": f"{label}\n\n{new_text}\n_(Edited)_"}}
+                        updated_blocks.append(block)
+                    client.chat_update(
+                        channel=mapping["triage_channel"],
+                        ts=mapping["triage_message_ts"],
+                        blocks=updated_blocks,
+                        text="Anonymous message via HushAsk (Edited)"
+                    )
+            else:
+                # Thread reply — update the attachment text
+                client.chat_update(
+                    channel=mapping["triage_channel"],
+                    ts=mapping["triage_message_ts"],
+                    text=" ",
+                    attachments=[{
+                        "color": "#5865F2",
+                        "blocks": [
+                            {"type": "section", "text": {"type": "mrkdwn", "text": "*Message from employee*"}},
+                            {"type": "section", "text": {"type": "mrkdwn", "text": f"> {new_text}\n_(Edited)_"}},
+                            {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]}
+                        ]
+                    }]
+                )
+        except Exception as e:
+            logger.error(f"[edit_sync] failed: {e}")
+        return
+
+    # ── Native delete/retract sync ────────────────────────────────────────────
+    if subtype == "message_deleted":
+        if message.get("channel_type") != "im":
+            return
+        deleted_ts = message.get("deleted_ts", "")
+        if not deleted_ts:
+            return
+        mapping = get_message_mapping(team_id, deleted_ts)
+        if not mapping:
+            return
+        try:
+            if mapping["triage_message_ts"] == mapping["triage_thread_ts"]:
+                # Root post — update in-place with retraction notice
+                result = client.conversations_replies(
+                    channel=mapping["triage_channel"],
+                    ts=mapping["triage_thread_ts"],
+                    limit=1
+                )
+                if result.get("messages"):
+                    orig = result["messages"][0]
+                    # Keep only the non-section, non-actions blocks (context/footer)
+                    footer_blocks = [b for b in orig.get("blocks", [])
+                                     if b.get("type") in ("context",) and
+                                     "🔒 Anonymous" in str(b)]
+                    retract_blocks = [
+                        {"type": "section", "text": {"type": "mrkdwn",
+                         "text": "🚫 *[The sender has retracted this message]*"}},
+                    ] + footer_blocks + [
+                        {"type": "divider"},
+                        {"type": "section", "text": {"type": "mrkdwn", "text": "🔒 Conversation closed."}}
+                    ]
+                    client.chat_update(
+                        channel=mapping["triage_channel"],
+                        ts=mapping["triage_message_ts"],
+                        blocks=retract_blocks,
+                        text="🚫 The sender has retracted this message."
+                    )
+            else:
+                # Thread reply — update with retraction notice
+                client.chat_update(
+                    channel=mapping["triage_channel"],
+                    ts=mapping["triage_message_ts"],
+                    text=" ",
+                    attachments=[{
+                        "color": "#5865F2",
+                        "blocks": [
+                            {"type": "section", "text": {"type": "mrkdwn",
+                             "text": "🚫 *[The sender has retracted this message]*"}},
+                            {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Anonymous · HushAsk"}]}
+                        ]
+                    }]
+                )
+        except Exception as e:
+            logger.error(f"[retract_sync] failed: {e}")
+        return
+
     # Common guards
     if message.get("bot_id") or message.get("subtype"):
         return
@@ -1532,8 +1647,6 @@ def handle_message(message, client, body, say):
     channel_type = message.get("channel_type")
     thread_ts = message.get("thread_ts")
     ts = message.get("ts")
-
-    team_id = (body.get("team_id") or body.get("team", {}).get("id") or message.get("team", ""))
 
     if channel_type == "im":
         # ── DM from employee ──────────────────────────────────────────────────
@@ -1549,6 +1662,41 @@ def handle_message(message, client, body, say):
             active = get_active_thread_for_user(team_id, user_hash)
             if active:
                 close_thread(team_id, active["thread_ts"])
+                # Update triage post — strip action row, mark closed
+                target_channel = active["target_channel"]
+                escape_thread_ts = active["thread_ts"]
+                try:
+                    result = client.conversations_replies(
+                        channel=target_channel, ts=escape_thread_ts, limit=1
+                    )
+                    if result.get("messages"):
+                        orig = result["messages"][0]
+                        clean_blocks = []
+                        for block in orig.get("blocks", []):
+                            if block.get("type") == "actions":
+                                break
+                            clean_blocks.append(block)
+                        while clean_blocks and clean_blocks[-1].get("type") == "divider":
+                            clean_blocks.pop()
+                        clean_blocks += [
+                            {"type": "divider"},
+                            {"type": "section", "text": {"type": "mrkdwn", "text": "🔒 Conversation closed."}}
+                        ]
+                        client.chat_update(
+                            channel=target_channel, ts=escape_thread_ts,
+                            blocks=clean_blocks, text="🔒 Conversation closed."
+                        )
+                except Exception as e:
+                    logger.error(f"[escape] triage update failed: {e}")
+                # Post threaded notification
+                try:
+                    client.chat_postMessage(
+                        channel=target_channel,
+                        thread_ts=escape_thread_ts,
+                        text="🔒 The employee has permanently ended this conversation."
+                    )
+                except Exception as e:
+                    logger.error(f"[escape] thread notification failed: {e}")
                 try:
                     client.chat_postMessage(
                         channel=message["channel"],
@@ -1573,7 +1721,7 @@ def handle_message(message, client, body, say):
             thread_ts = active_thread["thread_ts"]
             target_channel = active_thread["target_channel"]
             try:
-                client.chat_postMessage(
+                result = client.chat_postMessage(
                     channel=target_channel,
                     thread_ts=thread_ts,
                     text=" ",
@@ -1597,6 +1745,12 @@ def handle_message(message, client, body, say):
                         }
                     ]
                 )
+                reply_msg_ts = result.get("ts")
+                if reply_msg_ts:
+                    try:
+                        save_message_mapping(team_id, message["ts"], thread_ts, reply_msg_ts, target_channel)
+                    except Exception as e:
+                        logger.error(f"[2way] save_message_mapping failed: {e}")
                 say("Your reply has been sent anonymously.")
             except Exception as e:
                 logger.error(f"[2way] Failed to post anonymous reply: {e}")
@@ -1897,6 +2051,11 @@ def _do_route(ack, body, client, route_type):
         if triage_ts:
             save_routing(team_id, triage_ts, user_hash, src)
             logger.info(f"[route] routing_table saved: team={team_id}, thread_ts={triage_ts}, src={src}")
+        if triage_ts and msg_ts:
+            try:
+                save_message_mapping(team_id, msg_ts, triage_ts, triage_ts, target)
+            except Exception as e:
+                logger.error(f"[route] save_message_mapping failed: {e}")
         # Update the triage post with close controls
         if triage_ts:
             close_value = json.dumps({
