@@ -211,14 +211,19 @@ def get_active_thread_for_user(team_id: str, user_hash: str):
         return dict(row) if row else None
 
 
-def close_thread(team_id: str, thread_ts: str) -> None:
-    """Remove the active thread record, preventing further 2-way routing."""
+def close_thread(team_id: str, thread_ts: str) -> bool:
+    """Remove the active thread record, preventing further 2-way routing.
+
+    Returns True if a row was deleted (first close), False if no row was found
+    (thread was already closed — useful to guard against double-close races).
+    """
     with get_conn() as conn:
-        conn.execute(
+        cur = conn.execute(
             "DELETE FROM routing_table WHERE team_id = ? AND thread_ts = ?",
             (team_id, thread_ts)
         )
         conn.commit()
+        return cur.rowcount > 0
 
 
 def purge_expired_routing(days: int = 30) -> int:

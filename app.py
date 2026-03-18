@@ -1853,6 +1853,26 @@ def handle_message_deleted(event, client, body, logger):
     mapping = get_message_mapping(team_id, deleted_ts)
     if not mapping:
         return
+
+    # Guard: if the thread is already closed, skip triage post update to avoid
+    # stomping the admin-set "closed" visual state with a retraction state.
+    thread_still_active = get_routing(team_id, mapping["triage_thread_ts"])
+    if not thread_still_active:
+        logger.warning(
+            f"[retract_sync] thread {mapping['triage_thread_ts']} already closed — "
+            "skipping triage post update"
+        )
+        try:
+            employee_channel = event.get("channel")
+            if employee_channel:
+                client.chat_postMessage(
+                    channel=employee_channel,
+                    text="Your retraction couldn't be applied — this conversation was already closed by an admin."
+                )
+        except Exception as e:
+            logger.error(f"[retract_sync] employee already-closed DM failed: {e}")
+        return
+
     try:
         if mapping["triage_message_ts"] == mapping["triage_thread_ts"]:
             result = client.conversations_replies(
@@ -1958,8 +1978,19 @@ def on_mention(event, client):
     handle_incoming(client, event["team"], event["user"], event["channel"], event.get("text",""), event.get("ts"))
 
 
-def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id, triage_channel: str, thread_ts: str):
+def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id, triage_channel: str, thread_ts: str, team_id: str = ""):
     """Actually deliver the DM and mark replied. Called directly or after confirm."""
+    # Strip any workspace display names from the reply to prevent accidental deanonymisation.
+    if team_id:
+        try:
+            display_names = get_workspace_display_names(client, team_id)
+            for name in display_names:
+                if name and name.lower() in clean_reply.lower():
+                    # Case-insensitive replace using regex
+                    clean_reply = re.sub(re.escape(name), "[name removed]", clean_reply, flags=re.IGNORECASE)
+        except Exception as e:
+            logger.warning(f"[reply_back] name-filter failed (non-fatal): {e}")
+
     client.chat_postMessage(
         channel=source_channel,
         text=" ",
@@ -2016,7 +2047,8 @@ def handle_reply_deliver_confirm(ack, body, client, respond):
         msg_id         = ctx.get("msg_id")
         triage_channel = ctx.get("triage_channel", "")
         thread_ts_val  = ctx.get("thread_ts", "")
-        _deliver_reply_dm(client, source_channel, clean_reply, msg_id, triage_channel, thread_ts_val)
+        team_id_val    = body.get("team", {}).get("id", "")
+        _deliver_reply_dm(client, source_channel, clean_reply, msg_id, triage_channel, thread_ts_val, team_id=team_id_val)
         # Remove the ephemeral prompt via respond (chat_delete silently fails for ephemerals)
         respond(delete_original=True)
     except Exception as e:
@@ -2147,7 +2179,7 @@ def handle_reply_modal(ack, body, client, logger):
         msg_id = None
 
     try:
-        _deliver_reply_dm(client, source_channel, clean_reply, msg_id, channel_id, thread_ts)
+        _deliver_reply_dm(client, source_channel, clean_reply, msg_id, channel_id, thread_ts, team_id=team_id)
     except Exception as e:
         logger.error(f"[reply_modal] _deliver_reply_dm failed: {e}", exc_info=True)
         try:
@@ -2505,7 +2537,10 @@ def _do_thread_close(body, client, logger, sync_notion: bool) -> None:
 
     # 1. Delete active thread from DB (kills 2-way routing)
     try:
-        close_thread(team_id, thread_ts)
+        was_open = close_thread(team_id, thread_ts)
+        if not was_open:
+            logger.warning(f"[close] thread {thread_ts} already closed — skipping duplicate DM")
+            return
         logger.info(f"[close] thread {thread_ts} closed for team {team_id}")
     except Exception as e:
         logger.error(f"[close] DB close failed: {e}")
