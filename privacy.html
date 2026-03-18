@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Privacy Policy — HushAsk by HonestAlias</title>
+  <title>Privacy Policy — HushAsk</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <style>
@@ -225,10 +225,10 @@
     </div>
   </nav>
 
-  <div class="content">
+    <div class="content">
     <div class="page-header">
       <h1>Privacy Policy</h1>
-      <p class="updated">Last updated: March 6, 2026 · HonestAlias, Inc.</p>
+      <p class="updated">Last updated: March 2026</p>
     </div>
 
     <div class="toc">
@@ -243,7 +243,7 @@
         <li><a href="#notion-integration">Notion integration</a></li>
         <li><a href="#data-retention">Data retention</a></li>
         <li><a href="#your-rights">Your rights</a></li>
-        <li><a href="#slack-platform">Slack platform</a></li>
+        <li><a href="#slack-platform">Slack platform and audit logs</a></li>
         <li><a href="#security">Security</a></li>
         <li><a href="#changes">Changes to this policy</a></li>
         <li><a href="#contact">Contact</a></li>
@@ -251,20 +251,22 @@
     </div>
 
     <div class="callout">
-      <p>🔒 <strong>The short version:</strong> HushAsk is designed to protect your identity by design. We never store your Slack user ID, name, or email. Messages are routed using a one-way cryptographic hash. We cannot identify who sent any message — and that's intentional.</p>
+      <p><strong>The short version:</strong> HushAsk is designed to protect your identity by design. We never store your Slack user ID, name, or email. Messages are routed using a one-way cryptographic hash. We cannot identify who sent any message — and that's intentional.</p>
     </div>
 
+    <p>HushAsk exists because people won't ask certain questions if their name is on them. That only works if anonymity is real — not a policy promise, not a setting that could be toggled, but a technical property of how the system is built. This page explains exactly what HushAsk collects, what it doesn't, and where the limits of our control end and Slack's begin.</p>
+
     <h2 id="who-we-are">1. Who we are</h2>
-    <p>HushAsk is a Slack application developed and operated by <strong>HonestAlias, Inc.</strong> ("we," "us," or "our"). HushAsk enables anonymous message routing within Slack workspaces. This Privacy Policy explains how we collect, use, and protect information when you use the HushAsk bot.</p>
-    <p>If you have questions, contact us at <a href="mailto:privacy@honestalias.com">privacy@honestalias.com</a>.</p>
+    <p>HushAsk is a Slack application developed and operated by HonestAsk ("we," "us," or "our"). HushAsk enables anonymous message routing within Slack workspaces.</p>
+    <p>Questions? Contact us at <a href="mailto:privacy@hushask.com">privacy@hushask.com</a>.</p>
 
     <h2 id="what-we-collect">2. What we collect</h2>
     <p>When you interact with HushAsk, we collect a limited set of data necessary to operate the service:</p>
     <ul>
-      <li><strong>Message content</strong> — The text of messages you choose to route through HushAsk. This is stored temporarily while you select a routing destination, and permanently (post-routing) for Notion sync purposes.</li>
-      <li><strong>Anonymous user hash</strong> — A 16-character truncated SHA-256 hash derived from your Slack user ID and workspace ID, combined with a private salt. This hash cannot be reversed to identify you. It is used only for abuse detection (e.g., identifying patterns of misuse at a workspace level).</li>
+      <li><strong>Message content</strong> — The text of messages you choose to route through HushAsk. Stored temporarily while you select a routing destination, and post-routing for Notion sync where enabled.</li>
+      <li><strong>Anonymous user hash</strong> — A 16-character truncated SHA-256 hash derived from your Slack user ID and workspace ID, combined with a private salt. This hash cannot be reversed to identify you. It is used only for abuse detection at a workspace level.</li>
       <li><strong>Routing metadata</strong> — Which channel a message was delivered to, the timestamp, and whether the message was synced to Notion. No sender identity is included.</li>
-      <li><strong>Workspace configuration</strong> — The Slack team ID, configured channel IDs, and optional Notion integration credentials supplied by workspace admins.</li>
+      <li><strong>Workspace configuration</strong> — The Slack team ID, configured channel IDs, and any Notion integration credentials supplied by workspace admins.</li>
     </ul>
 
     <h2 id="what-we-dont-collect">3. What we never collect</h2>
@@ -278,14 +280,30 @@
     </ul>
 
     <h2 id="how-hashing-works">4. How identity hashing works</h2>
-    <p>When you send a message through HushAsk, your Slack user ID and workspace ID are passed through a <strong>SHA-256 one-way hash function</strong> combined with a private server-side salt. The result is a 16-character string that:</p>
+    <p>When you send a message through HushAsk, your Slack user ID and workspace ID are passed through a SHA-256 one-way hash function combined with a private server-side salt. The result is a 16-character string that:</p>
     <ul>
       <li>Cannot be mathematically reversed to recover your Slack ID</li>
       <li>Is not linkable to any external identity database</li>
       <li>Is unique within HushAsk's context but not cross-referenceable</li>
     </ul>
     <p>The original Slack user ID is never written to disk or transmitted to any external service. The hash is used solely for aggregate abuse detection — not for tracking individuals.</p>
-    <p>For a full technical explanation, see our <a href="/help/privacy-and-hashing.html">Privacy & Hashing guide</a>.</p>
+    <p><strong>What admins can and cannot see:</strong></p>
+    <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:14px;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);">
+          <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-weight:600;"></th>
+          <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-weight:600;">Admin can see</th>
+          <th style="text-align:left;padding:8px 12px;color:var(--text-muted);font-weight:600;">Admin cannot see</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:var(--text-mid);">Message content</td><td style="padding:8px 12px;color:var(--text-mid);">✓</td><td></td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:var(--text-mid);">Sender name or handle</td><td></td><td style="padding:8px 12px;color:var(--text-mid);">✓</td></tr>
+        <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:var(--text-mid);">Sender Slack ID</td><td></td><td style="padding:8px 12px;color:var(--text-mid);">✓</td></tr>
+        <tr><td style="padding:8px 12px;color:var(--text-mid);">Any identifier linking message to sender</td><td></td><td style="padding:8px 12px;color:var(--text-mid);">✓</td></tr>
+      </tbody>
+    </table>
+    <p>Sender identity cannot be recovered from HushAsk's database. It is not stored.</p>
 
     <h2 id="how-we-use-data">5. How we use your data</h2>
     <p>We use the data we collect to:</p>
@@ -302,34 +320,39 @@
     <p>We do not sell, rent, or share your personal data with third parties. The only external data flows are:</p>
     <ul>
       <li><strong>Slack API</strong> — Message delivery to your workspace's Slack channels. Governed by <a href="https://slack.com/intl/en-us/trust/privacy/privacy-policy" target="_blank">Slack's Privacy Policy</a>.</li>
-      <li><strong>Notion API</strong> — Only when a workspace admin explicitly clicks "Sync to Notion" on a specific message. Governed by <a href="https://www.notion.so/Privacy-Policy-3468d120cf614d4c9014c09f6adc9091" target="_blank">Notion's Privacy Policy</a>.</li>
+      <li><strong>Notion API</strong> — Only when a workspace admin explicitly syncs a specific message. Governed by <a href="https://www.notion.so/Privacy-Policy-3468d120cf614d4c9014c09f6adc9091" target="_blank">Notion's Privacy Policy</a>.</li>
     </ul>
     <p>No message content is shared with any other third party.</p>
 
     <h2 id="notion-integration">7. Notion integration</h2>
-    <p>The Notion integration is <strong>entirely optional</strong>. If a workspace admin connects Notion:</p>
+    <p>The Notion integration is entirely optional. If a workspace admin connects Notion:</p>
     <ul>
-      <li>Only messages explicitly synced (via the "📄 Sync to Notion" button) are sent to Notion</li>
-      <li>Messages are stored in a database provisioned within the admin's own Notion workspace</li>
+      <li>Only messages explicitly synced via the "Archive This Thread" flow are sent to Notion</li>
+      <li>Messages are stored in a database within the admin's own Notion workspace — no sender identity is included in the record</li>
       <li>We store the Notion API access token on our server to enable syncing — it is encrypted at rest</li>
-      <li>The Notion access token can be revoked at any time from Notion's integration settings, which will disable syncing</li>
+      <li>The access token can be revoked at any time from Notion's integration settings, which will disable syncing immediately</li>
     </ul>
 
     <h2 id="data-retention">8. Data retention</h2>
     <ul>
-      <li><strong>Pending messages</strong> (awaiting routing selection) — deleted immediately upon routing or if the routing flow is abandoned</li>
-      <li><strong>Delivered messages</strong> — retained for up to 12 months to support Notion sync. Admins can request early deletion</li>
-      <li><strong>Workspace configuration</strong> — retained until the app is uninstalled from Slack, or until an admin resets the configuration</li>
-      <li><strong>OAuth state tokens</strong> — automatically purged after 1 hour</li>
+      <li><strong>Message content</strong> — Retained for up to 12 months to support Notion sync. Admins can request early deletion by contacting <a href="mailto:privacy@hushask.com">privacy@hushask.com</a>.</li>
+      <li><strong>Routing data</strong> — Deleted immediately after your admin reply is delivered.</li>
+      <li><strong>Your hashed identifier</strong> — Retained alongside message content for the same 12-month period. It is a one-way cryptographic hash and cannot be reversed to identify you.</li>
+      <li><strong>Pending messages</strong> (awaiting routing selection) — Deleted immediately upon routing or if the routing flow is abandoned.</li>
+      <li><strong>Workspace configuration</strong> — Retained until the app is uninstalled from Slack, or until an admin resets the configuration.</li>
+      <li><strong>OAuth state tokens</strong> — Automatically purged after 1 hour.</li>
     </ul>
 
     <h2 id="your-rights">9. Your rights</h2>
     <p>Because we do not store identifiable information about message senders, we cannot fulfill data subject access or deletion requests on a per-sender basis — we genuinely cannot link a request to a stored record.</p>
-    <p>Workspace admins can request deletion of all message content for their workspace by contacting us at <a href="mailto:privacy@honestalias.com">privacy@honestalias.com</a>.</p>
-    <p>If you are located in the EU/UK, you have rights under GDPR/UK GDPR. Because our data is anonymized by design, most message data falls outside the scope of personal data as defined by GDPR. Configuration data (workspace ID, channel IDs) can be deleted upon workspace admin request.</p>
+    <p>Workspace admins can request deletion of all message content for their workspace by contacting <a href="mailto:privacy@hushask.com">privacy@hushask.com</a>.</p>
+    <p><strong>If you are in the EU or UK:</strong> You have rights under GDPR/UK GDPR. Because our data is anonymized by design, most message data falls outside the scope of personal data as defined by GDPR. Configuration data (workspace ID, channel IDs) can be deleted upon workspace admin request.</p>
 
-    <h2 id="slack-platform">10. Slack platform</h2>
-    <p>HushAsk operates within Slack and is subject to <a href="https://slack.com/intl/en-us/trust/privacy/privacy-policy" target="_blank">Slack's Privacy Policy</a> and <a href="https://api.slack.com/developer-policy" target="_blank">Slack's Developer Policy</a>. Slack may independently log API events, including message content, according to their own policies. HushAsk's anonymization protects your identity within our systems — but your organization's Slack admin may have access to Slack's audit logs independent of HushAsk.</p>
+    <h2 id="slack-platform">10. Slack platform and audit logs</h2>
+    <p><strong>This section is important if your organization uses Slack's Enterprise Grid plan.</strong></p>
+    <p>HushAsk operates within Slack and is subject to <a href="https://slack.com/intl/en-us/trust/privacy/privacy-policy" target="_blank">Slack's Privacy Policy</a> and <a href="https://api.slack.com/developer-policy" target="_blank">Slack's Developer Policy</a>. Slack may independently log API events according to their own policies.</p>
+    <p>When you send a message to any Slack app — including HushAsk — Slack's platform records that interaction in its own audit log. On Enterprise Grid plans, Slack makes this log available to workspace administrators through Slack's own tooling. This means your Slack admin may be able to see that you sent a DM to the HushAsk bot, independent of anything HushAsk stores or controls. HushAsk has no access to this log and no ability to suppress it. It is a Slack platform behavior, not a HushAsk behavior.</p>
+    <p>If this matters to you, check with your Slack administrator whether your workspace is on Enterprise Grid before using HushAsk.</p>
 
     <h2 id="security">11. Security</h2>
     <p>We take the following measures to protect data:</p>
@@ -340,20 +363,21 @@
       <li>SQLite WAL mode for safe concurrent access with no network exposure</li>
       <li>The application server does not expose internal files (source code, database, environment config) via the web interface</li>
     </ul>
-    <p>No system is perfectly secure. If you discover a vulnerability, please report it responsibly to <a href="mailto:security@honestalias.com">security@honestalias.com</a>.</p>
+    <p>No system is perfectly secure. If you discover a vulnerability, please report it responsibly to <a href="mailto:security@hushask.com">security@hushask.com</a>.</p>
 
     <h2 id="changes">12. Changes to this policy</h2>
     <p>We may update this policy as the product evolves. Material changes will be communicated to workspace admins via the HushAsk App Home. The "Last updated" date at the top of this page will reflect the most recent revision. Continued use of HushAsk after changes constitutes acceptance of the updated policy.</p>
 
     <h2 id="contact">13. Contact</h2>
-    <p>For privacy-related questions, data deletion requests, or security disclosures:</p>
+    <p>For privacy questions, data deletion requests, or security disclosures:</p>
     <ul>
-      <li>Email: <a href="mailto:privacy@honestalias.com">privacy@honestalias.com</a></li>
-      <li>Security: <a href="mailto:security@honestalias.com">security@honestalias.com</a></li>
+      <li>Email: <a href="mailto:privacy@hushask.com">privacy@hushask.com</a></li>
+      <li>Security: <a href="mailto:security@hushask.com">security@hushask.com</a></li>
     </ul>
 
     <hr>
-    <p class="footer-note">HonestAlias, Inc. · HushAsk · <a href="/">honestalias.com</a></p>
+    <p class="footer-note">HonestAsk · HushAsk · <a href="https://hushask.com">hushask.com</a></p>
+
   </div>
 
   <footer>
@@ -364,8 +388,8 @@
       </a>
       <div class="footer-copy">© 2025 HushAsk. All rights reserved.</div>
       <div class="footer-links">
-        <a href="/privacy.html">Privacy</a>
-        <a href="#">Terms</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
         <a href="/help/">Help</a>
       </div>
     </div>

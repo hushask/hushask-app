@@ -206,9 +206,9 @@
   <section class="hero">
     <h1>What your team won't say in Slack,<br><span class="accent-text">they'll say here.</span></h1>
     <p class="hero-tagline">
-      HushAsk routes anonymous questions to the right place — HR for sensitive issues, your Notion knowledge base for everything else. Your Slack ID is hashed before anything is stored. Installs in 60 seconds.
+      Your employees can send anonymous questions and choose where they go — straight to HR, or to a public channel where an expert can answer. Either way, no one knows who asked.
     </p>
-    <p style="font-size:15px;font-weight:600;color:var(--navy);margin-bottom:32px;">Anonymity in HushAsk is cryptographic — not a policy promise.</p>
+    <p style="font-size:15px;font-weight:600;color:var(--navy);margin-bottom:32px;"><a href="/privacy" style="color:var(--navy);text-decoration:none;border-bottom:1px solid currentColor;">Anonymity in HushAsk is cryptographic — not a policy promise.</a></p>
     <div class="hero-actions">
       <a href="#early-access" class="btn btn-primary btn-lg">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
@@ -216,7 +216,7 @@
       </a>
       <a href="#how-it-works" class="btn btn-ghost btn-lg">See how it works</a>
     </div>
-    <div class="hero-trust">Free to start &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; Installs in 60 seconds</div>
+    <div class="hero-trust">20 messages free monthly, always &nbsp;·&nbsp; No commitment &nbsp;·&nbsp; Cryptographic Anonymity</div>
 
     <!-- DM mockup — reflects actual bot behavior -->
     <div class="mockup">
@@ -253,27 +253,27 @@
   <!-- HOW IT WORKS -->
   <section class="how" id="how-it-works">
     <div class="section-label">How it works</div>
-    <div class="section-title">One question. Two tracks.</div>
-    <p class="section-sub">Every question sent through HushAsk follows a dual-track routing system — routed anonymously to the right team, handled appropriately for each track.</p>
+    <div class="section-title">Two-track for employee questions.</div>
+    <p class="section-sub">Every question starts the same way: your employee asks anonymously, then chooses the destination — HR for sensitive issues, or a public channel where your team can weigh in. If you want to share the answer with the whole team, it gets saved to Notion. The question gets answered. The asker stays anonymous.</p>
     <div class="tracks">
       <div class="track-card">
-        <div class="track-num">Track 01</div>
+        <div class="track-num">Confidential</div>
         <h3>Sensitive issue? Goes straight to HR.</h3>
         <p>
-          DM the HushAsk bot or use <code style="background:#E2E8F0;border:1px solid #CBD5E1;border-radius:4px;padding:2px 6px;font-family:monospace;font-size:13px;">/ha</code> from any channel. HushAsk immediately hashes your identity and presents two routing buttons — <strong>Public Knowledge Base</strong> or <strong>Confidential / HR</strong>. You choose where it goes. Your name never appears. You can edit or retract your message any time before an admin replies.
+          Your employees message HushAsk directly or use <code style="background:#E2E8F0;border:1px solid #CBD5E1;border-radius:4px;padding:2px 6px;font-family:monospace;font-size:13px;">/ha</code> from any channel. HushAsk hashes their identity and presents two routing options — Confidential or Open. They choose where it goes. Their name never appears. They can edit or retract their message any time before you reply.
         </p>
         <div class="track-detail">
-          Admins see only the message in the triage channel — never the sender's identity. Messages land in a dedicated admin triage channel; admins reply via a structured button, and the response is delivered back to you through the bot — anonymity preserved throughout. Your Slack ID is SHA-256 hashed before anything is stored. Zero social risk for the employee.
+          You see only the message in #hush-hr — never who sent it. When you're ready to respond, a single button delivers your reply back through the bot. Their Slack ID is SHA-256 hashed before anything is stored. Zero social risk for the employee.
         </div>
       </div>
       <div class="track-card">
-        <div class="track-num">Track 02</div>
+        <div class="track-num">Open</div>
         <h3>General question? Becomes permanent company knowledge.</h3>
         <p>
-          When the admin clicks "Archive This Thread", a modal prompts them to set a summary title before syncing to Notion. The Q&amp;A pair becomes a permanent, searchable entry in your <strong>Hush Library</strong> database — ready to surface the next time someone asks the same question.
+          When you're ready to wrap up a public thread, you can choose to save it to Notion with a summary title. The Q&amp;A becomes a searchable entry in your knowledge base — ready to surface the next time someone asks the same question.
         </p>
         <div class="track-detail">
-          Answered questions become <strong>searchable company assets</strong>. Your knowledge base grows every time someone speaks up — even anonymously.
+          When you choose to save a thread, the answered question becomes a permanent company asset. Your Notion knowledge base builds itself, one question at a time.
         </div>
       </div>
     </div>
@@ -293,17 +293,17 @@
       <div class="feature-card">
         <div class="feature-icon">💬</div>
         <h3>Zero Friction</h3>
-        <p>DM the bot directly or use <code style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:4px;padding:1px 5px;font-size:12px;">/ha</code> from any channel. No new apps, no onboarding flows. Slack is already open — that's the whole UX.</p>
+        <p>Your employees message HushAsk directly or use <code style="background:#F1F5F9;border:1px solid #E2E8F0;border-radius:4px;padding:1px 5px;font-size:12px;">/ha</code> from any channel. No new apps, no onboarding flows. Slack is already open — which means HushAsk is too.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🎯</div>
         <h3>You Choose the Route</h3>
-        <p>Every message gets routing buttons — <strong>Public Knowledge Base</strong> or <strong>Confidential / HR</strong>. You decide where it lands before it's sent.</p>
+        <p>Your employees choose where each question goes — HR for sensitive issues, or a public channel for general ones. Nothing is routed without their input.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">📄</div>
         <h3>Notion Sync</h3>
-        <p>Close a public thread and HushAsk walks you through archiving it to Notion with a custom summary title. Your company handbook writes itself, one honest question at a time.</p>
+        <p>When you wrap up a public thread, you have the option to save it to Notion with a custom summary title. Do it consistently and your team's knowledge base builds itself.</p>
       </div>
       <div class="feature-card">
         <div class="feature-icon">🛡️</div>
@@ -313,7 +313,7 @@
       <div class="feature-card">
         <div class="feature-icon">🏢</div>
         <h3>Slack-Native</h3>
-        <p>Installs like any Slack app. Uses Slack's existing permission model for access control. Works in public channels, private channels, and DMs.</p>
+        <p>Installs like any Slack app. Uses Slack's existing permission model for access control. Works in public channels, private channels, and messages to the app.</p>
       </div>
     </div>
   </section>
@@ -333,7 +333,7 @@
           <div class="trust-icon">📡</div>
           <h3>Routing data is purged after reply</h3>
           <p>Routing data used to deliver admin replies is minimized and not linked to your identity in our database. No lingering link between message and sender.</p>
-          <p style="margin-top:12px;font-size:12px;color:#94A3B8;">HushAsk is a Slack app. Slack's own audit log — available on Enterprise Grid plans — records which users DM a bot. This is a Slack platform behavior outside HushAsk's control. See our <a href="/privacy" style="color:#2563EB;">privacy documentation</a> for full detail.</p>
+          <p style="margin-top:12px;font-size:12px;color:#94A3B8;">Note: Slack's audit log (available on Enterprise Grid plans) contains messaging metadata separately from HushAsk. <a href="/privacy" style="color:#94A3B8;text-decoration:underline;">Full details in our privacy policy.</a></p>
         </div>
         <div class="trust-item">
           <div class="trust-icon">📋</div>
@@ -347,12 +347,12 @@
   <!-- CTA -->
   <section class="cta-section" id="early-access">
     <h2>Start hearing what's<br>not being said.</h2>
-    <p>Add HushAsk to your Slack workspace. Anonymous questions, routed intelligently, searchable, forever.</p>
+    <p>Anonymous questions. Honest answers. Nothing traced back.</p>
     <a href="#" class="btn btn-primary btn-lg">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
       Add to Slack
     </a>
-    <div class="cta-trust">Free to start &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; Anonymity is cryptographic, not policy</div>
+    <div class="cta-trust">20 messages free monthly, always &nbsp;·&nbsp; No commitment &nbsp;·&nbsp; Cryptographic Anonymity</div>
   </section>
 
   <!-- FOOTER -->
@@ -365,7 +365,7 @@
       <div class="footer-copy">© 2025 HushAsk. All rights reserved.</div>
       <div class="footer-links">
         <a href="/privacy">Privacy</a>
-        <a href="#">Terms</a>
+        <a href="/terms">Terms</a>
         <a href="/help/">Help</a>
       </div>
     </div>

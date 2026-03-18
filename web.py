@@ -407,6 +407,10 @@ def index():
 def privacy():
     return send_from_directory(BASE_DIR, "privacy.html")
 
+@web.route("/terms")
+def terms():
+    return send_from_directory(BASE_DIR, "terms.html")
+
 @web.route("/help/")
 def help_index():
     return send_from_directory(os.path.join(BASE_DIR, "help"), "index.html")

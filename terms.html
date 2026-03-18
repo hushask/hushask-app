@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Terms of Service — HushAsk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1A2E62;
+      --navy-dark: #0F1C3F;
+      --blue: #2563EB;
+      --blue-light: #EFF4FF;
+      --bg: #F8FAFC;
+      --bg-white: #ffffff;
+      --bg-dark: #0F172A;
+      --border: #E2E8F0;
+      --border-dark: #1E293B;
+      --text: #0F172A;
+      --text-mid: #475569;
+      --text-muted: #94A3B8;
+      --surface: #F1F5F9;
+      --radius: 14px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.8;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(248,250,252,0.95);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px; max-width: 1080px; margin: 0 auto;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-badge {
+      width: 36px; height: 36px; background: var(--navy);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 14px; color: white; transform: rotate(-6deg); flex-shrink: 0;
+    }
+    .logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
+    .logo-name em { font-style: normal; color: var(--blue); }
+    .nav-back {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-muted); text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-back:hover { color: var(--text); }
+
+    /* CONTENT */
+    .content {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 40px 100px;
+    }
+
+    /* PAGE HEADER */
+    .page-header { margin-bottom: 48px; }
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .updated {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px 26px;
+      margin-bottom: 48px;
+    }
+    .toc-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .toc ol {
+      color: var(--text-mid);
+      font-size: 14px;
+      padding-left: 18px;
+      line-height: 1.6;
+    }
+    .toc ol li { margin-bottom: 4px; }
+    .toc a { color: var(--text-mid); text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+
+    /* CALLOUT */
+    .callout {
+      border-left: 3px solid var(--blue);
+      background: var(--blue-light);
+      border-radius: 0 6px 6px 0;
+      padding: 16px 20px;
+      margin: 0 0 44px;
+    }
+    .callout p {
+      font-size: 14px;
+      color: var(--text-mid);
+      margin: 0;
+      line-height: 1.7;
+    }
+
+    /* BODY COPY */
+    h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 48px 0 10px;
+      letter-spacing: 0;
+    }
+    p {
+      color: var(--text-mid);
+      font-size: 15px;
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    ul, ol {
+      color: var(--text-mid);
+      font-size: 15px;
+      padding-left: 22px;
+      margin-bottom: 14px;
+      line-height: 1.8;
+    }
+    ul li, ol li { margin-bottom: 6px; }
+    strong { color: var(--text); font-weight: 600; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 48px 0 24px;
+    }
+    .footer-note {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .footer-note a { color: var(--text-muted); }
+    .footer-note a:hover { color: var(--blue); }
+
+    /* FOOTER */
+    footer {
+      background: var(--bg-dark);
+      border-top: 1px solid var(--border-dark);
+      padding: 32px 40px;
+    }
+    .footer-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-copy { font-size: 13px; color: #475569; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a {
+      font-size: 13px;
+      color: #475569;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: #94A3B8; }
+    .footer-logo-name {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #94A3B8;
+    }
+    .footer-logo-name em { font-style: normal; color: var(--blue); }
+
+    @media (max-width: 768px) {
+      .nav-inner { padding: 16px 20px; }
+      .content { padding: 44px 20px 72px; }
+      h1 { font-size: 26px; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <a href="https://hushask.com" class="nav-back">← Back to hushask.com</a>
+    </div>
+  </nav>
+
+      <div class="content">
+    <div class="page-header">
+      <h1>Terms of Service</h1>
+      <p class="updated">Last updated: March 2026</p>
+    </div>
+
+    <p>These terms govern your use of HushAsk, a Slack application operated by HonestAsk. By installing or using HushAsk, you agree to them.</p>
+    <p>If you're a workspace admin installing HushAsk on behalf of an organization, you're agreeing on behalf of that organization.</p>
+
+    <h2>1. What HushAsk does</h2>
+    <p>HushAsk routes anonymous messages within your Slack workspace. Employees send questions anonymously; admins receive and respond to them. Optionally, answered threads can be saved to Notion.</p>
+    <p>That's the service. We don't do anything else with your data.</p>
+
+    <h2>2. Your responsibilities</h2>
+    <p>You are responsible for:</p>
+    <ul>
+      <li>Ensuring your use of HushAsk complies with your organization's policies and any applicable law</li>
+      <li>Configuring HushAsk appropriately for your workspace — including which channels receive messages</li>
+      <li>Not using HushAsk to harass, threaten, or harm others</li>
+      <li>Not attempting to circumvent the anonymization system or identify message senders</li>
+    </ul>
+    <p>HushAsk is designed for legitimate workplace feedback. Misuse of the anonymity it provides — for harassment, abuse, or illegal activity — is a violation of these terms and may result in access being suspended.</p>
+
+    <h2>3. Slack and Notion</h2>
+    <p>HushAsk operates within Slack and integrates optionally with Notion. Your use of those platforms is governed by their own terms:</p>
+    <ul>
+      <li><a href="https://slack.com/intl/en-us/terms-of-service" target="_blank">Slack Terms of Service</a></li>
+      <li><a href="https://www.notion.so/Terms-of-Service-28ffdd083dc3473e9c2da6ec011b58ac" target="_blank">Notion Terms of Service</a></li>
+    </ul>
+    <p>HonestAsk is not responsible for the actions, policies, or availability of Slack or Notion.</p>
+
+    <h2>4. Data and privacy</h2>
+    <p>How we handle your data is explained in our <a href="/privacy">Privacy Policy</a>. These terms incorporate it by reference.</p>
+    <p>The short version: sender identity is cryptographically anonymized. We do not store Slack user IDs. We cannot identify who sent any message.</p>
+
+    <h2>5. Free tier and paid plans</h2>
+    <p>HushAsk offers a free tier with a monthly message limit. Paid plans are available with higher limits.</p>
+    <p>We reserve the right to change pricing with reasonable notice. We won't change the terms of your current paid plan mid-billing-period without your agreement.</p>
+
+    <h2>6. Availability</h2>
+    <p>We aim for high availability but don't guarantee it. HushAsk depends on Slack's API and Notion's API — both are outside our control. We're not liable for downtime caused by third-party platforms.</p>
+    <p>We may modify, suspend, or discontinue HushAsk with reasonable notice. If we shut the service down, we'll give workspace admins enough time to retrieve or export their data.</p>
+
+    <h2>7. Liability</h2>
+    <p>HushAsk is provided as-is. To the extent permitted by law:</p>
+    <ul>
+      <li>HonestAsk is not liable for indirect, incidental, or consequential damages arising from your use of HushAsk</li>
+      <li>Our total liability to you for any claim is limited to the amount you paid us in the 12 months before the claim arose</li>
+      <li>We make no warranties about fitness for a particular purpose or uninterrupted service</li>
+    </ul>
+    <p>Nothing in these terms limits liability for fraud, death, or personal injury caused by our negligence — that's non-waivable.</p>
+
+    <h2>8. Intellectual property</h2>
+    <p>HushAsk and everything in it belongs to HonestAsk. You get a license to use it; you don't get ownership of it.</p>
+    <p>Your message content belongs to you and your organization. We don't claim any rights to it.</p>
+
+    <h2>9. Changes to these terms</h2>
+    <p>We may update these terms as the product evolves. Material changes will be communicated to workspace admins via the HushAsk App Home. The "Last updated" date at the top of this page reflects the most recent revision. Continued use of HushAsk after changes constitutes acceptance.</p>
+
+    <h2>10. Governing law</h2>
+    <p>These terms are governed by the laws of the State of Wyoming, USA. Disputes will be resolved in the courts of Wyoming.</p>
+
+    <h2>11. Contact</h2>
+    <p>Questions about these terms: <a href="mailto:privacy@hushask.com">privacy@hushask.com</a></p>
+
+    <hr>
+    <p class="footer-note">HonestAsk · HushAsk · <a href="https://hushask.com">hushask.com</a></p>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="footer-logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2025 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
