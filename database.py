@@ -162,6 +162,7 @@ def init_db():
     _migrate_routing_table_nullable_source()
     # Auto-purge expired Identity Vault entries on every startup
     purge_expired_routing()
+    purge_expired_delivered_messages()  # 12-month content TTL
     # Safety sweep: NULL out source_channel for already-replied routing entries
     purge_source_channels()
     print("[db] Initialized.")
@@ -224,6 +225,21 @@ def close_thread(team_id: str, thread_ts: str) -> bool:
         )
         conn.commit()
         return cur.rowcount > 0
+
+
+def purge_expired_delivered_messages(days: int = 365) -> int:
+    """Delete delivered_messages rows older than N days (default 365 / 12 months).
+    Keyed on delivered_at — the timestamp when the message was stored.
+    Called on startup alongside purge_expired_routing().
+    Returns count deleted."""
+    with get_conn() as conn:
+        cur = conn.execute(
+            f"DELETE FROM delivered_messages WHERE delivered_at < datetime('now', '-{days} days')"
+        )
+        deleted = cur.rowcount
+        if deleted:
+            print(f"[db] Content TTL purge: removed {deleted} delivered_messages older than {days}d.")
+        return deleted
 
 
 def purge_expired_routing(days: int = 30) -> int:
