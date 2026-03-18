@@ -204,12 +204,11 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="hero-eyebrow"><span></span> Quiet by design</div>
-    <h1 id="hero-headline"></h1>
+    <h1>What your team won't say in Slack,<br><span class="accent-text">they'll say here.</span></h1>
     <p class="hero-tagline">
-      HushAsk is an anonymous Slack router that turns unasked employee questions into
-      <strong>searchable company documentation</strong> — delivered anonymously, handled with care, and synced to Notion for public questions.
+      HushAsk routes anonymous questions to the right place — HR for sensitive issues, your Notion knowledge base for everything else. Your Slack ID is hashed before anything is stored. Installs in 60 seconds.
     </p>
+    <p style="font-size:15px;font-weight:600;color:var(--navy);margin-bottom:32px;">Anonymity in HushAsk is cryptographic — not a policy promise.</p>
     <div class="hero-actions">
       <a href="#early-access" class="btn btn-primary btn-lg">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
@@ -259,7 +258,7 @@
     <div class="tracks">
       <div class="track-card">
         <div class="track-num">Track 01</div>
-        <h3>Anonymous Delivery</h3>
+        <h3>Sensitive issue? Goes straight to HR.</h3>
         <p>
           DM the HushAsk bot or use <code style="background:#E2E8F0;border:1px solid #CBD5E1;border-radius:4px;padding:2px 6px;font-family:monospace;font-size:13px;">/ha</code> from any channel. HushAsk immediately hashes your identity and presents two routing buttons — <strong>Public Knowledge Base</strong> or <strong>Confidential / HR</strong>. You choose where it goes. Your name never appears. You can edit or retract your message any time before an admin replies.
         </p>
@@ -269,7 +268,7 @@
       </div>
       <div class="track-card">
         <div class="track-num">Track 02</div>
-        <h3>Notion Sync</h3>
+        <h3>General question? Becomes permanent company knowledge.</h3>
         <p>
           When the admin clicks "Archive This Thread", a modal prompts them to set a summary title before syncing to Notion. The Q&amp;A pair becomes a permanent, searchable entry in your <strong>Hush Library</strong> database — ready to surface the next time someone asks the same question.
         </p>
@@ -322,7 +321,7 @@
   <!-- TRUST / PRIVACY -->
   <section class="trust" id="privacy">
     <div class="trust-inner">
-      <h2>What we never store. What we never see.</h2>
+      <h2>How anonymity works under the hood.</h2>
       <p class="trust-sub">Anonymity in HushAsk is cryptographic — not a policy promise.</p>
       <div class="trust-grid">
         <div class="trust-item">
@@ -333,7 +332,8 @@
         <div class="trust-item">
           <div class="trust-icon">📡</div>
           <h3>Routing data is purged after reply</h3>
-          <p>HushAsk temporarily stores your DM channel ID to route any admin reply back to you. The moment that reply is sent, the routing record is deleted. No lingering link between message and sender.</p>
+          <p>Routing data used to deliver admin replies is minimized and not linked to your identity in our database. No lingering link between message and sender.</p>
+          <p style="margin-top:12px;font-size:12px;color:#94A3B8;">HushAsk is a Slack app. Slack's own audit log — available on Enterprise Grid plans — records which users DM a bot. This is a Slack platform behavior outside HushAsk's control. See our <a href="/privacy" style="color:#2563EB;">privacy documentation</a> for full detail.</p>
         </div>
         <div class="trust-item">
           <div class="trust-icon">📋</div>
@@ -347,7 +347,7 @@
   <!-- CTA -->
   <section class="cta-section" id="early-access">
     <h2>Start hearing what's<br>not being said.</h2>
-    <p>Add HushAsk to your Slack workspace. Anonymous questions, routed intelligently, documented permanently.</p>
+    <p>Add HushAsk to your Slack workspace. Anonymous questions, routed intelligently, searchable, forever.</p>
     <a href="#" class="btn btn-primary btn-lg">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
       Add to Slack
@@ -371,15 +371,7 @@
     </div>
   </footer>
 
-  <script>
-    // Rotate hero headline on each page load
-    const headlines = [
-      'What your team won\'t say in Slack,<br><span class="accent-text">they\'ll say here.</span>',
-      'Turn team silence into<br><span class="accent-text">institutional knowledge.</span>'
-    ];
-    document.getElementById('hero-headline').innerHTML =
-      headlines[Math.floor(Math.random() * headlines.length)];
-  </script>
+  <script></script>
 
 </body>
 </html>
