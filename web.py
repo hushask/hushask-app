@@ -403,6 +403,10 @@ def _send_downgrade_notice(team_id: str):
 def index():
     return send_from_directory(BASE_DIR, "index.html")
 
+@web.route("/privacy")
+def privacy():
+    return send_from_directory(BASE_DIR, "privacy.html")
+
 @web.route("/help/")
 def help_index():
     return send_from_directory(os.path.join(BASE_DIR, "help"), "index.html")
