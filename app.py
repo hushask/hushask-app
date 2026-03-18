@@ -53,6 +53,7 @@ from database import (
     save_pending, get_pending, delete_pending, claim_pending, peek_pending,
     log_delivered, get_delivered, mark_notion_synced,
     get_delivered_by_thread_ts, get_delivered_by_thread, mark_replied, mark_replied_and_purge_source,
+    purge_delivered_source_channel,
     save_routing, get_routing, get_active_thread_for_user,
     get_workspace_config, save_workspace_config, reset_workspace_config,
     save_workspace_notion, store_notion_state, get_team_from_state, delete_notion_state,
@@ -2522,6 +2523,13 @@ def _do_thread_close(body, client, logger, sync_notion: bool) -> None:
     except Exception as e:
         logger.error(f"[close] DM notification failed: {e}")
 
+    # 2b. Purge source_channel from delivered_messages (privacy hardening)
+    try:
+        purge_delivered_source_channel(team_id, thread_ts)
+        logger.info(f"[close] source_channel purged from delivered_messages for thread {thread_ts}")
+    except Exception as e:
+        logger.error(f"[close] source_channel purge failed (non-fatal): {e}")
+
     # 3. Optionally sync to Notion (public route only)
     if sync_notion and route_type == "public":
         try:
@@ -2664,6 +2672,14 @@ def handle_notion_title_modal(ack, body, view, client, logger):
                         )
                     except Exception as e:
                         logger.warning(f"[notion_modal] employee DM failed: {e}")
+
+            # 2b. Purge source_channel from delivered_messages (privacy hardening)
+            try:
+                from database import purge_delivered_source_channel
+                purge_delivered_source_channel(team_id, thread_ts)
+                logger.info(f"[notion_modal] source_channel purged from delivered_messages for thread {thread_ts}")
+            except Exception as e:
+                logger.error(f"[notion_modal] source_channel purge failed (non-fatal): {e}")
 
             # 3. Sync to Notion with the provided title
             config = get_workspace_config(team_id)

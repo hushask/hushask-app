@@ -579,6 +579,18 @@ def mark_replied_and_purge_source(msg_id: int | None):
         print(f"[db] mark_replied_and_purge_source: msg_id={msg_id}")
 
 
+def purge_delivered_source_channel(team_id: str, thread_ts: str):
+    """NULL out source_channel in delivered_messages after thread close.
+    Once the closure DM has been sent, source_channel is no longer needed
+    and should be purged to prevent identity correlation via Slack API."""
+    with get_conn() as conn:
+        conn.execute(
+            "UPDATE delivered_messages SET source_channel = NULL "
+            "WHERE team_id = ? AND thread_ts = ?",
+            (team_id, thread_ts)
+        )
+
+
 def purge_source_channels():
     """NULL out source_channel in routing_table for all already-replied messages.
 
@@ -598,6 +610,15 @@ def purge_source_channels():
         """)
         if cur.rowcount:
             print(f"[db] purge_source_channels: NULLed {cur.rowcount} stale source_channel entries")
+        # Safety sweep: NULL out source_channel in delivered_messages for closed threads
+        conn.execute("""
+            UPDATE delivered_messages
+            SET source_channel = NULL
+            WHERE source_channel IS NOT NULL
+            AND team_id || ':' || thread_ts NOT IN (
+                SELECT team_id || ':' || thread_ts FROM routing_table
+            )
+        """)
 
 
 # ── Install nudge tracking ────────────────────────────────────────────────────
