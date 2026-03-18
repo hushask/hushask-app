@@ -4,57 +4,235 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Privacy Policy — HushAsk by HonestAlias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}
-    :root{--grad:linear-gradient(135deg,#FF8C42,#FF3CAC);--bg:#0d0d0d;--surface:#141414;--border:#222;--text:#f0f0f0;--muted:#888}
-    body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.8;min-height:100vh}
-    nav{padding:20px 48px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
-    .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
-    .logo-badge{width:32px;height:32px;background:var(--grad);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:white;transform:rotate(-6deg)}
-    .logo-name{font-size:16px;font-weight:900;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    nav a.back{color:var(--muted);text-decoration:none;font-size:14px}
-    nav a.back:hover{color:var(--text)}
-    .content{max-width:740px;margin:0 auto;padding:64px 48px 100px}
-    .eyebrow{font-size:12px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:16px}
-    h1{font-size:44px;font-weight:900;letter-spacing:-2px;line-height:1.1;margin-bottom:16px}
-    .updated{font-size:13px;color:var(--muted);margin-bottom:52px}
-    h2{font-size:20px;font-weight:700;margin:44px 0 12px;letter-spacing:-.2px;color:var(--text)}
-    p{color:#bbb;font-size:15px;margin-bottom:14px}
-    ul{color:#bbb;font-size:15px;padding-left:20px;margin-bottom:14px}
-    ul li{margin-bottom:6px}
-    a{color:#FF8C42;text-decoration:none}
-    a:hover{text-decoration:underline}
-    code{font-family:'SF Mono',monospace;background:#1a1a1a;border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:13px;color:#FF8C42}
-    .callout{background:var(--surface);border:1px solid var(--border);border-left:3px solid #FF8C42;border-radius:8px;padding:18px 22px;margin:28px 0}
-    .callout p{margin:0;font-size:14px}
-    .toc{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px 28px;margin-bottom:48px}
-    .toc p{font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
-    .toc ol{color:#bbb;font-size:14px;padding-left:20px}
-    .toc ol li{margin-bottom:5px}
-    .toc a{color:#bbb}
-    .toc a:hover{color:var(--text)}
-    hr{border:none;border-top:1px solid var(--border);margin:44px 0}
-    footer{border-top:1px solid var(--border);padding:28px 48px;text-align:center;color:var(--muted);font-size:13px}
-    @media(max-width:768px){nav{padding:16px 20px}.content{padding:44px 20px 72px}h1{font-size:32px}}
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1A2E62;
+      --navy-dark: #0F1C3F;
+      --blue: #2563EB;
+      --blue-light: #EFF4FF;
+      --bg: #F8FAFC;
+      --bg-white: #ffffff;
+      --bg-dark: #0F172A;
+      --border: #E2E8F0;
+      --border-dark: #1E293B;
+      --text: #0F172A;
+      --text-mid: #475569;
+      --text-muted: #94A3B8;
+      --surface: #F1F5F9;
+      --radius: 14px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.8;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(248,250,252,0.95);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px; max-width: 1080px; margin: 0 auto;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-badge {
+      width: 36px; height: 36px; background: var(--navy);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 14px; color: white; transform: rotate(-6deg); flex-shrink: 0;
+    }
+    .logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
+    .logo-name em { font-style: normal; color: var(--blue); }
+    .nav-back {
+      font-size: 14px; font-weight: 500;
+      color: var(--text-muted); text-decoration: none;
+      transition: color 0.15s;
+    }
+    .nav-back:hover { color: var(--text); }
+
+    /* CONTENT */
+    .content {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 40px 100px;
+    }
+
+    /* PAGE HEADER */
+    .page-header { margin-bottom: 48px; }
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .updated {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px 26px;
+      margin-bottom: 48px;
+    }
+    .toc-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .toc ol {
+      color: var(--text-mid);
+      font-size: 14px;
+      padding-left: 18px;
+      line-height: 1.6;
+    }
+    .toc ol li { margin-bottom: 4px; }
+    .toc a { color: var(--text-mid); text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+
+    /* CALLOUT */
+    .callout {
+      border-left: 3px solid var(--blue);
+      background: var(--blue-light);
+      border-radius: 0 6px 6px 0;
+      padding: 16px 20px;
+      margin: 0 0 44px;
+    }
+    .callout p {
+      font-size: 14px;
+      color: var(--text-mid);
+      margin: 0;
+      line-height: 1.7;
+    }
+
+    /* BODY COPY */
+    h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 48px 0 10px;
+      letter-spacing: 0;
+    }
+    p {
+      color: var(--text-mid);
+      font-size: 15px;
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    ul, ol {
+      color: var(--text-mid);
+      font-size: 15px;
+      padding-left: 22px;
+      margin-bottom: 14px;
+      line-height: 1.8;
+    }
+    ul li, ol li { margin-bottom: 6px; }
+    strong { color: var(--text); font-weight: 600; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 48px 0 24px;
+    }
+    .footer-note {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .footer-note a { color: var(--text-muted); }
+    .footer-note a:hover { color: var(--blue); }
+
+    /* FOOTER */
+    footer {
+      background: var(--bg-dark);
+      border-top: 1px solid var(--border-dark);
+      padding: 32px 40px;
+    }
+    .footer-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-copy { font-size: 13px; color: #475569; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a {
+      font-size: 13px;
+      color: #475569;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: #94A3B8; }
+    .footer-logo-name {
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #94A3B8;
+    }
+    .footer-logo-name em { font-style: normal; color: var(--blue); }
+
+    @media (max-width: 768px) {
+      .nav-inner { padding: 16px 20px; }
+      .content { padding: 44px 20px 72px; }
+      h1 { font-size: 26px; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
   </style>
 </head>
 <body>
+
   <nav>
-    <a href="/" class="logo">
-      <div class="logo-badge">HA</div>
-      <span class="logo-name">HushAsk</span>
-    </a>
-    <a href="/" class="back">← Back to site</a>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <a href="https://hushask.com" class="nav-back">← Back to hushask.com</a>
+    </div>
   </nav>
 
   <div class="content">
-    <div class="eyebrow">Legal</div>
-    <h1>Privacy Policy</h1>
-    <p class="updated">Last updated: March 6, 2026 · HonestAlias, Inc.</p>
+    <div class="page-header">
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: March 6, 2026 · HonestAlias, Inc.</p>
+    </div>
 
     <div class="toc">
-      <p>Contents</p>
+      <div class="toc-label">Contents</div>
       <ol>
         <li><a href="#who-we-are">Who we are</a></li>
         <li><a href="#what-we-collect">What we collect</a></li>
@@ -175,9 +353,23 @@
     </ul>
 
     <hr>
-    <p style="font-size:13px;color:var(--muted)">HonestAlias, Inc. · HushAsk · <a href="/">honestalias.com</a></p>
+    <p class="footer-note">HonestAlias, Inc. · HushAsk · <a href="/">honestalias.com</a></p>
   </div>
 
-  <footer>A product of HonestAlias. Built with ❤️ by Simon.</footer>
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="footer-logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2025 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy.html">Privacy</a>
+        <a href="#">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
 </body>
 </html>
