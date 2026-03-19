@@ -18,7 +18,7 @@
     "slash_commands": [
       {
         "command": "/ha",
-        "url": "https://api.hushask.com/slack/interactive",
+        "url": "https://hushask.com/slack/interactive",
         "description": "Send an anonymous message or open HushAsk settings",
         "usage_hint": "[your message or leave blank for settings]",
         "should_escape": false
@@ -27,7 +27,7 @@
   },
   "oauth_config": {
     "redirect_urls": [
-      "https://api.hushask.com/slack/oauth_redirect"
+      "https://hushask.com/slack/oauth_redirect"
     ],
     "scopes": {
       "bot": [
@@ -50,7 +50,7 @@
   },
   "settings": {
     "event_subscriptions": {
-      "request_url": "https://api.hushask.com/slack/events",
+      "request_url": "https://hushask.com/slack/events",
       "bot_events": [
         "app_home_opened",
         "app_mention",
@@ -59,7 +59,7 @@
     },
     "interactivity": {
       "is_enabled": true,
-      "request_url": "https://api.hushask.com/slack/interactive"
+      "request_url": "https://hushask.com/slack/interactive"
     },
     "org_deploy_enabled": false,
     "socket_mode_enabled": false,
