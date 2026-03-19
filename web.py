@@ -27,7 +27,7 @@ import app as bolt_module
 
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 PORT      = int(os.environ.get("PORT", os.environ.get("WEB_PORT", "8080")))
-API_BASE  = os.environ.get("API_BASE", "https://api.hushask.com")
+API_BASE  = os.environ.get("API_BASE", "https://hushask.com")
 SITE_BASE = os.environ.get("SITE_BASE", "https://hushask.com")
 
 NOTION_CLIENT_ID     = os.environ.get("NOTION_CLIENT_ID", "")

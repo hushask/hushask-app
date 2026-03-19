@@ -71,7 +71,7 @@ if not HASH_SALT or HASH_SALT == "hushask-v1-salt":
         "in your deployment environment."
     )
 FREE_LIMIT       = int(os.environ.get("FREE_LIMIT", "20"))
-API_BASE         = os.environ.get("API_BASE", "https://api.hushask.com")
+API_BASE         = os.environ.get("API_BASE", "https://hushask.com")
 HELP_BASE        = os.environ.get("HELP_BASE", "https://hushask.com/help")
 UPGRADE_URL      = os.environ.get("UPGRADE_URL", "https://hushask.com/upgrade")
 NOTION_CLIENT_ID = os.environ.get("NOTION_CLIENT_ID", "")
@@ -995,7 +995,7 @@ def admin_settings_blocks(config, team_id):
     pub_ch = cfg.get("public_channel")
     hr_ch = cfg.get("hr_channel")
     notion_connected = bool(cfg.get("notion_database_id"))
-    base_url = os.environ.get("BASE_URL", "https://api.hushask.com")
+    base_url = os.environ.get("BASE_URL", "https://hushask.com")
     notion_url = f"{base_url}/notion/connect?team_id={team_id}"
 
     pub_el = {
@@ -1201,7 +1201,7 @@ def handle_settings_notion_toggle(ack, body, client, logger):
     else:
         # Connect: send DM with OAuth link
         try:
-            notion_url = f"{os.environ.get('BASE_URL', 'https://api.hushask.com')}/notion/connect?team_id={team_id}"
+            notion_url = f"{os.environ.get('BASE_URL', 'https://hushask.com')}/notion/connect?team_id={team_id}"
             client.chat_postMessage(
                 channel=user_id,
                 text=f"To connect Notion, visit: {notion_url}"
