@@ -23,102 +23,48 @@
 </div>
   <div class="content">
     <div class="tag">Admin · 5 min</div>
-    <h1>Setting up Notion</h1>
+    <h1>Setting Up Notion</h1>
     <p class="lead">Connect HushAsk to Notion and turn closed public threads into permanent, searchable records in your <strong>Hush Library</strong> database — with a summary title you set each time.</p>
 
     <h2>How to connect</h2>
+    <p>Open the HushAsk <strong>App Home</strong> tab in Slack. In the <strong>Configuration</strong> section (visible to admins only), click <strong>Connect Notion</strong>. This opens a browser OAuth flow — authorize HushAsk in your Notion workspace and we'll automatically provision the Hush Library database. No tokens, no page IDs. Done in under a minute.</p>
+    <p>If OAuth isn't available in your deployment, the Configuration section will show token and database ID fields instead. Create an internal Notion integration, share a database with it, and paste the credentials in. <a href="#manual-token-setup-fallback">Steps below →</a></p>
 
-    <div class="method">
-      <div class="method-header">
-        <h3>🔗 One-Click OAuth from App Home</h3>
-        <span class="method-badge badge-recommended">Recommended</span>
-      </div>
-      <p>Open the HushAsk <strong>App Home</strong> tab in Slack. In the <strong>Configuration</strong> section (visible to admins only), click <strong>"Connect Notion"</strong>. This opens a browser OAuth flow — authorize HushAsk in your Notion workspace and we'll automatically provision the Hush Library database. No tokens, no page IDs — done in under a minute.</p>
-    </div>
-
-    <div class="method">
-      <div class="method-header">
-        <h3>🔑 Manual Token Entry</h3>
-        <span class="method-badge badge-manual">Fallback</span>
-      </div>
-      <p>If OAuth isn't available in your deployment, the Configuration section will show token and database ID fields instead. Create an internal Notion integration, share a database with it, and paste the credentials in. <a href="#manual-steps">Steps below →</a></p>
-    </div>
-
-    <h2 id="what-gets-created">What gets created in Notion</h2>
-    <p>When you first connect, HushAsk provisions a <strong>Hush Library</strong> database (🔒) in your Notion workspace with these properties:</p>
-    <p>• <strong>Name</strong> — the summary title you enter when archiving a thread<br>
-    • <strong>Route</strong> — 📢 Public or 🔒 Confidential / HR (Select)<br>
-    • <strong>Status</strong> — New → Answered → Archived (Select)<br>
-    • Full message body as page content</p>
+    <h2>What gets created in Notion</h2>
+    <p>When you first connect, HushAsk provisions a <strong>Hush Library</strong> database in your Notion workspace with these properties:</p>
+    <ul>
+      <li><strong>Name</strong> — the summary title you enter when archiving a thread</li>
+      <li><strong>Route</strong> — Public or Confidential / HR (Select)</li>
+      <li><strong>Status</strong> — New → Answered → Archived (Select)</li>
+      <li>Full message body as page content</li>
+    </ul>
 
     <div class="callout">
-      💡 <strong>Sync is intentional, not automatic.</strong> Notion entries are only created when an admin closes a Public thread using <strong>"Close &amp; Sync to Notion"</strong>. This keeps your Hush Library clean and curated — not a raw firehose of every message received.
+      <strong>Sync is intentional, not automatic.</strong> Notion entries are only created when an admin closes a Public thread using <strong>"Close &amp; Sync to Notion"</strong>. Your Hush Library stays clean and curated — not a raw feed of every message received.
     </div>
 
     <h2>How archiving works</h2>
+    <ol>
+      <li><strong>Admin closes a Public thread</strong> — click "Close &amp; Sync to Notion" on the triage message</li>
+      <li><strong>Set a summary title</strong> — an "Archive This Thread" modal opens. Enter a clear, searchable title (e.g. "How do I request PTO during blackout periods?")</li>
+      <li><strong>Entry created in Notion</strong> — HushAsk creates the page with the title, route, status "Archived", and full message body</li>
+    </ol>
 
-    <div class="step"><div class="step-num">1</div>
-      <div class="step-body">
-        <h3>Admin closes a Public thread</h3>
-        <p>When a public-route message is ready to archive, click <strong>"Close &amp; Sync to Notion"</strong> on the triage message in your public knowledge base channel.</p>
-      </div>
-    </div>
-
-    <div class="step"><div class="step-num">2</div>
-      <div class="step-body">
-        <h3>Set a summary title</h3>
-        <p>An <strong>"Archive This Thread"</strong> modal opens. Enter a clear, searchable summary title for the entry (e.g. "How do I request PTO during blackout periods?"). This becomes the page name in Notion.</p>
-      </div>
-    </div>
-
-    <div class="step"><div class="step-num">3</div>
-      <div class="step-body">
-        <h3>Entry created in Notion</h3>
-        <p>HushAsk creates the page in your Hush Library with the title you set, the route, a status of "Archived", and the full message body as page content.</p>
-      </div>
-    </div>
-
-    <h2 id="manual-steps">Manual token setup (fallback)</h2>
-
-    <div class="step"><div class="step-num">1</div>
-      <div class="step-body">
-        <h3>Create an internal Notion integration</h3>
-        <p>Go to <a href="https://notion.so/my-integrations">notion.so/my-integrations</a> → New integration → type: <strong>Internal</strong> → name it "HushAsk" → select your workspace → Save. Copy the token (starts with <code>secret_</code>).</p>
-      </div>
-    </div>
-
-    <div class="step"><div class="step-num">2</div>
-      <div class="step-body">
-        <h3>Create a Hush Library database</h3>
-        <p>In Notion, create a new full-page Database. Add properties: Route (Select), Status (Select). This database will receive all archived HushAsk threads.</p>
-      </div>
-    </div>
-
-    <div class="step"><div class="step-num">3</div>
-      <div class="step-body">
-        <h3>Share the database with your integration</h3>
-        <p>Open the database → ••• → <strong>Add connections</strong> → find your HushAsk integration → Confirm.</p>
-      </div>
-    </div>
-
-    <div class="step"><div class="step-num">4</div>
-      <div class="step-body">
-        <h3>Copy the Database ID</h3>
-        <p>Open the database in a browser. The URL contains a 32-character ID. Copy just that string.</p>
-      </div>
-    </div>
-
-    <div class="step"><div class="step-num">5</div>
-      <div class="step-body">
-        <h3>Paste credentials into App Home</h3>
-        <p>Open HushAsk App Home → Configuration section → paste your token and database ID → Save.</p>
-      </div>
-    </div>
+    <h2 id="manual-token-setup-fallback">Manual token setup (fallback)</h2>
+    <ol>
+      <li><strong>Create an internal Notion integration</strong> — go to <a href="https://notion.so/my-integrations">notion.so/my-integrations</a> → New integration → Internal → name it "HushAsk" → Save. Copy the token (starts with <code>secret_</code>).</li>
+      <li><strong>Create a Hush Library database</strong> — new full-page database with Route (Select) and Status (Select) properties.</li>
+      <li><strong>Share the database with your integration</strong> — ••• → Add connections → HushAsk integration → Confirm.</li>
+      <li><strong>Copy the Database ID</strong> — the 32-character ID from the database URL.</li>
+      <li><strong>Paste credentials into App Home</strong> — Configuration section → paste token and database ID → Save.</li>
+    </ol>
 
     <h2>Troubleshooting</h2>
-    <p><strong>"object_not_found" after connecting via OAuth</strong> — Hush Library provisioning failed. The integration may lack workspace-level create permissions. Try disconnecting and reconnecting, or fall back to manual setup.</p>
-    <p><strong>Sync fails: "unauthorized"</strong> — The OAuth token has expired or been revoked. Click "Connect Notion" in App Home to reconnect.</p>
-    <p><strong>Sync fails: "Could not find database"</strong> — The database wasn't shared with the integration (manual setup). Re-share it (Step 3 above).</p>
+    <ul>
+      <li><strong>"object_not_found" after OAuth</strong> — provisioning failed. Reconnect or use manual setup.</li>
+      <li><strong>Sync fails: "unauthorized"</strong> — OAuth token expired. Reconnect via App Home.</li>
+      <li><strong>Sync fails: "Could not find database"</strong> — database not shared with integration. Re-share it.</li>
+    </ul>
   </div>
   <footer>© 2025 HushAsk. All rights reserved.</footer>
 </body>

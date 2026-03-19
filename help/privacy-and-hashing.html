@@ -23,47 +23,53 @@
 </div>
   <div class="content">
     <div class="tag">Everyone · ~3 min</div>
-    <h1>Privacy & Hashing</h1>
-    <p class="lead">HushAsk is built on a simple guarantee: we cannot tell who sent a message. Here's exactly how that works — technically and in plain English.</p>
+    <h1>Privacy &amp; Hashing</h1>
+    <p class="lead">HushAsk is built on one guarantee: we cannot tell who sent a message. Here's exactly how that works — technically and in plain English.</p>
 
     <h2>The one-sentence version</h2>
     <p>When you send a message, your Slack user ID is passed through a SHA-256 one-way hash function before anything touches the database. The hash cannot be reversed. The original ID is never stored.</p>
 
     <h2>What SHA-256 means in practice</h2>
-    <p>SHA-256 is a cryptographic function that converts any input into a fixed-length string. The key properties:</p>
-    <p>• <strong>One-way:</strong> You can turn a Slack ID into a hash, but you cannot turn the hash back into a Slack ID.<br>
-    • <strong>Deterministic:</strong> The same ID always produces the same hash — but only within HushAsk's salted context.<br>
-    • <strong>Collision-resistant:</strong> Two different IDs will never produce the same hash.</p>
+    <p>SHA-256 is a cryptographic function that converts any input into a fixed-length string:</p>
+    <ul>
+      <li><strong>One-way</strong> — you can turn a Slack ID into a hash, but you cannot turn the hash back into a Slack ID.</li>
+      <li><strong>Deterministic</strong> — the same ID always produces the same hash, but only within HushAsk's salted context.</li>
+      <li><strong>Collision-resistant</strong> — two different IDs will never produce the same hash.</li>
+    </ul>
 
     <div class="callout">
-      🔒 HushAsk adds a private <strong>salt</strong> — unique to your deployment — to your ID before hashing. This means even if someone had a list of every Slack user ID in existence, they couldn't reverse-engineer which hash belongs to which person.
+      HushAsk adds a private <strong>salt</strong> — unique to your deployment — to your ID before hashing. Even if someone had a list of every Slack user ID in existence, they couldn't reverse-engineer which hash belongs to which person.
     </div>
 
     <h2>What we store</h2>
     <table class="data-table">
-      <tr><th>Data</th><th>Stored?</th><th>Notes</th></tr>
-      <tr><td>Your Slack user ID</td><td class="no">Never</td><td>Discarded immediately after hashing</td></tr>
-      <tr><td>Your name or email</td><td class="no">Never</td><td>We don't request this from Slack's API</td></tr>
-      <tr><td>Your profile photo</td><td class="no">Never</td><td>Not accessed</td></tr>
-      <tr><td>Your DM channel ID (<code>source_channel</code>)</td><td class="purged">Purged</td><td>Stored temporarily for routing; deleted from <code>routing_table</code> after the first reply is sent</td></tr>
-      <tr><td>Message content</td><td class="yes">Yes</td><td>Stored for delivery and optional Notion sync</td></tr>
-      <tr><td>User hash (16 chars)</td><td class="yes">Yes</td><td>Used only to detect abuse patterns — cannot identify you</td></tr>
-      <tr><td>Target channel ID</td><td class="yes">Yes</td><td>Used for routing only</td></tr>
-      <tr><td>Timestamp</td><td class="yes">Yes</td><td>Standard delivery metadata</td></tr>
+      <thead>
+        <tr><th>Data</th><th>Stored?</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Your Slack user ID</td><td>Never — discarded immediately after hashing</td></tr>
+        <tr><td>Your name or email</td><td>Never — not requested from Slack's API</td></tr>
+        <tr><td>Your profile photo</td><td>Never — not accessed</td></tr>
+        <tr><td>Your DM channel ID (<code>source_channel</code>)</td><td>Purged — stored temporarily; deleted after the first reply is sent</td></tr>
+        <tr><td>Message content</td><td>Yes — for delivery and optional Notion sync</td></tr>
+        <tr><td>User hash (16 characters)</td><td>Yes — used only to detect abuse patterns; cannot identify you</td></tr>
+        <tr><td>Target channel ID</td><td>Yes — routing only</td></tr>
+        <tr><td>Timestamp</td><td>Yes — standard delivery metadata</td></tr>
+      </tbody>
     </table>
 
     <div class="callout">
-      🛡️ <strong>No message content is logged to application logs.</strong> Message bodies are stored only in the database — never written to server-side log files or monitoring systems.
+      <strong>No message content is written to application logs.</strong> Message bodies are stored only in the database.
     </div>
 
     <h2>The source_channel purge</h2>
-    <p>When you send a message, HushAsk temporarily stores your DM channel ID (<code>source_channel</code>) so it knows where to deliver any admin reply. As soon as a reply is sent — or the conversation is closed without a reply — this value is deleted from the routing table. After that point, there is no record linking the anonymous post to any DM channel.</p>
+    <p>When you send a message, HushAsk temporarily stores your DM channel ID so it knows where to deliver any admin reply. As soon as a reply is sent — or the conversation is closed without a reply — this value is deleted from the routing table. After that point, there is no record linking the anonymous post to any DM channel.</p>
 
     <h2>Can admins see who sent a message?</h2>
-    <p>No. Admins see the anonymous message in their triage channel and can reply to it — but at no point is sender identity revealed. The reply is routed back to the correct DM entirely through the (temporary) routing record, which is then purged. Not even the person who installed HushAsk can reverse a hash.</p>
+    <p>No. Admins see the anonymous message in their triage channel and can reply — but sender identity is never revealed. The reply is routed through the temporary routing record, which is then purged.</p>
 
     <h2>What about Slack itself?</h2>
-    <p>Slack may log all events passing through their API, including the original message payload before HushAsk processes it. HushAsk protects your identity within its own systems — but your organization's Slack admin may have access to Slack's audit logs. If complete anonymity from your Slack admin is required, consult your organization's IT policy.</p>
+    <p>Slack may log all events passing through their API. HushAsk protects your identity within its own systems — but your organization's Slack admin may have access to Slack's audit logs. If complete anonymity from your Slack admin is required, consult your organization's IT policy.</p>
   </div>
   <footer>© 2025 HushAsk. All rights reserved.</footer>
 </body>
