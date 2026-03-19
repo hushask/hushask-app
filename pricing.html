@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pricing — HushAsk</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #1A2E62; --navy-dark: #0F1C3F; --blue: #2563EB; --blue-light: #EFF4FF;
+      --bg: #F8FAFC; --bg-white: #ffffff; --bg-dark: #0F172A;
+      --border: #E2E8F0; --border-dark: #1E293B;
+      --text: #0F172A; --text-mid: #475569; --text-muted: #94A3B8;
+      --surface: #F1F5F9; --radius: 14px;
+    }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; font-size: 16px; -webkit-font-smoothing: antialiased; }
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(248,250,252,0.95); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; max-width: 1080px; margin: 0 auto; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-badge { width: 36px; height: 36px; background: var(--navy); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: white; transform: rotate(-6deg); flex-shrink: 0; }
+    .logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
+    .logo-name em { font-style: normal; color: var(--blue); }
+    .nav-back { font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
+    .nav-back:hover { color: var(--text); }
+    /* PAGE */
+    .page { max-width: 900px; margin: 0 auto; padding: 72px 40px 100px; }
+    .page-header { text-align: center; margin-bottom: 20px; }
+    .page-header h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 900; letter-spacing: -1.5px; margin-bottom: 20px; }
+    .page-intro { text-align: center; max-width: 560px; margin: 0 auto 56px; }
+    .page-intro p { font-size: 16px; color: var(--text-mid); line-height: 1.7; margin-bottom: 10px; }
+    /* PLANS */
+    .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 48px; }
+    .plan { background: var(--bg-white); border: 1px solid var(--border); border-radius: 18px; padding: 36px 32px; display: flex; flex-direction: column; }
+    .plan.featured { border-color: var(--navy); border-width: 2px; position: relative; box-shadow: 0 8px 32px rgba(26,46,98,0.10); }
+    .plan.featured .plan-name { color: var(--navy); }
+    .plan-name { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .plan-price { font-size: 40px; font-weight: 900; letter-spacing: -2px; color: var(--text); line-height: 1; margin-bottom: 4px; }
+    .plan-price span { font-size: 16px; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
+    .plan-desc { font-size: 14px; color: var(--text-mid); margin-bottom: 4px; }
+    .plan-note { font-size: 13px; color: var(--text-muted); font-style: italic; margin-bottom: 28px; }
+    .plan-divider { border: none; border-top: 1px solid var(--border); margin: 0 0 24px; }
+    .plan-features { list-style: none; margin-bottom: 32px; flex: 1; }
+    .plan-features li { font-size: 14px; color: var(--text-mid); padding: 6px 0; display: flex; align-items: flex-start; gap: 10px; line-height: 1.5; }
+    .plan-features li::before { content: ''; display: inline-block; width: 16px; height: 16px; border-radius: 50%; background: var(--navy); flex-shrink: 0; margin-top: 2px; background-image: url("data:image/svg+xml,%3Csvg width='10' height='8' viewBox='0 0 10 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 4l2.5 2.5L9 1' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: center; }
+    .plan-no-cc { font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 10px; }
+    .plan-badge { display: inline-flex; align-items: center; gap: 6px; background: var(--blue-light); border: 1px solid #BFDBFE; border-radius: 100px; padding: 4px 12px; font-size: 11px; font-weight: 700; color: var(--blue); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 14px; align-self: flex-start; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 13px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none; border: none; transition: opacity 0.18s, transform 0.12s; width: 100%; }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary { background: var(--navy); color: white; }
+    .btn-ghost { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+    .btn-ghost:hover { border-color: #94A3B8; }
+    /* FOOTER NOTE */
+    .footer-note { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 32px; text-align: center; position: relative; overflow: hidden; }
+    .footer-note::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--navy); border-radius: 14px 14px 0 0; }
+    .footer-note p { font-size: 15px; color: var(--text-mid); line-height: 1.7; }
+    /* FOOTER */
+    footer { background: var(--bg-dark); border-top: 1px solid var(--border-dark); padding: 32px 40px; }
+    .footer-inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .footer-copy { font-size: 13px; color: #475569; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 13px; color: #475569; text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: #94A3B8; }
+    @media (max-width: 680px) {
+      .nav-inner { padding: 16px 20px; }
+      .page { padding: 48px 20px 72px; }
+      .plans { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <a href="/" class="nav-back">← hushask.com</a>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>Simple pricing.</h1>
+    </div>
+    <div class="page-intro">
+      <p>HushAsk does one thing: get the message to the right place, anonymously. The Notion sync is there when you want it. Everything else isn't.</p>
+      <p>No dashboards. No engagement scores. No feature you didn't ask for.</p>
+    </div>
+
+    <div class="plans">
+      <!-- FREE -->
+      <div class="plan">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0<span>/month</span></div>
+        <p class="plan-desc">20 messages per month, per workspace.</p>
+        <p class="plan-note">Enough for most small teams.</p>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li>Anonymous employee questions — sent and replied to anonymously</li>
+          <li>HR routing — sensitive questions go to your private HR channel</li>
+          <li>Notion sync — answered threads saved to your knowledge base</li>
+          <li>All core features</li>
+        </ul>
+        <a href="#" class="btn btn-ghost">Add to Slack — Free</a>
+        <p class="plan-no-cc">No credit card required.</p>
+      </div>
+
+      <!-- PRO -->
+      <div class="plan featured">
+        <div class="plan-badge">Recommended</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$19<span>/month</span></div>
+        <p class="plan-desc">Unlimited messages. Same features. No per-seat pricing.</p>
+        <p class="plan-note">Same price regardless of team size.</p>
+        <hr class="plan-divider">
+        <ul class="plan-features">
+          <li>Everything in Free</li>
+          <li>Unlimited messages</li>
+        </ul>
+        <a href="#" class="btn btn-primary">Add to Slack — Pro</a>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <p>All plans include every core feature. We don't gate anonymity, HR routing, or Notion sync behind a paywall. The free tier is the full product — the only difference is message volume.</p>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>
