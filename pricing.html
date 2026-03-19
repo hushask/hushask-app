@@ -24,8 +24,10 @@
     .logo-badge { width: 36px; height: 36px; background: var(--navy); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: white; transform: rotate(-6deg); flex-shrink: 0; }
     .logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
     .logo-name em { font-style: normal; color: var(--blue); }
-    .nav-back { font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; transition: color 0.15s; }
-    .nav-back:hover { color: var(--text); }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+    .nav-links a:hover { color: var(--text); }
+    @media (max-width: 768px) { .nav-links { display: none; } }
     /* PAGE */
     .page { max-width: 900px; margin: 0 auto; padding: 72px 40px 100px; }
     .page-header { text-align: center; margin-bottom: 20px; }
@@ -81,7 +83,14 @@
         <div class="logo-badge">HA</div>
         <span class="logo-name"><em>Hush</em>Ask</span>
       </a>
-      <a href="/" class="nav-back">← hushask.com</a>
+      <ul class="nav-links">
+        <li><a href="/#how-it-works">How it works</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing" style="color:var(--navy);font-weight:600;">Pricing</a></li>
+        <li><a href="/privacy">Privacy</a></li>
+      </ul>
+      <a href="#" class="btn btn-primary" style="padding:10px 20px;font-size:13px;border-radius:8px;text-decoration:none;">Add to Slack</a>
     </div>
   </nav>
 
