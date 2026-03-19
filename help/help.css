@@ -24,7 +24,7 @@ nav a.back:hover{color:var(--text)}
 
 /* ── Article nav strip ────────────────────────────────────────────────────── */
 .article-nav{background:var(--bg-white,rgba(248,250,252,0.95));border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
-.article-nav-inner{max-width:1080px;margin:0 auto;padding:0 40px;display:flex;align-items:stretch;height:40px;white-space:nowrap;gap:0}
+.article-nav-inner{max-width:1080px;margin:0 auto;padding:0 40px;display:flex;align-items:stretch;justify-content:center;height:40px;white-space:nowrap;gap:0}
 .article-nav a{display:inline-flex;align-items:center;font-size:13px;font-weight:500;color:var(--text-muted,#94A3B8);text-decoration:none;padding:0 14px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;flex-shrink:0}
 .article-nav a:hover{color:var(--text,#0F172A)}
 .article-nav a.active{color:var(--navy,#1A2E62);font-weight:600;border-bottom-color:var(--navy,#1A2E62)}
