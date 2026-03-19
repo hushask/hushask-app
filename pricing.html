@@ -36,7 +36,8 @@
     .page-intro p { font-size: 16px; color: var(--text-mid); line-height: 1.7; margin-bottom: 10px; }
     /* PLANS */
     .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 48px; }
-    .plan { background: var(--bg-white); border: 1px solid var(--border); border-radius: 18px; padding: 36px 32px; display: flex; flex-direction: column; justify-content: space-between; }
+    .plan { background: var(--bg-white); border: 1px solid var(--border); border-radius: 18px; padding: 36px 32px; display: flex; flex-direction: column; }
+    .plan-cta { margin-top: auto; }
     .plan.featured { border-color: var(--navy); border-width: 2px; position: relative; box-shadow: 0 8px 32px rgba(26,46,98,0.10); }
     .plan.featured .plan-name { color: var(--navy); }
     .plan-name { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
@@ -116,7 +117,7 @@
           <li>Notion sync — answered threads saved to your knowledge base</li>
           <li>All core features</li>
         </ul>
-        <div>
+        <div class="plan-cta">
           <a href="#" class="btn btn-ghost">Add to Slack — Free</a>
           <p class="plan-no-cc">No credit card required.</p>
         </div>
@@ -134,7 +135,7 @@
           <li>Everything in Free</li>
           <li>Unlimited messages</li>
         </ul>
-        <a href="#" class="btn btn-primary">Add to Slack — Pro</a>
+        <div class="plan-cta"><a href="#" class="btn btn-primary">Add to Slack — Pro</a></div>
       </div>
     </div>
 
