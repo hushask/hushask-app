@@ -14,9 +14,10 @@
       <a href="/" class="logo"><div class="logo-badge">HA</div><span class="logo-name"><em>Hush</em>Ask<span class="logo-help-word">Help</span></span></a>
       <ul class="nav-links">
         <li><a href="/help/">Help Home</a></li>
-        <li><a href="/help/setting-up-notion.html">Setting Up Notion</a></li>
         <li><a href="/help/privacy-and-hashing.html">Privacy &amp; Hashing</a></li>
+        <li><a href="/help/managing-hush-public.html">Managing the Open Channel</a></li>
         <li><a href="/help/managing-hush-hr.html" class="active">Managing the Channel</a></li>
+        <li><a href="/help/setting-up-notion.html">Setting Up Notion</a></li>
       </ul>
       <a href="/" class="back">← hushask.com</a>
     </div>
@@ -25,12 +26,12 @@
   <div class="content">
     <div class="tag">HR / Admin · ~4 min</div>
     <h1>Managing the Confidential Channel</h1>
-    <p class="lead">Whether you're using <code>#hush-hr</code> or a custom private channel, this guide covers how to manage sensitive anonymous feedback — from first triage to closing a conversation.</p>
+    <p class="lead">Whether you're using #hush-hr or a custom private channel, this guide covers how to manage sensitive anonymous feedback — from first triage to closing a conversation.</p>
 
     <h2>Channel setup</h2>
     <ol>
-      <li>Open the HushAsk <strong>App Home</strong> tab in Slack</li>
-      <li>In the <strong>Configuration</strong> section (admin only), select your HR / Confidential channel from the private channel dropdown</li>
+      <li>Open the HushAsk App Home tab in Slack</li>
+      <li>In the Configuration section (admin only), select your HR / Confidential channel from the private channel dropdown</li>
       <li>Only members you explicitly invite to that channel will see messages routed there</li>
     </ol>
     <p>Once it's configured:</p>
@@ -39,43 +40,32 @@
       <li>Do not invite managers of the teams most likely to send feedback</li>
       <li>Document who has access in your HR system of record</li>
     </ul>
-
     <div class="callout warning">
-      <strong>Keep the circle small.</strong> The fewer people with access to this channel, the more trust employees will have in using it.
+      <p><strong>Keep the circle small.</strong> The fewer people with access to this channel, the more trust employees will have in using it.</p>
     </div>
 
     <h2>What admins see</h2>
     <p>Every message arrives as an anonymous post with an indigo left sidebar — a visual indicator that the message was delivered through HushAsk and the sender's identity is protected. Two action buttons:</p>
     <ul>
-      <li><strong>Reply to Employee</strong> — sends an anonymous reply to the employee's DM thread</li>
+      <li><strong>Reply to Employee</strong> — sends an anonymous reply to the employee's private message thread</li>
       <li><strong>Close Conversation</strong> — marks the thread as resolved and removes active routing</li>
     </ul>
 
     <h2>What employees can do before a reply</h2>
-    <p>Until an admin sends the first reply, the employee retains full control. If they edit the original message in their DM with HushAsk, the post in your triage channel updates automatically. If they delete it, it is retracted. Once a reply has been sent, edits are no longer synced.</p>
+    <p>Until an admin sends the first reply, the employee retains full control. If they edit the original message in their private message with HushAsk, the post in your triage channel updates automatically. If they delete it, it is retracted. Once a reply has been sent, edits are no longer synced.</p>
 
-    <h2>Triage workflow</h2>
+    <h2>Triage workflow best practices</h2>
     <ol>
-      <li><strong>Acknowledge within 48 hours</strong> — use "Reply to Employee" even if you can't act immediately. A simple acknowledgment matters. The reply appears anonymously in their DM thread.</li>
-      <li><strong>Categorize before acting</strong> — Informational / Requires Follow-up / Legal/Compliance / Immediate Action. Tackle in reverse order.</li>
+      <li><strong>Acknowledge within 48 hours</strong> — use "Reply to Employee" even if you can't act immediately. A simple acknowledgment matters. The reply appears anonymously in their private message thread.</li>
       <li><strong>Close when resolved</strong> — click "Close Conversation". Note: the HR route does not sync to Notion.</li>
       <li><strong>Never attempt to identify the sender</strong> — even if you suspect who sent it. Doing so violates the trust HushAsk was built on, and may have legal implications.</li>
     </ol>
 
-    <h2>What to do with difficult messages</h2>
-    <ul>
-      <li><strong>Threats or harassment</strong> — preserve a screenshot, escalate to legal/compliance, consult your incident response policy.</li>
-      <li><strong>Repeated similar messages</strong> — treat as a signal of a systemic issue, not individual noise.</li>
-      <li><strong>Vague feedback</strong> — post a general request publicly for more specificity. Don't speculate about the sender.</li>
-    </ul>
-
     <div class="callout">
-      <strong>A reminder on what HushAsk stores:</strong> Only a 16-character user hash. The DM channel ID used for routing is purged after the first reply — after that, no technical link exists between the post and any individual.
+      <p>HushAsk stores only a 16-character user hash alongside message content. This hash cannot be reversed to identify you — at any point in the process.</p>
     </div>
-
-    <h2>Monthly review</h2>
-    <p>Review volume and categories monthly. Share aggregate trends — never individual messages — with leadership as part of your culture health report.</p>
   </div>
+
   <footer>© 2025 HushAsk. All rights reserved.</footer>
 </body>
 </html>
