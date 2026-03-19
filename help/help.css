@@ -23,8 +23,8 @@ nav{position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);back
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .logo-badge{width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:white;transform:rotate(-6deg)}
 .logo-name{font-size:16px;font-weight:900;color:var(--text)}
-.logo-help-word{color:#94A3B8;font-weight:400;font-size:14px;margin-left:8px}
-.logo-help-word::before{content:'·';color:#CBD5E1;font-weight:400;margin-right:7px}
+.logo-help-word{color:var(--navy);font-weight:600;font-size:14px;margin-left:12px;padding-left:12px;position:relative}
+.logo-help-word::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:1px;height:16px;background:var(--border)}
 .logo-name em{font-style:normal;color:var(--blue)}
 nav a.back{color:var(--muted);text-decoration:none;font-size:14px}
 nav a.back:hover{color:var(--text)}
