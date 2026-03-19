@@ -14,7 +14,12 @@
 body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;line-height:1.75;min-height:100vh}
 
 /* ── Nav ──────────────────────────────────────────────────────────────────── */
-nav{position:sticky;top:0;z-index:100;padding:16px 48px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(248,250,252,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+nav{position:sticky;top:0;z-index:100;border-bottom:1px solid var(--border);background:rgba(248,250,252,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.nav-inner{display:flex;align-items:center;justify-content:space-between;padding:16px 40px;max-width:1080px;margin:0 auto}
+.nav-links{display:flex;gap:24px;list-style:none}
+.nav-links a{font-size:14px;font-weight:500;color:var(--text-muted);text-decoration:none;transition:color .15s}
+.nav-links a:hover{color:var(--text)}
+.nav-links a.active{color:var(--navy);font-weight:600}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none}
 .logo-badge{width:32px;height:32px;background:var(--navy);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:white;transform:rotate(-6deg)}
 .logo-name{font-size:16px;font-weight:900;color:var(--text)}
@@ -23,13 +28,7 @@ nav a.back{color:var(--muted);text-decoration:none;font-size:14px}
 nav a.back:hover{color:var(--text)}
 
 /* ── Article nav strip ────────────────────────────────────────────────────── */
-.article-nav{background:var(--bg-white,rgba(248,250,252,0.95));border-bottom:1px solid var(--border);overflow-x:auto;-webkit-overflow-scrolling:touch}
-.article-nav-inner{max-width:1080px;margin:0 auto;padding:0 40px;display:flex;align-items:stretch;justify-content:center;height:40px;white-space:nowrap;gap:0}
-.article-nav a{display:inline-flex;align-items:center;font-size:13px;font-weight:500;color:var(--text-muted,#94A3B8);text-decoration:none;padding:0 14px;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;flex-shrink:0}
-.article-nav a:hover{color:var(--text,#0F172A)}
-.article-nav a.active{color:var(--navy,#1A2E62);font-weight:600;border-bottom-color:var(--navy,#1A2E62)}
-.article-nav .home-link{padding-left:0;padding-right:16px;margin-right:4px}
-.article-nav .divider{display:inline-flex;align-items:center;color:var(--border,#E2E8F0);font-size:14px;padding:0 4px;flex-shrink:0;user-select:none}
+
 
 /* ── Hero (index.html) ────────────────────────────────────────────────────── */
 .hero{padding:80px 48px 60px;max-width:860px;margin:0 auto;text-align:center}
