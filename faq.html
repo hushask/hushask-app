@@ -41,12 +41,90 @@
 
     /* SECTIONS */
     .faq-section { margin-bottom: 56px; }
-    .faq-section-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 28px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .faq-section-label { font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 
-    /* Q&A */
-    .faq-item { margin-bottom: 36px; }
-    .faq-q { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
-    .faq-a { font-size: 15px; color: var(--text-mid); line-height: 1.75; }
+    /* ACCORDION — details/summary */
+    details.faq-item {
+      border-bottom: 1px solid var(--border);
+    }
+    details.faq-item:first-of-type {
+      border-top: 1px solid var(--border);
+    }
+
+    details.faq-item summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 0;
+      cursor: pointer;
+      list-style: none; /* remove default triangle */
+      -webkit-appearance: none;
+      user-select: none;
+    }
+    /* Remove default marker in all browsers */
+    details.faq-item summary::-webkit-details-marker { display: none; }
+    details.faq-item summary::marker { display: none; }
+
+    .faq-q {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text);
+      transition: color 0.15s;
+      flex: 1;
+    }
+
+    .faq-chevron {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: transform 0.25s ease, color 0.15s;
+    }
+    .faq-chevron svg {
+      display: block;
+    }
+
+    /* Open state */
+    details.faq-item[open] summary .faq-q {
+      color: var(--navy);
+    }
+    details.faq-item[open] summary .faq-chevron {
+      transform: rotate(180deg);
+      color: var(--navy);
+    }
+
+    /* Hover state */
+    details.faq-item summary:hover .faq-q {
+      color: var(--navy);
+    }
+    details.faq-item summary:hover .faq-chevron {
+      color: var(--navy);
+    }
+
+    /* Answer panel */
+    .faq-a {
+      font-size: 15px;
+      color: var(--text-mid);
+      line-height: 1.75;
+      padding: 0 0 20px 0;
+
+      /* Smooth reveal via grid trick — works without JS */
+      display: grid;
+      grid-template-rows: 0fr;
+      overflow: hidden;
+      transition: grid-template-rows 0.28s ease;
+    }
+    details.faq-item[open] .faq-a {
+      grid-template-rows: 1fr;
+    }
+    .faq-a-inner {
+      overflow: hidden;
+    }
+
     .faq-a p { margin-bottom: 10px; }
     .faq-a p:last-child { margin-bottom: 0; }
     .faq-a a { color: var(--blue); text-decoration: none; }
@@ -104,105 +182,213 @@
     <div class="faq-section">
       <div class="faq-section-label">For HR admins</div>
 
-      <div class="faq-item" id="is-anonymity-really-guaranteed">
-        <div class="faq-q">Is anonymity really guaranteed?</div>
+      <details class="faq-item" id="is-anonymity-really-guaranteed">
+        <summary>
+          <span class="faq-q">Is anonymity really guaranteed?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>Technically, yes — with one caveat you should know about.</p>
-          <p>When an employee sends a message, HushAsk immediately hashes their Slack user ID using SHA-256. The original ID is never written to disk. What gets stored is a one-way cryptographic string that cannot be reversed to identify anyone. HushAsk cannot tell you who sent a message. Neither can we.</p>
-          <p>The caveat: if your organization is on Slack's Enterprise Grid plan, Slack's own audit log records which users send DMs to any bot — including HushAsk. That log is a Slack platform behavior, not something HushAsk controls or can suppress. <a href="/privacy">See our privacy page for the full detail.</a></p>
+          <div class="faq-a-inner">
+            <p>Technically, yes — with one caveat you should know about.</p>
+            <p>When an employee sends a message, HushAsk immediately hashes their Slack user ID using SHA-256. The original ID is never written to disk. What gets stored is a one-way cryptographic string that cannot be reversed to identify anyone. HushAsk cannot tell you who sent a message. Neither can we.</p>
+            <p>The caveat: if your organization is on Slack's Enterprise Grid plan, Slack's own audit log records which users send DMs to any bot — including HushAsk. That log is a Slack platform behavior, not something HushAsk controls or can suppress. <a href="/privacy">See our privacy page for the full detail.</a></p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">Can admins find out who sent a message?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">Can admins find out who sent a message?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>No. HushAsk stores message content and routing data — not sender identity. There is no setting, no override, and no request process that surfaces a sender's name or Slack ID. It's not a policy we enforce; it's a technical property of how the system works.</p>
-          <p>The one exception applies to Enterprise Grid workspaces. <a href="#is-anonymity-really-guaranteed">See above.</a></p>
+          <div class="faq-a-inner">
+            <p>No. HushAsk stores message content and routing data — not sender identity. There is no setting, no override, and no request process that surfaces a sender's name or Slack ID. It's not a policy we enforce; it's a technical property of how the system works.</p>
+            <p>The one exception applies to Enterprise Grid workspaces. <a href="#is-anonymity-really-guaranteed">See above.</a></p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">What happens if someone sends a threatening or harassing message?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">What happens if someone sends a threatening or harassing message?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>HushAsk routes messages anonymously — that's its job. It cannot identify the sender after the fact, and neither can we.</p>
-          <p>If your organization receives a message that requires escalation, the appropriate path is your internal HR or legal process, and — if warranted — law enforcement contact with Slack directly. Slack's audit logs (available on Enterprise Grid) may be relevant in serious cases; that is outside HushAsk's scope.</p>
-          <p>We recommend setting clear expectations with your team about what HushAsk is for and what constitutes misuse. If you need guidance on workspace configuration to reduce abuse risk, contact <a href="mailto:support@hushask.com">support@hushask.com</a>.</p>
+          <div class="faq-a-inner">
+            <p>HushAsk routes messages anonymously — that's its job. It cannot identify the sender after the fact, and neither can we.</p>
+            <p>If your organization receives a message that requires escalation, the appropriate path is your internal HR or legal process, and — if warranted — law enforcement contact with Slack directly. Slack's audit logs (available on Enterprise Grid) may be relevant in serious cases; that is outside HushAsk's scope.</p>
+            <p>We recommend setting clear expectations with your team about what HushAsk is for and what constitutes misuse. If you need guidance on workspace configuration to reduce abuse risk, contact <a href="mailto:support@hushask.com">support@hushask.com</a>.</p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">Does HushAsk work with Slack's Enterprise Grid?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">Does HushAsk work with Slack's Enterprise Grid?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>Yes. HushAsk installs and operates on Enterprise Grid workspaces.</p>
-          <p>One thing to know: Enterprise Grid gives workspace administrators access to Slack's audit logs, which record bot interactions at the platform level. This means a Slack admin could see that a user sent a DM to the HushAsk bot — even though HushAsk itself doesn't store that information. <a href="/privacy">Our privacy page explains this in full.</a></p>
+          <div class="faq-a-inner">
+            <p>Yes. HushAsk installs and operates on Enterprise Grid workspaces.</p>
+            <p>One thing to know: Enterprise Grid gives workspace administrators access to Slack's audit logs, which record bot interactions at the platform level. This means a Slack admin could see that a user sent a DM to the HushAsk bot — even though HushAsk itself doesn't store that information. <a href="/privacy">Our privacy page explains this in full.</a></p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">How does the Notion sync work?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">How does the Notion sync work?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>Once you've connected Notion in the HushAsk settings, a <strong>Sync to Notion</strong> button appears on each answered message thread. When an admin clicks it, the Q&amp;A is saved to a database in your own Notion workspace. No sender identity is included in the record.</p>
-          <p>Syncing is manual and per-message — nothing is sent to Notion automatically. You stay in control of what gets archived.</p>
-          <p>If you revoke HushAsk's Notion access from your Notion settings, syncing stops immediately.</p>
+          <div class="faq-a-inner">
+            <p>Once you've connected Notion in the HushAsk settings, a <strong>Sync to Notion</strong> button appears on each answered message thread. When an admin clicks it, the Q&amp;A is saved to a database in your own Notion workspace. No sender identity is included in the record.</p>
+            <p>Syncing is manual and per-message — nothing is sent to Notion automatically. You stay in control of what gets archived.</p>
+            <p>If you revoke HushAsk's Notion access from your Notion settings, syncing stops immediately.</p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">What's included in the free plan?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">What's included in the free plan?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>Everything. The free plan includes anonymous message routing, HR channel routing, and Notion sync — the full product, with no features gated behind a paywall.</p>
-          <p>The only limit is volume: 20 messages per month per workspace. No credit card required.</p>
-          <p>If your team needs more, Pro is $19 per month — flat rate, unlimited messages, same features. <a href="/pricing">See pricing.</a></p>
+          <div class="faq-a-inner">
+            <p>Everything. The free plan includes anonymous message routing, HR channel routing, and Notion sync — the full product, with no features gated behind a paywall.</p>
+            <p>The only limit is volume: 20 messages per month per workspace. No credit card required.</p>
+            <p>If your team needs more, Pro is $19 per month — flat rate, unlimited messages, same features. <a href="/pricing">See pricing.</a></p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">Can I use a custom channel instead of #hush-hr or #hush-public?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">Can I use a custom channel instead of #hush-hr or #hush-public?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>Yes. Channel configuration is managed entirely from the HushAsk App Home — select whichever channels you want for each track. No support required. There's also a Reset option in App Home if you need to clear your configuration and start fresh (your message history is preserved).</p>
+          <div class="faq-a-inner">
+            <p>Yes. Channel configuration is managed entirely from the HushAsk App Home — select whichever channels you want for each track. No support required. There's also a Reset option in App Home if you need to clear your configuration and start fresh (your message history is preserved).</p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">How do I install HushAsk?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">How do I install HushAsk?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>Click <strong><a href="/slack/install">Add to Slack</a></strong> and follow the authorization prompts. Installation takes about 60 seconds. You'll be asked to select your routing channels and optionally connect Notion.</p>
-          <p>If you run into any issues during setup, email <a href="mailto:support@hushask.com">support@hushask.com</a>.</p>
+          <div class="faq-a-inner">
+            <p>Click <strong><a href="/slack/install">Add to Slack</a></strong> and follow the authorization prompts. Installation takes about 60 seconds. You'll be asked to select your routing channels and optionally connect Notion.</p>
+            <p>If you run into any issues during setup, email <a href="mailto:support@hushask.com">support@hushask.com</a>.</p>
+          </div>
         </div>
-      </div>
+      </details>
     </div>
 
     <div class="faq-section">
       <div class="faq-section-label">For employees</div>
 
-      <div class="faq-item">
-        <div class="faq-q">Will anyone know it was me?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">Will anyone know it was me?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>HushAsk is built so that no one — including the HR admin reading your message, and including us — can identify who sent it. Your Slack user ID is hashed the moment you send, and the original is immediately discarded. What gets stored cannot be reversed.</p>
-          <p>The one exception: if your company uses Slack's Enterprise Grid plan, Slack's own infrastructure records bot interactions. Your Slack admin may be able to see that you sent a DM to the HushAsk bot through Slack's audit logs — independently of anything HushAsk does. If this matters to you, check with your IT or Slack admin before using HushAsk.</p>
+          <div class="faq-a-inner">
+            <p>HushAsk is built so that no one — including the HR admin reading your message, and including us — can identify who sent it. Your Slack user ID is hashed the moment you send, and the original is immediately discarded. What gets stored cannot be reversed.</p>
+            <p>The one exception: if your company uses Slack's Enterprise Grid plan, Slack's own infrastructure records bot interactions. Your Slack admin may be able to see that you sent a DM to the HushAsk bot through Slack's audit logs — independently of anything HushAsk does. If this matters to you, check with your IT or Slack admin before using HushAsk.</p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">Can I take back a message after I've sent it?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">Can I take back a message after I've sent it?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>Yes — but only before an admin replies. If you haven't received a response yet, you can edit or delete your original message in your private message with HushAsk. The change will be reflected in the admin's view. Once an admin has replied, the conversation is locked in and the message cannot be retracted.</p>
+          <div class="faq-a-inner">
+            <p>Yes — but only before an admin replies. If you haven't received a response yet, you can edit or delete your original message in your private message with HushAsk. The change will be reflected in the admin's view. Once an admin has replied, the conversation is locked in and the message cannot be retracted.</p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">What does the admin see?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">What does the admin see?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>Your message, the channel it was routed to, and the timestamp. That's it. They do not see your name, your Slack handle, or any identifier linking the message to you.</p>
+          <div class="faq-a-inner">
+            <p>Your message, the channel it was routed to, and the timestamp. That's it. They do not see your name, your Slack handle, or any identifier linking the message to you.</p>
+          </div>
         </div>
-      </div>
+      </details>
 
-      <div class="faq-item">
-        <div class="faq-q">Is HushAsk a separate app, or does it work inside Slack?</div>
+      <details class="faq-item">
+        <summary>
+          <span class="faq-q">Is HushAsk a separate app, or does it work inside Slack?</span>
+          <span class="faq-chevron" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </summary>
         <div class="faq-a">
-          <p>It works inside Slack. You send messages by opening a direct message with the HushAsk bot in your existing workspace — no separate account, no new login, no additional app to install.</p>
+          <div class="faq-a-inner">
+            <p>It works inside Slack. You send messages by opening a direct message with the HushAsk bot in your existing workspace — no separate account, no new login, no additional app to install.</p>
+          </div>
         </div>
-      </div>
+      </details>
     </div>
 
     <div class="faq-cta">
