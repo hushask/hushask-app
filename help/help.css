@@ -6,6 +6,7 @@
   --border:#E2E8F0;
   --text:#0F172A;
   --muted:#475569;
+  --text-muted:#475569;
   --blue:#2563EB;
   --navy:#1A2E62;
 }
@@ -45,6 +46,19 @@ nav a.back:hover{color:var(--text)}
 .guide-card h3{font-size:18px;font-weight:700;margin-bottom:10px;letter-spacing:-.3px}
 .guide-card p{font-size:14px;color:var(--muted);line-height:1.6}
 .guide-tag{display:inline-block;background:var(--bg);border:1px solid var(--border);border-radius:100px;padding:2px 10px;font-size:11px;color:var(--muted);margin-top:16px}
+
+/* ── Article layout (sidebar + content) ───────────────────────────────────── */
+.article-layout{display:flex;gap:48px;max-width:920px;margin:0 auto;padding:60px 40px 80px;align-items:flex-start}
+
+.article-sidebar{width:200px;flex-shrink:0;position:sticky;top:80px}
+.sidebar-label{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:14px}
+.sidebar-nav{list-style:none;padding:0;margin:0}
+.sidebar-nav li{margin-bottom:4px}
+.sidebar-nav a{display:block;font-size:14px;font-weight:500;color:var(--text-muted);text-decoration:none;padding:4px 0;transition:color .15s}
+.sidebar-nav a:hover{color:var(--text)}
+.sidebar-nav a.active{color:var(--navy);font-weight:700}
+
+.article-content{flex:1;min-width:0;max-width:680px}
 
 /* ── Article content ──────────────────────────────────────────────────────── */
 .content{max-width:720px;margin:0 auto;padding:60px 48px 80px}
@@ -98,5 +112,8 @@ footer{border-top:1px solid var(--border);padding:28px 48px;text-align:center;co
   .hero{padding:60px 20px 40px}
   .guides{grid-template-columns:1fr;padding:0 20px 60px}
   .content{padding:40px 20px 60px}
+  .article-layout{flex-direction:column;padding:40px 20px 60px}
+  .article-sidebar{display:none}
+  .article-content{max-width:100%}
   h1{font-size:32px}
 }
