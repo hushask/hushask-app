@@ -39,8 +39,7 @@
     .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 48px; align-items: stretch; }
     .plan { background: var(--bg-white); border: 1px solid var(--border); border-radius: 18px; padding: 36px 32px; display: flex; flex-direction: column; }
     .plan-cta { margin-top: auto; }
-    .plan.featured { border-color: var(--navy); border-width: 2px; position: relative; box-shadow: 0 8px 32px rgba(26,46,98,0.10); }
-    .plan.featured .plan-name { color: var(--navy); }
+    .plan.featured { }
     .plan-name { font-size: 13px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
     .plan-price { font-size: 40px; font-weight: 900; letter-spacing: -2px; color: var(--text); line-height: 1; margin-bottom: 4px; }
     .plan-price span { font-size: 16px; font-weight: 500; color: var(--text-muted); letter-spacing: 0; }
@@ -135,7 +134,7 @@
           <li>Everything in Free</li>
           <li>Unlimited messages</li>
         </ul>
-        <div class="plan-cta"><a href="/slack/install" class="btn btn-primary">Add to Slack — Pro</a></div>
+        <div class="plan-cta"><a href="/slack/install" class="btn btn-ghost">Add to Slack — Pro</a></div>
         <p class="plan-no-cc" style="visibility:hidden;">placeholder</p>
       </div>
     </div>
