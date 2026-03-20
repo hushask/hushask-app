@@ -205,6 +205,14 @@
     }
     .footer-logo-name em { font-style: normal; color: var(--blue); }
 
+
+    .btn{display:inline-flex;align-items:center;gap:8px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;border:none;transition:opacity .18s;}
+    .btn:hover{opacity:.88;}
+    .btn-primary{background:#1A2E62;color:white;}
+    .nav-links{display:flex;gap:28px;list-style:none;}
+    .nav-links a{color:#94A3B8;text-decoration:none;font-size:14px;font-weight:500;}
+    .nav-links a:hover{color:#0F172A;}
+    @media(max-width:768px){.nav-links{display:none;}}
     @media (max-width: 768px) {
       .nav-inner { padding: 16px 20px; }
       .content { padding: 44px 20px 72px; }
@@ -222,7 +230,13 @@
         <div class="logo-badge">HA</div>
         <span class="logo-name"><em>Hush</em>Ask</span>
       </a>
-      <a href="https://hushask.com" class="nav-back">← Back to hushask.com</a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/privacy">Privacy</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary" style="padding:10px 20px;font-size:13px;border-radius:8px;text-decoration:none;width:auto;flex-shrink:0;">Add to Slack</a>
     </div>
   </nav>
 
