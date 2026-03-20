@@ -186,7 +186,7 @@
         <summary><span class="faq-q">Is anonymity really guaranteed?</span><span class="faq-chevron"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></summary>
         <div class="faq-a"><div class="faq-a-inner">
           <p>Technically, yes — with one caveat you should know about.</p>
-          <p>When an employee sends a message, HushAsk immediately hashes their Slack user ID using SHA-256. The original ID is never written to disk. What gets stored is a one-way cryptographic string that cannot be reversed to identify anyone. HushAsk cannot tell you who sent a message. Neither can we.</p>
+          <p>When an employee sends a message, HushAsk immediately hashes their Slack user ID using SHA-256. The original ID is never written to disk. What gets stored is a one-way cryptographic string that cannot be reversed to identify anyone. HushAsk cannot tell you who sent a message.</p>
           <p>The caveat: if your organization is on Slack's Enterprise Grid plan, Slack's own audit log records which users send DMs to any bot — including HushAsk. That log is a Slack platform behavior, not something HushAsk controls or can suppress. <a href="/privacy">See our privacy page for the full detail.</a></p>
         </div></div>
       </details>
