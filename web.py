@@ -415,6 +415,10 @@ def terms():
 def pricing():
     return send_from_directory(BASE_DIR, "pricing.html")
 
+@web.route("/faq")
+def faq():
+    return send_from_directory(BASE_DIR, "faq.html")
+
 @web.route("/help/")
 def help_index():
     return send_from_directory(os.path.join(BASE_DIR, "help"), "index.html")
