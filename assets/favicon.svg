@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect x="1" y="1" width="30" height="30" rx="6" ry="6" fill="#1A2E62"/>
-  <text x="16" y="22" text-anchor="middle" font-family="Inter, Arial Black, sans-serif" font-weight="900" font-size="15" fill="white" letter-spacing="-0.5">HA</text>
+  <g transform="rotate(-6, 16, 16)">
+    <rect x="1" y="1" width="30" height="30" rx="6" ry="6" fill="#1A2E62"/>
+    <text x="16" y="22" text-anchor="middle" font-family="Inter, Arial Black, sans-serif" font-weight="900" font-size="15" fill="white" letter-spacing="-0.5">HA</text>
+  </g>
 </svg>
