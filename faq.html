@@ -53,9 +53,10 @@
     .faq-a a:hover { text-decoration: underline; }
 
     /* STILL HAVE QUESTIONS */
-    .faq-cta { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 32px; margin-top: 56px; }
+    .faq-cta { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 28px 32px; margin-top: 56px; text-align: center; position: relative; overflow: hidden; }
+    .faq-cta::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: var(--navy); border-radius: 14px 14px 0 0; }
     .faq-cta h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    .faq-cta p { font-size: 15px; color: var(--text-mid); }
+    .faq-cta p { font-size: 15px; color: var(--text-mid); line-height: 1.7; }
     .faq-cta a { color: var(--blue); text-decoration: none; }
     .faq-cta a:hover { text-decoration: underline; }
 
@@ -88,6 +89,7 @@
         <li><a href="/#features">Features</a></li>
         <li><a href="/pricing">Pricing</a></li>
         <li><a href="/help/">Help</a></li>
+        <li><a href="/faq" style="color:var(--navy);font-weight:600;">FAQ</a></li>
         <li><a href="/privacy">Privacy</a></li>
       </ul>
       <a href="/slack/install" class="btn btn-primary" style="width:auto;flex-shrink:0;">Add to Slack</a>
