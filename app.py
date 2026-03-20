@@ -1800,6 +1800,13 @@ def handle_message_changed(event, client, body, logger):
     mapping = get_message_mapping(team_id, user_dm_ts)
     if not mapping:
         return
+    routing = get_routing(team_id, mapping["triage_thread_ts"])
+    if routing is None:
+        logger.debug("[edit_sync] skipped — thread already closed")
+        return
+    if routing.get("source_channel") is None:
+        logger.debug("[edit_sync] edit sync skipped — thread already replied")
+        return
     try:
         if mapping["triage_message_ts"] == mapping["triage_thread_ts"]:
             result = client.conversations_replies(
@@ -1871,6 +1878,9 @@ def handle_message_deleted(event, client, body, logger):
                 )
         except Exception as e:
             logger.error(f"[retract_sync] employee already-closed DM failed: {e}")
+        return
+    if thread_still_active.get("source_channel") is None:
+        logger.debug("[retract_sync] edit sync skipped — thread already replied")
         return
 
     try:
