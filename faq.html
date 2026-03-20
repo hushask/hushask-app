@@ -212,7 +212,7 @@
         <div class="faq-a">
           <div class="faq-a-inner">
             <p>No. HushAsk stores message content and routing data — not sender identity. There is no setting, no override, and no request process that surfaces a sender's name or Slack ID. It's not a policy we enforce; it's a technical property of how the system works.</p>
-            <p>The one exception applies to Enterprise Grid workspaces. <a href="#is-anonymity-really-guaranteed">See above.</a></p>
+            
           </div>
         </div>
       </details>
@@ -229,28 +229,12 @@
         <div class="faq-a">
           <div class="faq-a-inner">
             <p>HushAsk routes messages anonymously — that's its job. It cannot identify the sender after the fact, and neither can we.</p>
-            <p>If your organization receives a message that requires escalation, the appropriate path is your internal HR or legal process, and — if warranted — law enforcement contact with Slack directly. Slack's audit logs (available on Enterprise Grid) may be relevant in serious cases; that is outside HushAsk's scope.</p>
+            <p>If your organization receives a message that requires escalation, the appropriate path is your internal HR or legal process, and — if warranted — law enforcement contact with Slack directly.</p>
             <p>We recommend setting clear expectations with your team about what HushAsk is for and what constitutes misuse. If you need guidance on workspace configuration to reduce abuse risk, contact <a href="mailto:support@hushask.com">support@hushask.com</a>.</p>
           </div>
         </div>
       </details>
 
-      <details class="faq-item">
-        <summary>
-          <span class="faq-q">Does HushAsk work with Slack's Enterprise Grid?</span>
-          <span class="faq-chevron" aria-hidden="true">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M3 5.5L8 10.5L13 5.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </span>
-        </summary>
-        <div class="faq-a">
-          <div class="faq-a-inner">
-            <p>Yes. HushAsk installs and operates on Enterprise Grid workspaces.</p>
-            <p>One thing to know: Enterprise Grid gives workspace administrators access to Slack's audit logs, which record bot interactions at the platform level. This means a Slack admin could see that a user sent a DM to the HushAsk bot — even though HushAsk itself doesn't store that information. <a href="/privacy">Our privacy page explains this in full.</a></p>
-          </div>
-        </div>
-      </details>
 
       <details class="faq-item">
         <summary>
@@ -337,7 +321,8 @@
         <div class="faq-a">
           <div class="faq-a-inner">
             <p>HushAsk is built so that no one — including the HR admin reading your message, and including us — can identify who sent it. Your Slack user ID is hashed the moment you send, and the original is immediately discarded. What gets stored cannot be reversed.</p>
-            <p>The one exception: if your company uses Slack's Enterprise Grid plan, Slack's own infrastructure records bot interactions. Your Slack admin may be able to see that you sent a DM to the HushAsk bot through Slack's audit logs — independently of anything HushAsk does. If this matters to you, check with your IT or Slack admin before using HushAsk.</p>
+            <p>The one exception: if your company uses Slack's Enterprise Grid plan, Slack's own infrastructure records bot interactions. Your Slack admin may be able to see that you sent a DM to the HushAsk bot through Slack's audit logs — independently of anything HushAsk does. If this matters to you, check with your IT or Slack admin before using HushAsk.
+            </p><p>If you're not sure whether your company is on Enterprise Grid, the simplest path is to ask your IT or Slack admin. There's no fully reliable self-serve check available to regular employees.</p>
           </div>
         </div>
       </details>
@@ -353,7 +338,7 @@
         </summary>
         <div class="faq-a">
           <div class="faq-a-inner">
-            <p>Yes — but only before an admin replies. If you haven't received a response yet, you can edit or delete your original message in your private message with HushAsk. The change will be reflected in the admin's view. Once an admin has replied, the conversation is locked in and the message cannot be retracted.</p>
+            <p>Yes — but only before an admin replies. Until then, you can delete your original message in your private message with HushAsk and it will be retracted. Once an admin has responded, the message can no longer be retracted — they've already seen it.</p>
           </div>
         </div>
       </details>
