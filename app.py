@@ -656,7 +656,7 @@ def home_configured(config, client, team_id):
     ]
     return {"type":"home","blocks":blocks}
 
-BUILD_ID = "sovereign-v1"  # git short SHA — update on each deploy for UI verification
+BUILD_ID = os.environ.get("BUILD_ID", "dev")  # set BUILD_ID env var to git short SHA on each deploy
 
 def publish_home(client, user_id, team_id):
     """Publish the App Home tab for a user.
@@ -2815,6 +2815,14 @@ def _bootstrap_from_env():
         print(f"[bootstrap] {action} workspace {team_id} ({team_name}) from SLACK_BOT_TOKEN.")
     except Exception as e:
         print(f"[bootstrap] Warning: could not sync workspace from env — {e}")
+
+
+# ── Misc action handlers ───────────────────────────────────────────────────────
+
+@app.action("reactivate_pro_cta")
+def handle_reactivate_pro_cta(ack):
+    """Ack the 'Reactivate Pro' button sent in downgrade notices — no further action needed."""
+    ack()
 
 
 # ── Init ──────────────────────────────────────────────────────────────────────

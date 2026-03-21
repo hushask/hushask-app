@@ -316,9 +316,21 @@ def _provision_hush_library(token):
 
 # ── Stripe Checkout ────────────────────────────────────────────────────────────
 
+# KNOWN LIMITATION: /upgrade has no admin auth — anyone who knows a team_id can
+# initiate a checkout. Adding Slack OAuth verification on a web redirect is complex.
+# Mitigated with a simple in-memory rate limit (one attempt per team per 60s).
+_checkout_rate: dict = {}  # team_id → timestamp
+
 @web.route("/upgrade")
 def upgrade():
     team_id = request.args.get("team_id", "")
+
+    # Rate limit: one checkout attempt per team per 60s
+    now = time.time()
+    if team_id and _checkout_rate.get(team_id, 0) > now - 60:
+        return "Too many requests", 429
+    if team_id:
+        _checkout_rate[team_id] = now
 
     if not stripe.api_key or not STRIPE_PRO_PRICE_ID:
         return redirect(f"{SITE_BASE}/#early-access")
@@ -344,9 +356,15 @@ def upgrade():
 def upgrade_success():
     team_id    = request.args.get("team_id", "")
     session_id = request.args.get("session_id", "")
-    # DM the installer with the Pro welcome message
-    if team_id:
-        _send_pro_welcome(team_id)
+    # Only send DM if Stripe is configured and session is verified as paid.
+    # Actual upgrade happens via webhook — this is just a landing page.
+    if team_id and session_id and stripe.api_key:
+        try:
+            sess = stripe.checkout.Session.retrieve(session_id)
+            if sess.get("payment_status") == "paid":
+                _send_pro_welcome(team_id)
+        except Exception as e:
+            print(f"[upgrade/success] Stripe session verify failed: {e}")
     return _render_pro_success_page()
 
 
