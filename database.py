@@ -5,8 +5,20 @@ database.py — HushAsk SQLite layer
 import sqlite3, os, secrets
 from datetime import datetime, timezone
 
-DB_PATH    = os.environ.get("DB_PATH", "hushask.db")
+DB_PATH    = os.environ.get("DB_PATH", "/data/hushask.db")
 print(f"[db] DB_PATH={DB_PATH}", flush=True)
+
+# Startup validation: warn loudly if the DB directory doesn't exist (Railway persistent volume not mounted)
+_db_dir = os.path.dirname(DB_PATH)
+if _db_dir and DB_PATH.startswith("/data") and not os.path.isdir(_db_dir):
+    print(
+        f"\n{'='*60}\n"
+        f"[db] WARNING: DB directory '{_db_dir}' does not exist!\n"
+        f"[db] If running on Railway, ensure a persistent volume is mounted at /data.\n"
+        f"[db] Without it, ALL DATA WILL BE LOST ON EVERY REDEPLOY.\n"
+        f"{'='*60}\n",
+        flush=True
+    )
 FREE_LIMIT = int(os.environ.get("FREE_LIMIT", "20"))
 
 
@@ -233,6 +245,9 @@ def purge_expired_delivered_messages(days: int = 365) -> int:
     Called on startup alongside purge_expired_routing().
     Returns count deleted."""
     with get_conn() as conn:
+        # SQLite's datetime() modifier string cannot accept bind params — f-string is intentional.
+        # Guard ensures days is always int so there is no injection risk.
+        assert isinstance(days, int), f"days must be int, got {type(days)}"
         cur = conn.execute(
             f"DELETE FROM delivered_messages WHERE delivered_at < datetime('now', '-{days} days')"
         )
@@ -245,6 +260,9 @@ def purge_expired_delivered_messages(days: int = 365) -> int:
 def purge_expired_routing(days: int = 30) -> int:
     """Delete routing_table entries older than N days (default 30). Returns count deleted."""
     with get_conn() as conn:
+        # SQLite's datetime() modifier string cannot accept bind params — f-string is intentional.
+        # Guard ensures days is always int so there is no injection risk.
+        assert isinstance(days, int), f"days must be int, got {type(days)}"
         cur = conn.execute(
             f"DELETE FROM routing_table WHERE created_at < datetime('now', '-{days} days')"
         )

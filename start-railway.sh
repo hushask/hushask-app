@@ -6,6 +6,8 @@ set -e
 PORT=${PORT:-8080}
 WORKERS=${WEB_WORKERS:-2}
 
+mkdir -p /data
+
 echo "🚀 HushAsk starting on port $PORT ($WORKERS workers)..."
 exec gunicorn web:web \
   --bind "0.0.0.0:$PORT" \

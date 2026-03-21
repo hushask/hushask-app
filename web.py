@@ -13,9 +13,13 @@ Routes:
   /stripe/webhook         → Stripe event listener
   /health                 → Healthcheck
   /* (static)             → Landing page, help, assets
+
+Note: Notion access tokens are stored in plaintext SQLite.
+# TODO: Encrypt Notion access tokens at rest before Slack App Directory submission
 """
 
 import os
+import time
 import requests as http
 from flask import Flask, request, redirect, send_from_directory, jsonify, render_template_string
 from dotenv import load_dotenv
@@ -46,11 +50,51 @@ handler = SlackRequestHandler(bolt_module.app)
 web = Flask(__name__, static_folder=None)
 
 
+# ── Startup env var validation ─────────────────────────────────────────────────
+
+def _validate_env():
+    required = [
+        "SLACK_SIGNING_SECRET",
+        "SLACK_CLIENT_ID",
+        "SLACK_CLIENT_SECRET",
+        "HASH_SALT",
+    ]
+    optional_warn = [
+        "STRIPE_SECRET_KEY",
+        "STRIPE_PRO_PRICE_ID",
+        "STRIPE_WEBHOOK_SECRET",
+        "NOTION_CLIENT_ID",
+        "NOTION_CLIENT_SECRET",
+    ]
+    missing = [k for k in required if not os.environ.get(k)]
+    if missing:
+        raise RuntimeError(f"[HushAsk] FATAL: Missing required env vars: {', '.join(missing)}")
+    for k in optional_warn:
+        if not os.environ.get(k):
+            print(f"[HushAsk] WARNING: Optional env var not set: {k} — related features will be disabled")
+
+_validate_env()
+
+
 # ── Health ─────────────────────────────────────────────────────────────────────
 
 @web.route("/health")
 def health():
     return jsonify({"status": "ok", "service": "hushask"}), 200
+
+
+# ── Global error handlers ──────────────────────────────────────────────────────
+
+@web.errorhandler(404)
+def handle_404(e):
+    return jsonify({"error": "Not found"}), 404
+
+@web.errorhandler(Exception)
+def handle_unhandled_exception(e):
+    import traceback
+    import logging as _logging
+    _logging.getLogger(__name__).error(f"Unhandled exception: {traceback.format_exc()}")
+    return jsonify({"error": "Internal server error"}), 500
 
 
 # ── Slack routes ───────────────────────────────────────────────────────────────
