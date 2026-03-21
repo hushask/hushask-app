@@ -4,6 +4,7 @@ database.py — HushAsk SQLite layer
 
 import sqlite3, os, secrets
 from datetime import datetime, timezone
+from crypto import encrypt_token, decrypt_token
 
 DB_PATH    = os.environ.get("DB_PATH", "/data/hushask.db")
 print(f"[db] DB_PATH={DB_PATH}", flush=True)
@@ -364,7 +365,11 @@ def get_workspace_config(workspace_id: str):
         row = conn.execute(
             "SELECT * FROM workspace_config WHERE workspace_id = ?", (workspace_id,)
         ).fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        result = dict(row)
+        result["notion_api_key"] = decrypt_token(result.get("notion_api_key"))
+        return result
 
 
 def save_workspace_config(workspace_id: str, installer_id: str,
@@ -394,13 +399,14 @@ def save_workspace_config(workspace_id: str, installer_id: str,
                 notion_database_id = excluded.notion_database_id,
                 updated_at         = excluded.updated_at
         """, (workspace_id, installer_id, public_channel, hr_channel,
-              final_notion_key, final_notion_db))
+              encrypt_token(final_notion_key), final_notion_db))
 
         print(f"[db] save_workspace_config: pub={public_channel} hr={hr_channel} "
               f"notion_key={bool(final_notion_key)} notion_db={bool(final_notion_db)}")
 
 
 def save_workspace_notion(workspace_id: str, notion_api_key: str, notion_database_id: str):
+    encrypted_key = encrypt_token(notion_api_key) if notion_api_key else None
     with get_conn() as conn:
         conn.execute("""
             INSERT INTO workspace_config (workspace_id, notion_api_key, notion_database_id, updated_at)
@@ -409,7 +415,7 @@ def save_workspace_notion(workspace_id: str, notion_api_key: str, notion_databas
                 notion_api_key     = excluded.notion_api_key,
                 notion_database_id = excluded.notion_database_id,
                 updated_at         = excluded.updated_at
-        """, (workspace_id, notion_api_key, notion_database_id))
+        """, (workspace_id, encrypted_key, notion_database_id))
 
 
 def reset_workspace_config(workspace_id: str):

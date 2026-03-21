@@ -15,7 +15,8 @@ Routes:
   /* (static)             → Landing page, help, assets
 
 Note: Notion access tokens are stored in plaintext SQLite.
-# TODO: Encrypt Notion access tokens at rest before Slack App Directory submission
+# Notion access tokens are encrypted at rest using Fernet symmetric encryption.
+# Key: NOTION_ENCRYPTION_KEY env var. See crypto.py for details.
 """
 
 import os
