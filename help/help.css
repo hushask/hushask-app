@@ -109,6 +109,10 @@ footer{border-top:1px solid var(--border);padding:28px 48px;text-align:center;co
 /* ── Mobile ───────────────────────────────────────────────────────────────── */
 @media(max-width:768px){
   nav{padding:16px 20px}
+  .nav-inner{padding:12px 20px}
+  .nav-links{display:none}
+  .nav-cta{display:none}
+  .nav-hamburger{display:block}
   .hero{padding:60px 20px 40px}
   .guides{grid-template-columns:1fr;padding:0 20px 60px}
   .content{padding:40px 20px 60px}
@@ -117,6 +121,23 @@ footer{border-top:1px solid var(--border);padding:28px 48px;text-align:center;co
   .article-content{max-width:100%}
   h1{font-size:32px}
 }
+
+/* ── Mobile hamburger nav ─────────────────────────────────────────────────── */
+.nav-hamburger{display:none;background:none;border:none;cursor:pointer;padding:6px 8px;color:var(--text);font-size:22px;line-height:1;border-radius:8px;transition:background .15s;flex-shrink:0}
+.nav-hamburger:hover{background:var(--bg)}
+.nav-cta{flex-shrink:0}
+.mobile-menu{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:#ffffff;z-index:200;flex-direction:column;padding:20px 24px 32px}
+.mobile-menu.open{display:flex}
+.mobile-menu-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:36px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.mobile-menu-close{background:none;border:none;cursor:pointer;font-size:22px;color:var(--text);padding:6px 8px;border-radius:8px;line-height:1}
+.mobile-menu-close:hover{background:var(--bg)}
+.mobile-menu-links{list-style:none;flex:1}
+.mobile-menu-links li{border-bottom:1px solid var(--border)}
+.mobile-menu-links a{display:block;padding:16px 4px;font-size:17px;font-weight:600;color:var(--text);text-decoration:none;transition:color .15s}
+.mobile-menu-links a:hover{color:var(--blue)}
+.mobile-menu-cta{margin-top:32px}
+.mobile-menu-cta a{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 24px;background:var(--navy);color:white;border-radius:10px;font-weight:700;font-size:15px;text-decoration:none;transition:opacity .18s}
+.mobile-menu-cta a:hover{opacity:.88}
 
 /* ── Add to Slack button ──────────────────────────────────────────────────── */
 .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;border:none;transition:opacity .18s,transform .12s}
