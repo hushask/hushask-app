@@ -82,7 +82,8 @@
     <p>No. Admins see the anonymous message in their triage channel and can reply — but sender identity is never revealed. The reply is routed through the temporary routing record, which is then purged.</p>
 
     <h2>What about Slack itself?</h2>
-    <p>Slack may log all events passing through their API. HushAsk protects your identity within its own systems — but your organization's Slack admin may have access to Slack's audit logs. If complete anonymity from your Slack admin is required, consult your organization's IT policy.</p>
+    <p>HushAsk can't protect against Slack's own audit logs — that's a Slack platform constraint, not ours. On Enterprise Grid plans, Slack makes bot interaction logs available to workspace administrators. If your company is on Enterprise Grid, your Slack admin could see that you sent a DM to HushAsk — independently of anything HushAsk stores.</p>
+    <p>If you're not sure whether your company is on Enterprise Grid, ask your IT or Slack admin directly. There's no reliable self-serve check for regular employees.</p>
     </div>
   </div>
   <footer>© 2026 HushAsk. All rights reserved.</footer>
