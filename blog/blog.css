@@ -46,6 +46,13 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.95)
 .mobile-menu-cta a { display: flex; align-items: center; justify-content: center; padding: 14px 24px; background: var(--navy); color: white; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; transition: opacity 0.18s; }
 .mobile-menu-cta a:hover { opacity: 0.88; }
 
+/* ── ARTICLE HERO ────────────────────────────────────────────────────────── */
+.article-hero { max-width: 780px; margin: 40px auto 0; padding: 0 40px; }
+.article-hero img { width: 100%; border-radius: 16px; display: block; }
+@media (max-width: 768px) {
+  .article-hero { padding: 0 20px; margin-top: 24px; }
+}
+
 /* ── BLOG INDEX ──────────────────────────────────────────────────────────── */
 .page { max-width: 680px; margin: 0 auto; padding: 72px 40px 100px; }
 
