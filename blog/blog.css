@@ -78,12 +78,12 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.95)
 .article-lead { font-size: 19px; line-height: 1.7; color: #4B5563; margin-top: 20px; }
 
 /* ── AUTHOR BYLINE ───────────────────────────────────────────────────────── */
-.article-byline { display: flex; align-items: flex-start; gap: 12px; margin-top: 28px; }
+.article-byline { display: flex; align-items: flex-start; gap: 14px; margin-top: 32px; background: #F8FAFC; border-radius: 10px; padding: 18px 20px; }
 .byline-avatar { flex-shrink: 0; border-radius: 50%; display: block; }
-.byline-meta { display: flex; flex-direction: column; gap: 4px; }
+.byline-meta { display: flex; flex-direction: column; gap: 3px; }
 .byline-name { font-size: 13px; font-weight: 600; color: #111827; }
-.byline-bio { font-size: 12px; color: #6B7280; line-height: 1.5; margin-top: 2px; }
-.byline-date { font-size: 12px; color: #9CA3AF; margin-top: 4px; }
+.byline-bio { font-size: 12px; color: #6B7280; line-height: 1.5; margin-top: 3px; }
+.byline-date { font-size: 11px; color: #9CA3AF; margin-top: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
 
 /* ── ARTICLE BODY ────────────────────────────────────────────────────────── */
 .article-body { font-size: 16px; line-height: 1.85; color: var(--text-body); margin-top: 40px; }
