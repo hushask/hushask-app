@@ -495,17 +495,17 @@ def faq():
 def blog_index():
     return send_from_directory(os.path.join(BASE_DIR, "blog"), "index.html")
 
-@web.route("/blog/<slug>")
-def blog_article(slug):
-    filename = slug + ".html"
-    blog_dir = os.path.join(BASE_DIR, "blog")
-    if not os.path.isfile(os.path.join(blog_dir, filename)):
-        return "Not found", 404
-    return send_from_directory(blog_dir, filename)
-
 @web.route("/blog/<path:filename>")
 def blog_static(filename):
-    return send_from_directory(os.path.join(BASE_DIR, "blog"), filename)
+    blog_dir = os.path.join(BASE_DIR, "blog")
+    # Static assets (css, js, images) served directly
+    if '.' in filename and not filename.endswith('.html'):
+        return send_from_directory(blog_dir, filename)
+    # Slugs — append .html
+    html_file = filename if filename.endswith('.html') else filename + '.html'
+    if not os.path.isfile(os.path.join(blog_dir, html_file)):
+        return "Not found", 404
+    return send_from_directory(blog_dir, html_file)
 
 @web.route("/help/")
 def help_index():
