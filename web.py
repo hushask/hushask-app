@@ -77,6 +77,17 @@ def _validate_env():
 _validate_env()
 
 
+# ── api.hushask.com → hushask.com redirect ────────────────────────────────────
+
+@web.before_request
+def redirect_api_subdomain():
+    if request.host == 'api.hushask.com':
+        target = 'https://hushask.com' + request.path
+        if request.query_string:
+            target += '?' + request.query_string.decode()
+        return redirect(target, 301)
+
+
 # ── Health ─────────────────────────────────────────────────────────────────────
 
 @web.route("/health")
