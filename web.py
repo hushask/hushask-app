@@ -462,6 +462,14 @@ def _send_downgrade_notice(team_id: str):
 
 # ── Static serving ─────────────────────────────────────────────────────────────
 
+@web.route("/robots.txt")
+def robots():
+    return send_from_directory(BASE_DIR, "robots.txt", mimetype="text/plain")
+
+@web.route("/sitemap.xml")
+def sitemap():
+    return send_from_directory(BASE_DIR, "sitemap.xml", mimetype="application/xml")
+
 @web.route("/")
 def index():
     return send_from_directory(BASE_DIR, "index.html")
@@ -499,7 +507,7 @@ def root_file(filename):
     if filename in BLOCKED or filename.startswith("."):
         return "403 Forbidden", 403
     ext = os.path.splitext(filename)[1].lower()
-    if ext not in {".html", ".css", ".js", ".svg", ".png", ".ico", ".txt", ".webmanifest"}:
+    if ext not in {".html", ".css", ".js", ".svg", ".png", ".ico", ".txt", ".xml", ".webmanifest"}:
         return "403 Forbidden", 403
     return send_from_directory(BASE_DIR, filename)
 
