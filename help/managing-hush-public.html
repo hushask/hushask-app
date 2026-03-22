@@ -44,6 +44,19 @@
       <a href="/slack/install">Add to Slack</a>
     </div>
   </div>
+  <!-- Mobile article nav (hidden on desktop) -->
+  <div class="mobile-article-nav" id="mobile-article-nav">
+    <button class="mobile-article-nav-toggle" id="mobile-article-nav-toggle" aria-expanded="false" aria-controls="mobile-article-nav-links">
+      <span>In this section</span>
+      <svg class="mobile-article-nav-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <ul class="mobile-article-nav-links" id="mobile-article-nav-links" hidden>
+      <li><a href="/help/privacy-and-hashing.html">Privacy &amp; Hashing</a></li>
+      <li><a href="/help/managing-hush-public.html" class="active">Managing the Open Channel</a></li>
+      <li><a href="/help/managing-hush-hr.html">Managing the Confidential Channel</a></li>
+      <li><a href="/help/setting-up-notion.html">Setting Up Notion</a></li>
+    </ul>
+  </div>
   <div class="article-layout">
     <aside class="article-sidebar">
       <span class="sidebar-label">In this section</span>
@@ -114,6 +127,22 @@
       btn.addEventListener('click', openMenu);
       closeBtn.addEventListener('click', closeMenu);
       menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+
+      var toggle = document.getElementById('mobile-article-nav-toggle');
+      var links = document.getElementById('mobile-article-nav-links');
+      if (toggle && links) {
+        toggle.addEventListener('click', function() {
+          var expanded = toggle.getAttribute('aria-expanded') === 'true';
+          toggle.setAttribute('aria-expanded', String(!expanded));
+          links.hidden = expanded;
+        });
+        links.querySelectorAll('a').forEach(function(a) {
+          a.addEventListener('click', function() {
+            toggle.setAttribute('aria-expanded', 'false');
+            links.hidden = true;
+          });
+        });
+      }
     })();
   </script>
 
