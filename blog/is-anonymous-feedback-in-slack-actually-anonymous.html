@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Is Anonymous Feedback in Slack Actually Anonymous? — HushAsk</title>
+  <meta name="description" content='"Anonymous" usually means someone promised not to look. Cryptographic anonymity means the information doesn&apos;t exist. Here&apos;s the difference — and how to check which one you have.'>
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hushask.com/blog/is-anonymous-feedback-in-slack-actually-anonymous">
+  <meta property="og:title" content="Is Anonymous Feedback in Slack Actually Anonymous? — HushAsk">
+  <meta property="og:description" content='"Anonymous" usually means someone promised not to look. Cryptographic anonymity means the information doesn&apos;t exist. Here&apos;s the difference — and how to check which one you have.'>
+  <meta property="og:image" content="https://hushask.com/assets/ha-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Is Anonymous Feedback in Slack Actually Anonymous? — HushAsk">
+  <meta name="twitter:description" content='"Anonymous" usually means someone promised not to look. Cryptographic anonymity means the information doesn&apos;t exist.'>
+  <meta name="twitter:image" content="https://hushask.com/assets/ha-512.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/faq">FAQ</a></li>
+        <li><a href="/privacy">Privacy</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary nav-cta">Add to Slack</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu-header">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="mobile-menu-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/pricing">Pricing</a></li>
+      <li><a href="/help/">Help</a></li>
+      <li><a href="/faq">FAQ</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+    </ul>
+    <div class="mobile-menu-cta">
+      <a href="/slack/install">Add to Slack</a>
+    </div>
+  </div>
+
+  <article class="article-page">
+    <header class="article-header">
+      <a href="/blog" class="back-link">← Blog</a>
+      <div class="article-date">March 2026</div>
+      <h1>Is Anonymous Feedback in Slack Actually Anonymous?</h1>
+      <p class="article-lead">"Anonymous" usually means someone promised not to look. Cryptographic anonymity means the information doesn't exist. Here's the difference — and how to check which one you have.</p>
+    </header>
+
+    <div class="article-body">
+      <p>It depends entirely on the tool — and most tools won't tell you the answer directly.</p>
+
+      <p>"Anonymous" is one of the most overused words in workplace software. It usually means someone promised not to look, not that the information doesn't exist. For an employee deciding whether to raise something sensitive, that difference matters a lot.</p>
+
+      <h2>What "anonymous" usually means</h2>
+
+      <p>Most anonymous feedback tools work by routing your message through a bot. The message appears without your name attached. But somewhere in the system — a database, a log file, an API call record — your user ID or email was part of the transaction.</p>
+
+      <p>Whether anyone connects the dots depends on policy. The admin <em>could</em> look it up; they've agreed not to. The vendor <em>could</em> access it; they've promised not to.</p>
+
+      <p>Policy promises can be broken. Architecture can't.</p>
+
+      <h2>What cryptographic anonymity actually means</h2>
+
+      <p>When you send a message through HushAsk, your Slack user ID is immediately passed through a SHA-256 hash function. SHA-256 is a one-way cryptographic process: it converts your ID into a 64-character string. There is no reverse operation.</p>
+
+      <p>HushAsk also adds a private salt — a unique value specific to your deployment — before hashing. Even someone with a complete list of every Slack user ID couldn't match hashes to users by brute force.</p>
+
+      <p>The original ID is discarded. Not stored in a hidden column, not archived in a log. What exists in HushAsk's database is the hash, the message content, and routing metadata. The hash cannot be reversed to reveal who that person is.</p>
+
+      <p>The admin who reads your message sees the message. That's all.</p>
+
+      <p>This isn't a promise. It's a structural property of how the system works.</p>
+
+      <h2>What Slack itself can see</h2>
+
+      <p>HushAsk is a Slack app. When you send a message to any Slack bot, that interaction passes through Slack's API — and Slack logs API events according to their own privacy policy.</p>
+
+      <p>For most organizations — those on Slack's Free, Pro, or Business+ plans — this logging isn't accessible to your Slack admin.</p>
+
+      <p>Enterprise Grid is the exception. On Enterprise Grid plans, Slack provides workspace administrators with an audit log that includes bot interaction metadata. Your Slack admin could potentially see that you sent a DM to HushAsk — independently of anything HushAsk stores or controls.</p>
+
+      <p>HushAsk discloses this in its <a href="/privacy">privacy documentation</a>. It's a Slack platform constraint, not a HushAsk one.</p>
+
+      <p>To check: open Slack on the web and go to <code>[yourworkspace].slack.com/account/workspace-settings</code>. The plan is listed under Overview. No admin access needed. If it says Enterprise Grid, the caveat applies. For teams on Free, Pro, or Business+, it doesn't.</p>
+
+      <h2>So — is it actually anonymous?</h2>
+
+      <p>With most tools: anonymous in practice, if the people with database access keep their word.</p>
+
+      <p>With HushAsk, on a non-Enterprise Grid workspace: anonymous by design. The information needed to identify you doesn't exist in HushAsk's system.</p>
+
+      <p>If that distinction matters to the feedback you need to give — or the feedback your team needs to feel safe giving — it's worth knowing before you choose a tool.</p>
+    </div>
+
+    <div class="article-cta">
+      <p>Read how HushAsk's anonymity works in full — <a href="/privacy">Privacy Policy →</a></p>
+      <a href="/slack/install" class="btn btn-primary btn-lg" style="margin-top:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+        Try HushAsk Free
+      </a>
+    </div>
+  </article>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('mobile-menu');
+      var closeBtn = document.getElementById('mobile-menu-close');
+      function openMenu() { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+      btn.addEventListener('click', openMenu);
+      closeBtn.addEventListener('click', closeMenu);
+      menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+  </script>
+
+</body>
+</html>

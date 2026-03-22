@@ -1,0 +1,96 @@
+/* blog.css — HushAsk Blog shared stylesheet */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #1A2E62; --navy-dark: #0F1C3F; --blue: #2563EB; --blue-light: #EFF4FF;
+  --bg: #F8FAFC; --bg-white: #ffffff; --bg-dark: #0F172A;
+  --border: #E2E8F0; --border-dark: #1E293B;
+  --text: #0F172A; --text-mid: #475569; --text-muted: #94A3B8;
+  --surface: #F1F5F9;
+}
+
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+/* ── NAV ─────────────────────────────────────────────────────────────────── */
+nav { position: sticky; top: 0; z-index: 100; background: rgba(248,250,252,0.95); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+.nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; max-width: 1080px; margin: 0 auto; }
+.logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+.logo-badge { width: 36px; height: 36px; background: var(--navy); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: white; transform: rotate(-6deg); flex-shrink: 0; }
+.logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
+.logo-name em { font-style: normal; color: var(--blue); }
+.nav-links { display: flex; gap: 28px; list-style: none; }
+.nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+.nav-links a:hover { color: var(--text); }
+
+/* ── BUTTONS ─────────────────────────────────────────────────────────────── */
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none; border: none; transition: opacity 0.18s, transform 0.12s; }
+.btn:hover { opacity: 0.88; transform: translateY(-1px); }
+.btn-primary { background: var(--navy); color: white; }
+.btn-lg { padding: 14px 28px; font-size: 15px; border-radius: 12px; }
+
+/* ── HAMBURGER ───────────────────────────────────────────────────────────── */
+.nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 6px 8px; color: var(--text); font-size: 22px; line-height: 1; border-radius: 8px; transition: background 0.15s; flex-shrink: 0; }
+.nav-hamburger:hover { background: var(--surface); }
+.nav-cta { flex-shrink: 0; }
+
+/* ── MOBILE OVERLAY — must come BEFORE media query ───────────────────────── */
+.mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 200; flex-direction: column; padding: 20px 24px 32px; }
+.mobile-menu.open { display: flex; }
+.mobile-menu-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.mobile-menu-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--text); padding: 6px 8px; border-radius: 8px; line-height: 1; }
+.mobile-menu-links { list-style: none; flex: 1; }
+.mobile-menu-links li { border-bottom: 1px solid var(--border); }
+.mobile-menu-links a { display: block; padding: 16px 4px; font-size: 17px; font-weight: 600; color: var(--text); text-decoration: none; transition: color 0.15s; }
+.mobile-menu-cta { margin-top: 32px; }
+.mobile-menu-cta a { display: flex; align-items: center; justify-content: center; padding: 14px 24px; background: var(--navy); color: white; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; transition: opacity 0.18s; }
+.mobile-menu-cta a:hover { opacity: 0.88; }
+
+/* ── MOBILE BREAKPOINT ───────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .nav-inner { padding: 16px 20px; }
+  .nav-links { display: none; }
+  .nav-cta { display: none !important; }
+  .nav-hamburger { display: flex; }
+}
+
+/* ── ARTICLE PAGE ────────────────────────────────────────────────────────── */
+.article-page { max-width: 720px; margin: 0 auto; padding: 56px 40px 100px; }
+
+.article-header { margin-bottom: 48px; }
+.back-link { display: inline-block; font-size: 14px; font-weight: 500; color: var(--text-muted); text-decoration: none; margin-bottom: 28px; transition: color 0.15s; }
+.back-link:hover { color: var(--text); }
+.article-date { font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+.article-page h1 { font-size: clamp(28px, 4vw, 40px); font-weight: 900; letter-spacing: -1.5px; line-height: 1.15; margin-bottom: 20px; }
+.article-lead { font-size: 18px; color: var(--text-mid); line-height: 1.7; border-left: 3px solid var(--border); padding-left: 18px; }
+
+/* ── ARTICLE BODY ────────────────────────────────────────────────────────── */
+.article-body { font-size: 16px; line-height: 1.8; color: var(--text-mid); }
+.article-body p { margin-bottom: 20px; }
+.article-body h2 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; margin: 44px 0 14px; }
+.article-body strong { color: var(--text); font-weight: 600; }
+.article-body em { font-style: italic; }
+.article-body a { color: var(--blue); text-decoration: none; }
+.article-body a:hover { text-decoration: underline; }
+.article-body code { font-family: 'SF Mono', 'Fira Code', monospace; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 2px 6px; font-size: 13px; color: var(--text); }
+
+/* ── ARTICLE CTA ─────────────────────────────────────────────────────────── */
+.article-cta { margin-top: 64px; padding: 40px; background: var(--bg-white); border: 1px solid var(--border); border-radius: 16px; border-top: 3px solid var(--navy); }
+.article-cta p { font-size: 15px; color: var(--text-mid); margin-bottom: 20px; line-height: 1.6; }
+.article-cta p:last-of-type { margin-bottom: 0; }
+.article-cta a.btn { margin-top: 0; }
+
+/* ── FOOTER ──────────────────────────────────────────────────────────────── */
+footer { background: var(--bg-dark); border-top: 1px solid var(--border-dark); padding: 32px 40px; }
+.footer-inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+.footer-copy { font-size: 13px; color: #475569; }
+.footer-links { display: flex; gap: 20px; }
+.footer-links a { font-size: 13px; color: #475569; text-decoration: none; transition: color 0.15s; }
+.footer-links a:hover { color: #94A3B8; }
+
+@media (max-width: 768px) {
+  .article-page { padding: 40px 20px 72px; }
+  .article-cta { padding: 28px 24px; }
+  .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+  .footer-links { justify-content: center; }
+}

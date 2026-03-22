@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blog — HushAsk</title>
+  <meta name="description" content="Thoughts on anonymous feedback, workplace trust, and how HushAsk works.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hushask.com/blog">
+  <meta property="og:title" content="Blog — HushAsk">
+  <meta property="og:description" content="Thoughts on anonymous feedback, workplace trust, and how HushAsk works.">
+  <meta property="og:image" content="https://hushask.com/assets/ha-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Blog — HushAsk">
+  <meta name="twitter:description" content="Thoughts on anonymous feedback, workplace trust, and how HushAsk works.">
+  <meta name="twitter:image" content="https://hushask.com/assets/ha-512.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy: #1A2E62; --navy-dark: #0F1C3F; --blue: #2563EB;
+      --bg: #F8FAFC; --bg-white: #ffffff; --bg-dark: #0F172A;
+      --border: #E2E8F0; --border-dark: #1E293B;
+      --text: #0F172A; --text-mid: #475569; --text-muted: #94A3B8;
+      --surface: #F1F5F9;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; line-height: 1.6; font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+    /* NAV */
+    nav { position: sticky; top: 0; z-index: 100; background: rgba(248,250,252,0.95); backdrop-filter: blur(14px); border-bottom: 1px solid var(--border); }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; padding: 18px 40px; max-width: 1080px; margin: 0 auto; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-badge { width: 36px; height: 36px; background: var(--navy); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 14px; color: white; transform: rotate(-6deg); flex-shrink: 0; }
+    .logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
+    .logo-name em { font-style: normal; color: var(--blue); }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; text-decoration: none; border: none; transition: opacity 0.18s, transform 0.12s; }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary { background: var(--navy); color: white; }
+
+    /* HAMBURGER */
+    .nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 6px 8px; color: var(--text); font-size: 22px; line-height: 1; border-radius: 8px; transition: background 0.15s; flex-shrink: 0; }
+    .nav-hamburger:hover { background: var(--surface); }
+    .nav-cta { flex-shrink: 0; }
+    @media (max-width: 768px) {
+      .nav-inner { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .nav-cta { display: none !important; }
+      .nav-hamburger { display: flex; }
+    }
+
+    /* MOBILE MENU */
+    .mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #fff; z-index: 200; flex-direction: column; padding: 20px 24px 32px; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+    .mobile-menu-close { background: none; border: none; cursor: pointer; font-size: 22px; color: var(--text); padding: 6px 8px; border-radius: 8px; line-height: 1; }
+    .mobile-menu-links { list-style: none; flex: 1; }
+    .mobile-menu-links li { border-bottom: 1px solid var(--border); }
+    .mobile-menu-links a { display: block; padding: 16px 4px; font-size: 17px; font-weight: 600; color: var(--text); text-decoration: none; }
+    .mobile-menu-cta { margin-top: 32px; }
+    .mobile-menu-cta a { display: flex; align-items: center; justify-content: center; padding: 14px 24px; background: var(--navy); color: white; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; }
+
+    /* CONTENT */
+    .page { max-width: 720px; margin: 0 auto; padding: 64px 40px 100px; }
+    .page-header { margin-bottom: 56px; }
+    .page-header h1 { font-size: clamp(32px, 4vw, 44px); font-weight: 900; letter-spacing: -1.5px; margin-bottom: 12px; }
+    .page-header p { color: var(--text-mid); font-size: 16px; }
+
+    /* ARTICLE CARDS */
+    .article-list { display: flex; flex-direction: column; gap: 0; }
+    .article-card { display: block; padding: 32px 0; border-bottom: 1px solid var(--border); text-decoration: none; color: var(--text); transition: opacity 0.15s; }
+    .article-card:first-child { border-top: 1px solid var(--border); }
+    .article-card:hover { opacity: 0.75; }
+    .article-card .article-date { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-bottom: 10px; }
+    .article-card h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.3px; margin-bottom: 10px; line-height: 1.3; }
+    .article-card p { font-size: 15px; color: var(--text-mid); line-height: 1.65; }
+    .article-card .read-more { display: inline-block; margin-top: 14px; font-size: 13px; font-weight: 600; color: var(--blue); }
+
+    /* FOOTER */
+    footer { background: var(--bg-dark); border-top: 1px solid var(--border-dark); padding: 32px 40px; }
+    .footer-inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; }
+    .footer-copy { font-size: 13px; color: #475569; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { font-size: 13px; color: #475569; text-decoration: none; transition: color 0.15s; }
+    .footer-links a:hover { color: #94A3B8; }
+
+    @media (max-width: 768px) {
+      .page { padding: 44px 20px 72px; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .footer-links { justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/faq">FAQ</a></li>
+        <li><a href="/privacy">Privacy</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary nav-cta">Add to Slack</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu-header">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="mobile-menu-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/pricing">Pricing</a></li>
+      <li><a href="/help/">Help</a></li>
+      <li><a href="/faq">FAQ</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+    </ul>
+    <div class="mobile-menu-cta">
+      <a href="/slack/install">Add to Slack</a>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="page-header">
+      <h1>Blog</h1>
+      <p>Thoughts on anonymous feedback, workplace trust, and how HushAsk works.</p>
+    </div>
+
+    <div class="article-list">
+      <a href="/blog/how-to-collect-anonymous-employee-feedback-in-slack" class="article-card">
+        <div class="article-date">March 2026</div>
+        <h2>How to Collect Anonymous Employee Feedback in Slack</h2>
+        <p>Most anonymous feedback tools make a promise. HushAsk makes it technically impossible to identify you. Here's what that difference means in practice.</p>
+        <span class="read-more">Read article →</span>
+      </a>
+      <a href="/blog/is-anonymous-feedback-in-slack-actually-anonymous" class="article-card">
+        <div class="article-date">March 2026</div>
+        <h2>Is Anonymous Feedback in Slack Actually Anonymous?</h2>
+        <p>"Anonymous" usually means someone promised not to look. Cryptographic anonymity means the information doesn't exist. Here's the difference — and how to check which one you have.</p>
+        <span class="read-more">Read article →</span>
+      </a>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('mobile-menu');
+      var closeBtn = document.getElementById('mobile-menu-close');
+      function openMenu() { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+      btn.addEventListener('click', openMenu);
+      closeBtn.addEventListener('click', closeMenu);
+      menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+  </script>
+
+</body>
+</html>

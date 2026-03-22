@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app.py database.py web.py crypto.py start-railway.sh ./
 COPY index.html privacy.html terms.html pricing.html faq.html ./
 COPY robots.txt sitemap.xml ./
+COPY blog/ ./blog/
 COPY help/ ./help/
 COPY assets/ ./assets/
 

@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>How to Collect Anonymous Employee Feedback in Slack — HushAsk</title>
+  <meta name="description" content="Most anonymous feedback tools make a promise. HushAsk makes it technically impossible to identify you. Here's what that difference means in practice.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hushask.com/blog/how-to-collect-anonymous-employee-feedback-in-slack">
+  <meta property="og:title" content="How to Collect Anonymous Employee Feedback in Slack — HushAsk">
+  <meta property="og:description" content="Most anonymous feedback tools make a promise. HushAsk makes it technically impossible to identify you. Here's what that difference means in practice.">
+  <meta property="og:image" content="https://hushask.com/assets/ha-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="How to Collect Anonymous Employee Feedback in Slack — HushAsk">
+  <meta name="twitter:description" content="Most anonymous feedback tools make a promise. HushAsk makes it technically impossible to identify you. Here's what that difference means in practice.">
+  <meta name="twitter:image" content="https://hushask.com/assets/ha-512.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/faq">FAQ</a></li>
+        <li><a href="/privacy">Privacy</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary nav-cta">Add to Slack</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu-header">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="mobile-menu-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/pricing">Pricing</a></li>
+      <li><a href="/help/">Help</a></li>
+      <li><a href="/faq">FAQ</a></li>
+      <li><a href="/privacy">Privacy</a></li>
+    </ul>
+    <div class="mobile-menu-cta">
+      <a href="/slack/install">Add to Slack</a>
+    </div>
+  </div>
+
+  <article class="article-page">
+    <header class="article-header">
+      <a href="/blog" class="back-link">← Blog</a>
+      <div class="article-date">March 2026</div>
+      <h1>How to Collect Anonymous Employee Feedback in Slack</h1>
+      <p class="article-lead">Most anonymous feedback tools make a promise. HushAsk makes it technically impossible to identify you. Here's what that difference means in practice.</p>
+    </header>
+
+    <div class="article-body">
+      <p>Your employees know things you don't. They know which manager is struggling. They know which policy doesn't make sense in practice. They know which meeting could be an email. And in most workplaces, they're not telling you — because they've learned, correctly or not, that honesty has a cost.</p>
+
+      <p>Anonymous feedback is the obvious solution. The problem is that most anonymous feedback tools don't actually solve the trust problem. They trade one worry for another.</p>
+
+      <p>Here's what actually works — and why how it's built matters more than how it looks.</p>
+
+      <h2>Why employees don't give honest feedback</h2>
+
+      <p>Fear is the simple answer. But it's worth being specific about what employees are afraid of.</p>
+
+      <p>They're not usually afraid of being fired for saying the wrong thing. They're afraid of something smaller: being known as the person who complained. The one who raised the issue in the all-hands. The one whose manager now treats them differently.</p>
+
+      <p>That's a rational calculation, not paranoia. And it means that "anonymous" has to actually mean something. A suggestion box that HR can trace back to you isn't anonymous — it's a liability with extra steps.</p>
+
+      <p>A 2021 AllVoices survey of 817 US full-time employees found that <strong>74% would be more inclined to share feedback if it's truly anonymous.</strong> The operative word is "truly." Employees have been promised anonymity before and found out it wasn't real.</p>
+
+      <h2>What makes a tool trustworthy</h2>
+
+      <p>Most anonymous feedback tools work like this: you submit feedback, it goes to HR or leadership, and somewhere in the system there's a user ID or email address attached. Whether anyone looks at it depends on policy — not architecture.</p>
+
+      <p>That's the distinction that matters. A policy promise says: "We won't look." A technical guarantee says: "We can't look, because the information doesn't exist."</p>
+
+      <p>For an employee deciding whether to send a message about a pay disparity, a manager's behavior, or a compliance concern — that difference is everything.</p>
+
+      <h2>What cryptographic anonymity actually means</h2>
+
+      <p>When HushAsk processes a message, your Slack user ID is passed through a SHA-256 hash function before anything is stored. SHA-256 is the same cryptographic standard used to secure financial transactions. The process is one-way: the hash cannot be reversed to recover the original ID.</p>
+
+      <p>What's stored is a 64-character string that looks nothing like a Slack username. HushAsk also adds a private salt — a unique value specific to your deployment — before hashing, which means even a brute-force comparison against known Slack IDs wouldn't work.</p>
+
+      <p>The result: HushAsk's database doesn't contain your identity. Not in a hidden column. Not in a log file. Not anywhere. The admin who reads your message sees the message content. That's all.</p>
+
+      <p>This is different from a tool that promises not to share your data. It's different from a tool where the admin <em>could</em> look if they wanted to. The information simply isn't there to find.</p>
+
+      <h2>How to set it up — and what employees experience</h2>
+
+      <p>HushAsk installs like any Slack app. Employees don't need a new account, a separate login, or any onboarding. If Slack is open — and it almost always is — HushAsk is available.</p>
+
+      <p>To send a message, an employee either DMs the HushAsk bot directly or uses <code>/ha</code> from any channel. HushAsk immediately confirms their identity has been anonymized, then presents a choice: route the message to HR (sensitive issues) or to a public channel where the team can weigh in (general questions). They can also edit or retract their message any time before an admin replies.</p>
+
+      <p>On the admin side, the message appears in your triage channel. You see the message. You don't see the sender. When you reply, the response goes back through HushAsk as an anonymous "Response from HR." The loop closes without either party knowing who the other is.</p>
+
+      <p>Questions answered publicly can be archived to Notion with a summary title — your team builds a searchable knowledge base from the questions employees were already asking.</p>
+
+      <h2>One thing to be honest about</h2>
+
+      <p>HushAsk operates within Slack's infrastructure. On Enterprise Grid plans, Slack's own audit log records which users interact with bots. That's a Slack platform behavior outside HushAsk's control, disclosed clearly in the <a href="/privacy">privacy documentation</a>. For teams on Free, Pro, or Business+ plans, it doesn't apply.</p>
+
+      <h2>What you get</h2>
+
+      <p>Anonymous feedback isn't just a culture initiative. It's a data problem. The information you need to make good decisions about your team is already in your employees' heads — it's just not reaching you.</p>
+
+      <p>A tool employees trust enough to actually use changes what you know. Questions that would have stayed silent become HR cases that get resolved. Confusion that would have festered becomes a Notion entry that answers the same question for everyone who asks it after.</p>
+
+      <p>The employees most likely to leave because they didn't feel heard now have a path.</p>
+    </div>
+
+    <div class="article-cta">
+      <p>Try HushAsk free — 20 messages per month, no credit card required.</p>
+      <a href="/slack/install" class="btn btn-primary btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+        Add to Slack
+      </a>
+    </div>
+  </article>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('mobile-menu');
+      var closeBtn = document.getElementById('mobile-menu-close');
+      function openMenu() { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+      btn.addEventListener('click', openMenu);
+      closeBtn.addEventListener('click', closeMenu);
+      menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+  </script>
+
+</body>
+</html>
