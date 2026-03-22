@@ -120,7 +120,7 @@ footer{border-top:1px solid var(--border);padding:28px 48px;text-align:center;co
   nav{padding:16px 20px}
   .nav-inner{padding:12px 20px}
   .nav-links{display:none}
-  .nav-cta{display:none}
+  .nav-cta{display:none !important}
   .nav-hamburger{display:flex}
   .hero{padding:60px 20px 40px}
   .guides{grid-template-columns:1fr;padding:0 20px 60px}
