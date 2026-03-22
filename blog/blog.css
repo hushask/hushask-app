@@ -78,9 +78,12 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(248,250,252,0.95)
 .article-lead { font-size: 17px; color: var(--text-mid); line-height: 1.75; }
 
 /* ── AUTHOR BYLINE ───────────────────────────────────────────────────────── */
-.article-byline { display: flex; align-items: center; gap: 10px; padding: 24px 0; margin-top: 28px; border-bottom: 1px solid var(--border); }
+.article-byline { display: flex; align-items: flex-start; gap: 14px; padding: 24px 0; margin-top: 28px; border-bottom: 1px solid var(--border); }
 .byline-avatar { flex-shrink: 0; border-radius: 50%; display: block; }
+.byline-meta { display: flex; flex-direction: column; gap: 4px; }
 .byline-name { font-size: 14px; font-weight: 600; color: var(--text-body); }
+.byline-bio { font-size: 13px; color: var(--text-mid); line-height: 1.55; }
+.byline-date { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 .byline-date { font-size: 13px; color: var(--text-muted); margin-left: auto; }
 
 /* ── ARTICLE BODY ────────────────────────────────────────────────────────── */
