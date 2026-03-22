@@ -88,6 +88,31 @@
 
       <p>Policy promises can be broken. Architecture can't.</p>
 
+      <figure class="article-mockup">
+        <div class="am-window">
+          <div class="am-bar"><span class="am-dot" style="background:#FF5F57"></span><span class="am-dot" style="background:#FEBC2E"></span><span class="am-dot" style="background:#28C840"></span></div>
+          <div class="am-body">
+            <div class="am-sidebar"><div class="am-ws-icon">HA</div></div>
+            <div class="am-content">
+              <div class="am-channel">🔒 HushAsk · Direct Message</div>
+              <div class="am-msg">
+                <div class="am-avatar am-avatar-bot">HA</div>
+                <div class="am-msg-body">
+                  <span class="am-sender">HushAsk</span><span class="am-verified">✓</span><span class="am-time">Today at 3:02 PM</span>
+                  <div class="am-card">
+                    <div class="am-card-text">🔒 <strong>Your identity has been anonymized.</strong> Your Slack ID was hashed immediately — it is not stored anywhere.</div>
+                    <div class="am-card-preview">"I think our review process isn't applied consistently across teams."</div>
+                    <div class="am-btns"><button class="am-btn am-btn-green">Public Knowledge Base</button><button class="am-btn am-btn-outline">Confidential / HR</button></div>
+                    <div class="am-footer">🤫 Your Slack identity will never be stored or shared.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>The moment a message is sent — identity hashed, original discarded.</figcaption>
+      </figure>
+
       <h2>What cryptographic anonymity actually means</h2>
 
       <p>When you send a message through HushAsk, your Slack user ID is immediately passed through a SHA-256 hash function. SHA-256 is a one-way cryptographic process: it converts your ID into a 64-character string. There is no reverse operation.</p>
@@ -97,6 +122,30 @@
       <p>The original ID is discarded. Not stored in a hidden column, not archived in a log. What exists in HushAsk's database is the hash, the message content, and routing metadata. The hash cannot be reversed to reveal who that person is.</p>
 
       <p>The admin who reads your message sees the message. That's all.</p>
+
+      <figure class="article-mockup">
+        <div class="am-window">
+          <div class="am-bar"><span class="am-dot" style="background:#FF5F57"></span><span class="am-dot" style="background:#FEBC2E"></span><span class="am-dot" style="background:#28C840"></span></div>
+          <div class="am-body">
+            <div class="am-sidebar"><div class="am-ws-icon">HA</div></div>
+            <div class="am-content">
+              <div class="am-channel">🔒 HushAsk · Direct Message</div>
+              <div class="am-msg">
+                <div class="am-avatar am-avatar-bot">HA</div>
+                <div class="am-msg-body">
+                  <span class="am-sender">HushAsk</span><span class="am-verified">✓</span><span class="am-time">Today at 3:45 PM</span>
+                  <div class="am-card am-card-reply">
+                    <div class="am-card-text"><strong>Reply from leadership</strong></div>
+                    <div class="am-card-preview">"Great question — the 401k vests on a 4-year cliff schedule. Happy to walk through the details in the next all-hands."</div>
+                    <div class="am-footer">🤫 Delivered anonymously · HushAsk</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>The reply arrives anonymously — no name attached, on either end.</figcaption>
+      </figure>
 
       <p>This isn't a promise. It's a structural property of how the system works.</p>
 
