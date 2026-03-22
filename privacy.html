@@ -378,7 +378,7 @@
     <ul>
       <li>Only messages explicitly synced via the "Archive This Thread" flow are sent to Notion</li>
       <li>Messages are stored in a database within the admin's own Notion workspace — no sender identity is included in the record</li>
-      <li>We store the Notion API access token on our server to enable syncing — it is encrypted at rest</li>
+      <li>We store the Notion API access token on our server to enable syncing — it is encrypted at rest using AES symmetric encryption (Fernet, AES-128-CBC). The encryption key is stored separately as a server environment variable.</li>
       <li>The access token can be revoked at any time from Notion's integration settings, which will disable syncing immediately</li>
     </ul>
 
