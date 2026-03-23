@@ -101,9 +101,9 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.95)
 .share-btn svg { display: block; }
 
 /* ── ARTICLE PAGE ────────────────────────────────────────────────────────── */
-.article-page { background: #ffffff; padding-top: 32px; }
+.article-page { background: #ffffff; }
 
-.article-header { margin-bottom: 40px; padding-top: 72px; padding-bottom: 40px; border-bottom: 1px solid var(--border); margin-bottom: 48px; }
+.article-header { margin-bottom: 48px; padding-bottom: 40px; border-bottom: 1px solid var(--border); }
 
 .back-link { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; color: var(--text-muted); text-decoration: none; margin-bottom: 32px; letter-spacing: 0.1px; transition: color 0.15s; }
 .back-link:hover { color: var(--text-mid); }
