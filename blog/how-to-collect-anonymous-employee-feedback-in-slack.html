@@ -59,6 +59,37 @@
     </div>
   </div>
 
+  <div class="article-layout">
+  <aside class="article-sidebar-col">
+    <div class="toc-box">
+      <div class="toc-title">Table of contents</div>
+      <ul class="toc-list">
+        <li><a href="#why-employees">Why employees don't give honest feedback</a></li>
+        <li><a href="#what-makes-trustworthy">What makes a tool trustworthy</a></li>
+        <li><a href="#cryptographic-anonymity">What cryptographic anonymity actually means</a></li>
+        <li><a href="#how-to-set-up">How to set it up</a></li>
+        <li><a href="#one-thing">One thing to be honest about</a></li>
+        <li><a href="#what-you-get">What you get</a></li>
+      </ul>
+    </div>
+    <div class="share-box">
+      <div class="share-title">Share</div>
+      <div class="share-btns">
+        <a class="share-btn" href="https://twitter.com/intent/tweet?url=https://hushask.com/blog/how-to-collect-anonymous-employee-feedback-in-slack&text=How+to+Collect+Anonymous+Employee+Feedback+in+Slack" target="_blank" rel="noopener" aria-label="Share on X">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a class="share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https://hushask.com/blog/how-to-collect-anonymous-employee-feedback-in-slack" target="_blank" rel="noopener" aria-label="Share on LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <a class="share-btn" href="mailto:?subject=How+to+Collect+Anonymous+Employee+Feedback+in+Slack&body=https://hushask.com/blog/how-to-collect-anonymous-employee-feedback-in-slack" aria-label="Share via email">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+        <a class="share-btn" href="#" onclick="navigator.clipboard.writeText(window.location.href);this.title='Copied!';return false;" aria-label="Copy link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
   <article class="article-page">
     <header class="article-header">
       <a href="/blog" class="back-link">← Blog</a>
@@ -110,7 +141,7 @@
 
       <p>Here's what actually works — and why how it's built matters more than how it looks.</p>
 
-      <h2>Why employees don't give honest feedback</h2>
+      <h2 id="why-employees">Why employees don't give honest feedback</h2>
 
       <p>Fear is the simple answer. But it's worth being specific about what employees are afraid of.</p>
 
@@ -120,7 +151,7 @@
 
       <p>A 2021 AllVoices survey of 817 US full-time employees found that <strong>74% would be more inclined to share feedback if it's truly anonymous.</strong> The operative word is "truly." Employees have been promised anonymity before and found out it wasn't real.</p>
 
-      <h2>What makes a tool trustworthy</h2>
+      <h2 id="what-makes-trustworthy">What makes a tool trustworthy</h2>
 
       <p>Most anonymous feedback tools work like this: you submit feedback, it goes to HR or leadership, and somewhere in the system there's a user ID or email address attached. Whether anyone looks at it depends on policy — not architecture.</p>
 
@@ -128,7 +159,7 @@
 
       <p>For an employee deciding whether to send a message about a pay disparity, a manager's behavior, or a compliance concern — that difference is everything.</p>
 
-      <h2>What cryptographic anonymity actually means</h2>
+      <h2 id="cryptographic-anonymity">What cryptographic anonymity actually means</h2>
 
       <p>When HushAsk processes a message, your Slack user ID is passed through a SHA-256 hash function before anything is stored. SHA-256 is the same cryptographic standard used to secure financial transactions. The process is one-way: the hash cannot be reversed to recover the original ID.</p>
 
@@ -163,7 +194,7 @@
         <figcaption>Admins see the message — never the sender.</figcaption>
       </figure>
 
-      <h2>How to set it up — and what employees experience</h2>
+      <h2 id="how-to-set-up">How to set it up — and what employees experience</h2>
 
       <p>HushAsk installs like any Slack app. Employees don't need a new account, a separate login, or any onboarding. If Slack is open — and it almost always is — HushAsk is available.</p>
 
@@ -173,11 +204,11 @@
 
       <p>Questions answered publicly can be archived to Notion with a summary title — your team builds a searchable knowledge base from the questions employees were already asking.</p>
 
-      <h2>One thing to be honest about</h2>
+      <h2 id="one-thing">One thing to be honest about</h2>
 
       <p>HushAsk operates within Slack's infrastructure. On Enterprise Grid plans, Slack's own audit log records which users interact with bots. That's a Slack platform behavior outside HushAsk's control, disclosed clearly in the <a href="/privacy">privacy documentation</a>. For teams on Free, Pro, or Business+ plans, it doesn't apply.</p>
 
-      <h2>What you get</h2>
+      <h2 id="what-you-get">What you get</h2>
 
       <p>Anonymous feedback isn't just a culture initiative. It's a data problem. The information you need to make good decisions about your team is already in your employees' heads — it's just not reaching you.</p>
 
@@ -194,6 +225,7 @@
       </a>
     </div>
   </article>
+  </div>
 
   <footer>
     <div class="footer-inner">
