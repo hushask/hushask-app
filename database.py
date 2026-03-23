@@ -2,7 +2,7 @@
 database.py — HushAsk SQLite layer
 """
 
-import sqlite3, os, secrets
+import sqlite3, os, secrets, hmac
 from datetime import datetime, timezone
 from crypto import encrypt_token, decrypt_token
 
@@ -348,12 +348,13 @@ def issue_slack_state() -> str:
 
 def consume_slack_state(state: str) -> bool:
     with get_conn() as conn:
-        row = conn.execute(
-            "SELECT state FROM slack_oauth_states WHERE state = ? AND created_at > datetime('now', '-10 minutes')",
-            (state,)
-        ).fetchone()
-        if row:
-            conn.execute("DELETE FROM slack_oauth_states WHERE state = ?", (state,))
+        rows = conn.execute(
+            "SELECT state FROM slack_oauth_states WHERE created_at > datetime('now', '-10 minutes')",
+        ).fetchall()
+        # Timing-safe comparison across all recent states
+        matched = next((r["state"] for r in rows if hmac.compare_digest(r["state"], state)), None)
+        if matched:
+            conn.execute("DELETE FROM slack_oauth_states WHERE state = ?", (matched,))
             return True
         return False
 
@@ -443,16 +444,42 @@ def store_notion_state(state: str, team_id: str):
 
 def get_team_from_state(state: str) -> str | None:
     with get_conn() as conn:
-        row = conn.execute(
-            "SELECT team_id FROM notion_auth_states WHERE state = ? AND created_at > datetime('now', '-1 hour')",
-            (state,)
-        ).fetchone()
-        return row["team_id"] if row else None
+        rows = conn.execute(
+            "SELECT state, team_id FROM notion_auth_states WHERE created_at > datetime('now', '-1 hour')",
+        ).fetchall()
+        for row in rows:
+            if hmac.compare_digest(row["state"], state):
+                return row["team_id"]
+        return None
 
 
 def delete_notion_state(state: str):
     with get_conn() as conn:
         conn.execute("DELETE FROM notion_auth_states WHERE state = ?", (state,))
+
+
+def check_checkout_rate(team_id: str, window_seconds: int = 60) -> bool:
+    """Returns True if allowed (not rate limited). Records the attempt atomically.
+    Uses SQLite to share state across gunicorn workers."""
+    with get_conn() as conn:
+        # Clean up old entries first
+        conn.execute(
+            "DELETE FROM slack_oauth_states WHERE created_at < datetime('now', '-10 minutes')"
+        )
+        # Use a prefixed key to store checkout attempts in slack_oauth_states
+        key = f"checkout:{team_id}"
+        row = conn.execute(
+            "SELECT state FROM slack_oauth_states WHERE state = ? AND created_at > datetime('now', ? || ' seconds')",
+            (key, f"-{window_seconds}")
+        ).fetchone()
+        if row:
+            return False  # Rate limited
+        # Record this attempt
+        conn.execute(
+            "INSERT OR REPLACE INTO slack_oauth_states (state, created_at) VALUES (?, datetime('now'))",
+            (key,)
+        )
+        return True
 
 
 # ── Freemium usage ────────────────────────────────────────────────────────────

@@ -30,6 +30,7 @@ load_dotenv()
 import stripe
 from slack_bolt.adapter.flask import SlackRequestHandler
 import app as bolt_module
+from database import check_checkout_rate
 
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 PORT      = int(os.environ.get("PORT", os.environ.get("WEB_PORT", "8080")))
@@ -337,19 +338,15 @@ def _provision_hush_library(token):
 
 # KNOWN LIMITATION: /upgrade has no admin auth — anyone who knows a team_id can
 # initiate a checkout. Adding Slack OAuth verification on a web redirect is complex.
-# Mitigated with a simple in-memory rate limit (one attempt per team per 60s).
-_checkout_rate: dict = {}  # team_id → timestamp
+# Rate limit stored in SQLite to share state across gunicorn workers.
 
 @web.route("/upgrade")
 def upgrade():
     team_id = request.args.get("team_id", "")
 
-    # Rate limit: one checkout attempt per team per 60s
-    now = time.time()
-    if team_id and _checkout_rate.get(team_id, 0) > now - 60:
+    # Rate limit: one checkout attempt per team per 60s (cross-worker via SQLite)
+    if team_id and not check_checkout_rate(team_id, window_seconds=60):
         return "Too many requests", 429
-    if team_id:
-        _checkout_rate[team_id] = now
 
     if not stripe.api_key or not STRIPE_PRO_PRICE_ID:
         return redirect(f"{SITE_BASE}/#early-access")

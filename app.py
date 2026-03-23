@@ -287,6 +287,7 @@ _display_name_cache: dict = {}     # team_id → {"names": [...], "fetched_at": 
 _display_name_fetching: dict = {}  # team_id → bool; guards against cache stampede
 _display_name_lock = Lock()
 _DISPLAY_NAME_TTL  = 14400  # refresh every 4 hours
+_MAX_CACHE_SIZE    = 100    # max workspaces to hold in memory
 
 
 def normalize_for_name_check(text: str) -> str:
@@ -364,6 +365,11 @@ def get_workspace_display_names(client, team_id: str) -> list:
         with _display_name_lock:
             _display_name_cache[team_id] = {"names": names, "fetched_at": time.time()}
             _display_name_fetching.pop(team_id, None)
+            # Evict oldest entries if cache exceeds limit
+            if len(_display_name_cache) > _MAX_CACHE_SIZE:
+                sorted_entries = sorted(_display_name_cache.items(), key=lambda x: x[1]["fetched_at"])
+                for old_team_id, _ in sorted_entries[:len(sorted_entries) // 2]:
+                    del _display_name_cache[old_team_id]
 
     return names
 
