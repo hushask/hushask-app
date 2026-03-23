@@ -83,7 +83,7 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.95)
 }
 
 /* ── ARTICLE LAYOUT (sidebar + content) ─────────────────────────────────── */
-.article-layout { max-width: 1080px; margin: 0 auto; padding: 80px 40px 100px; display: grid; grid-template-columns: 260px 1fr; gap: 64px; align-items: start; }
+.article-layout { max-width: 1080px; margin: 0 auto; padding: 48px 40px 100px; display: grid; grid-template-columns: 260px 1fr; gap: 64px; align-items: start; }
 
 /* Sidebar */
 .article-sidebar-col { position: sticky; top: 96px; }
@@ -101,7 +101,7 @@ nav { position: sticky; top: 0; z-index: 100; background: rgba(255,255,255,0.95)
 .share-btn svg { display: block; }
 
 /* ── ARTICLE PAGE ────────────────────────────────────────────────────────── */
-.article-page { background: #ffffff; }
+.article-page { background: #ffffff; padding-top: 32px; }
 
 .article-header { margin-bottom: 40px; padding-top: 72px; padding-bottom: 40px; border-bottom: 1px solid var(--border); margin-bottom: 48px; }
 
