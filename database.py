@@ -469,13 +469,14 @@ def check_and_increment(workspace_id: str) -> tuple[bool, int]:
     now = datetime.now(timezone.utc).isoformat()
     with get_conn() as conn:
         _ensure_usage(conn, workspace_id)
+
+        # Reset if 30+ days have passed
         row = conn.execute(
             "SELECT message_count, count_reset_at FROM workspace_usage WHERE workspace_id = ?",
             (workspace_id,)
         ).fetchone()
         raw_ts = row["count_reset_at"].replace("Z", "+00:00")
         reset_at = datetime.fromisoformat(raw_ts)
-        # Ensure both sides are timezone-aware before subtracting
         if reset_at.tzinfo is None:
             reset_at = reset_at.replace(tzinfo=timezone.utc)
         if (datetime.now(timezone.utc) - reset_at).days >= 30:
@@ -483,17 +484,27 @@ def check_and_increment(workspace_id: str) -> tuple[bool, int]:
                 "UPDATE workspace_usage SET message_count = 0, count_reset_at = ? WHERE workspace_id = ?",
                 (now, workspace_id)
             )
-            count = 0
-        else:
-            count = row["message_count"]
 
-        if count >= FREE_LIMIT:
-            return False, count
-        conn.execute(
-            "UPDATE workspace_usage SET message_count = message_count + 1 WHERE workspace_id = ?",
-            (workspace_id,)
+        # Atomic conditional increment — only succeeds if under cap
+        cur = conn.execute(
+            "UPDATE workspace_usage SET message_count = message_count + 1 "
+            "WHERE workspace_id = ? AND message_count < ?",
+            (workspace_id, FREE_LIMIT)
         )
-        return True, count + 1
+        if cur.rowcount == 0:
+            # Cap hit — read current count for error message
+            count = conn.execute(
+                "SELECT message_count FROM workspace_usage WHERE workspace_id = ?",
+                (workspace_id,)
+            ).fetchone()["message_count"]
+            return False, count
+
+        # Get new count
+        count = conn.execute(
+            "SELECT message_count FROM workspace_usage WHERE workspace_id = ?",
+            (workspace_id,)
+        ).fetchone()["message_count"]
+        return True, count
 
 
 def get_usage(workspace_id: str) -> int:

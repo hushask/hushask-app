@@ -23,6 +23,7 @@ import os
 import time
 import requests as http
 from flask import Flask, request, redirect, send_from_directory, jsonify, render_template_string
+from markupsafe import escape
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -187,7 +188,13 @@ def notion_callback():
 
         access_token = data["access_token"]
         from database import get_team_from_state, delete_notion_state, save_workspace_notion, get_workspace_config
-        team_id = get_team_from_state(state) if state else None
+
+        # Require valid state — reject stateless callbacks
+        if not state:
+            return redirect("/notion/error?reason=missing_state")
+        team_id = get_team_from_state(state)
+        if not team_id:
+            return redirect("/notion/error?reason=invalid_or_expired_state")
 
         # Fix 4a — Duplicate prevention: if workspace already has a Notion DB, just refresh the token
         if team_id:
@@ -372,8 +379,9 @@ def upgrade_success():
     # Actual upgrade happens via webhook — this is just a landing page.
     if team_id and session_id and stripe.api_key:
         try:
+            from database import is_workspace_pro
             sess = stripe.checkout.Session.retrieve(session_id)
-            if sess.get("payment_status") == "paid":
+            if sess.get("payment_status") == "paid" and not is_workspace_pro(team_id):
                 _send_pro_welcome(team_id)
         except Exception as e:
             print(f"[upgrade/success] Stripe session verify failed: {e}")
@@ -571,7 +579,10 @@ def _render_pro_success_page():
 
 @web.route("/notion/connected")
 def notion_connected():
-    db_url = request.args.get("db_url", "")
+    raw_url = request.args.get("db_url", "")
+    # Only allow Notion URLs to prevent open redirect
+    safe_prefixes = ("https://notion.so/", "https://www.notion.so/")
+    db_url = raw_url if any(raw_url.startswith(p) for p in safe_prefixes) else ""
     link   = f'<br><br><a href="{db_url}" target="_blank">Open Hush Library in Notion →</a>' if db_url else ""
     return f"""<!DOCTYPE html><html><head><title>Connected — HushAsk</title>{_PAGE_STYLE}</head>
 <body><div class="card">
@@ -583,7 +594,7 @@ def notion_connected():
 
 @web.route("/notion/error")
 def notion_error():
-    reason = request.args.get("reason", "Unknown error")
+    reason = escape(request.args.get("reason", "Unknown error"))
     return f"""<!DOCTYPE html><html><head><title>Error — HushAsk</title>{_PAGE_STYLE}</head>
 <body><div class="card">
   <div class="icon">⚠️</div>
