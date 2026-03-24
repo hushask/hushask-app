@@ -656,11 +656,10 @@ def mark_replied_and_purge_source(msg_id: int | None):
                     "WHERE team_id = ? AND thread_ts = ?",
                     (row["team_id"], row["thread_ts"])
                 )
-                conn.execute(
-                    "UPDATE delivered_messages SET source_channel = NULL "
-                    "WHERE team_id = ? AND thread_ts = ?",
-                    (row["team_id"], row["thread_ts"])
-                )
+                # NOTE: Do NOT NULL source_channel in delivered_messages here.
+                # It must persist until thread close so subsequent admin replies
+                # can fall back to it. purge_delivered_source_channel() handles
+                # the purge at close time.
             conn.execute(
                 "UPDATE delivered_messages SET replied = 1 WHERE id = ?", (msg_id,)
             )

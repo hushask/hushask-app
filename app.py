@@ -2199,11 +2199,22 @@ def handle_reply_modal(ack, body, client, logger):
             pass
         return
 
-    if not routing.get("source_channel"):
+    source_channel = routing.get("source_channel")
+
+    # Fallback: routing_table.source_channel is NULLed after the first reply
+    # (identity vault purge). delivered_messages retains it until thread close,
+    # so we can use it for subsequent replies.
+    if not source_channel:
+        try:
+            delivered_fallback = get_delivered_by_thread_ts(channel_id, thread_ts)
+            if delivered_fallback:
+                source_channel = delivered_fallback.get("source_channel")
+        except Exception as e:
+            logger.warning(f"[reply_modal] fallback source_channel lookup failed: {e}")
+
+    if not source_channel:
         logger.warning(f"[reply_modal] no source_channel for thread_ts={thread_ts}")
         return
-
-    source_channel = routing["source_channel"]
 
     # Strip mentions
     clean_reply = re.sub(r"<@[A-Z0-9]+>", "[someone]", reply_text)
