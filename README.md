@@ -141,4 +141,4 @@ See [hushask.com/help/privacy-and-hashing.html](https://hushask.com/help/privacy
 
 ---
 
-© 2026 HushAsk / HonestAsk
+© 2026 HushAsk / Jaris LLC
