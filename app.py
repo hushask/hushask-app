@@ -489,7 +489,19 @@ def route_confirmation_blocks(token: str, route_type: str, message: str) -> list
     ]
 
 def confirmed_blocks(label):
-    return [{"type":"section","text":{"type":"mrkdwn","text":f"Sent. Routed to: *{label}*"}}]
+    return [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": f"✅ *Sent. Routed to: {label}.*\n\nYour identity remains anonymous — it was never stored. If someone replies, you'll receive their response here in this conversation."
+            }
+        },
+        {
+            "type": "context",
+            "elements": [{"type": "mrkdwn", "text": "🤫 You don't need to do anything else."}]
+        }
+    ]
 
 def triage_blocks(message, label, close_value, route_type, thread_ts, channel_id):
     reply_btn = {
@@ -2007,13 +2019,23 @@ def _deliver_reply_dm(client, source_channel: str, clean_reply: str, msg_id, tri
         except Exception as e:
             logger.warning(f"[reply_back] name-filter failed (non-fatal): {e}")
 
+    # Determine label based on route type
+    reply_label = "*Response from HR*"  # default
+    if msg_id is not None:
+        try:
+            delivered = get_delivered(msg_id)
+            if delivered and delivered.get("route_type") == "public":
+                reply_label = "*Response from the team*"
+        except Exception:
+            pass
+
     client.chat_postMessage(
         channel=source_channel,
         text=" ",
         attachments=[{
             "color": "#5865F2",
             "blocks": [
-                {"type": "section", "text": {"type": "mrkdwn", "text": "*Reply from leadership*"}},
+                {"type": "section", "text": {"type": "mrkdwn", "text": reply_label}},
                 {"type": "section", "text": {"type": "mrkdwn", "text": f"> {clean_reply}"}},
                 {"type": "context", "elements": [{"type": "mrkdwn", "text": "🤫 Delivered anonymously · HushAsk"}]}
             ]
