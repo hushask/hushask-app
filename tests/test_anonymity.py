@@ -146,12 +146,28 @@ def test_mark_replied_and_purge_source_nulls_delivered_messages():
 
     database.mark_replied_and_purge_source(msg_id)
 
+    # New behaviour: delivered_messages.source_channel is NOT NULLed by mark_replied_and_purge_source
+    # It persists until purge_delivered_source_channel() is explicitly called at thread close
     with database.get_conn() as conn:
         row = conn.execute(
             "SELECT source_channel FROM delivered_messages WHERE id = ?", (msg_id,)
         ).fetchone()
         assert row is not None
-        assert row["source_channel"] is None, "source_channel should be NULL in delivered_messages"
+        assert row["source_channel"] is not None, (
+            "source_channel should still be set in delivered_messages after mark_replied_and_purge_source"
+        )
+
+    # Now explicitly call purge_delivered_source_channel — THEN it should be NULL
+    database.purge_delivered_source_channel(team_id, thread_ts)
+
+    with database.get_conn() as conn:
+        row = conn.execute(
+            "SELECT source_channel FROM delivered_messages WHERE id = ?", (msg_id,)
+        ).fetchone()
+        assert row is not None
+        assert row["source_channel"] is None, (
+            "source_channel should be NULL in delivered_messages after purge_delivered_source_channel"
+        )
 
 
 # ── purge_source_channels safety sweep ───────────────────────────────────────

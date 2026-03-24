@@ -123,7 +123,7 @@ def test_mark_replied_and_purge_source_purges_both_tables():
 
     database.mark_replied_and_purge_source(msg_id)
 
-    # Both tables should have NULL source_channel after purge
+    # New behaviour: routing_table.source_channel is NULLed, but delivered_messages.source_channel is NOT
     routing_after = database.get_routing(team_id, thread_ts)
     assert routing_after["source_channel"] is None, "routing_table.source_channel should be NULL"
 
@@ -131,8 +131,22 @@ def test_mark_replied_and_purge_source_purges_both_tables():
         dm_row = conn.execute(
             "SELECT source_channel, replied FROM delivered_messages WHERE id = ?", (msg_id,)
         ).fetchone()
-        assert dm_row["source_channel"] is None, "delivered_messages.source_channel should be NULL"
+        assert dm_row["source_channel"] is not None, (
+            "delivered_messages.source_channel should NOT be NULL yet — "
+            "it persists until purge_delivered_source_channel() is called at thread close"
+        )
         assert dm_row["replied"] == 1, "delivered_messages.replied should be 1"
+
+    # Now call purge_delivered_source_channel — THEN it should be NULL
+    database.purge_delivered_source_channel(team_id, thread_ts)
+
+    with database.get_conn() as conn:
+        dm_row = conn.execute(
+            "SELECT source_channel FROM delivered_messages WHERE id = ?", (msg_id,)
+        ).fetchone()
+        assert dm_row["source_channel"] is None, (
+            "delivered_messages.source_channel should be NULL after purge_delivered_source_channel"
+        )
 
 
 def test_mark_replied_and_purge_source_with_none_msg_id():
