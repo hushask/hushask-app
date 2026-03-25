@@ -1002,12 +1002,13 @@ def build_standard_home(is_admin: bool = False, config=None, team_id=None) -> di
 
     if is_admin and config:
         blocks.append({"type": "divider"})
-        blocks += admin_settings_blocks(config, team_id or "")
+        pro = is_workspace_pro(team_id) if team_id else False
+        blocks += admin_settings_blocks(config, team_id or "", is_pro=pro)
 
     return {"type": "home", "blocks": blocks}
 
 
-def admin_settings_blocks(config, team_id):
+def admin_settings_blocks(config, team_id, is_pro=False):
     """Inline settings blocks for the admin App Home section."""
     cfg = config or {}
     pub_ch = cfg.get("public_channel")
@@ -1047,7 +1048,7 @@ def admin_settings_blocks(config, team_id):
     if not notion_connected:
         notion_btn["url"] = notion_url
 
-    return [
+    blocks = [
         {
             "type": "header",
             "text": {"type": "plain_text", "text": "Configuration", "emoji": False}
@@ -1076,6 +1077,29 @@ def admin_settings_blocks(config, team_id):
             "elements": [{"type": "mrkdwn", "text": "🤫 Channel changes apply immediately."}],
         },
     ]
+
+    # Upgrade button for free workspaces
+    if not is_pro:
+        blocks.append({"type": "divider"})
+        blocks.append({
+            "type": "actions",
+            "elements": [{
+                "type": "button",
+                "action_id": "upgrade_click",
+                "style": "primary",
+                "text": {"type": "plain_text", "text": "Upgrade to Pro — $19/mo", "emoji": False},
+                "url": f"{os.environ.get('API_BASE', 'https://hushask.com')}/upgrade?team_id={team_id}"
+            }]
+        })
+
+    # Plan + version footer
+    plan_label = "⭐ Pro" if is_pro else "Free plan — 20 messages/month"
+    blocks.append({
+        "type": "context",
+        "elements": [{"type": "mrkdwn", "text": f"{plan_label}  ·  Build `{BUILD_ID}`"}]
+    })
+
+    return blocks
 
 # ── Events & Actions ──────────────────────────────────────────────────────────
 
