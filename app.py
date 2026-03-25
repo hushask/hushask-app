@@ -1082,18 +1082,18 @@ def admin_settings_blocks(config, team_id, is_pro=False):
     blocks.append({"type": "divider"})
     blocks.append({
         "type": "header",
-        "text": {"type": "plain_text", "text": "Plan & Version", "emoji": False}
+        "text": {"type": "plain_text", "text": "Your Plan", "emoji": False}
     })
 
     if is_pro:
         blocks.append({
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "⭐ *Pro plan* — Unlimited messages and routing."}
+            "text": {"type": "mrkdwn", "text": "⭐ *Pro plan* — Unlimited messages. No monthly cap, no per-seat pricing."}
         })
     else:
         blocks.append({
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Free plan* — 20 messages per month.\nUpgrade to Pro for unlimited routing, no monthly cap."}
+            "text": {"type": "mrkdwn", "text": "*Free plan* — 20 messages per month, all features included.\nNeed more? Pro is $19/month — unlimited messages, no per-seat pricing."}
         })
         blocks.append({
             "type": "actions",
@@ -1108,7 +1108,7 @@ def admin_settings_blocks(config, team_id, is_pro=False):
                 {
                     "type": "button",
                     "action_id": "view_pricing",
-                    "text": {"type": "plain_text", "text": "View Pricing", "emoji": False},
+                    "text": {"type": "plain_text", "text": "Learn more", "emoji": False},
                     "url": f"{os.environ.get('API_BASE', 'https://hushask.com')}/pricing"
                 }
             ]
