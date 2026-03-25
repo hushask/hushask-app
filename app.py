@@ -1093,7 +1093,7 @@ def admin_settings_blocks(config, team_id, is_pro=False):
     else:
         blocks.append({
             "type": "section",
-            "text": {"type": "mrkdwn", "text": "*Free plan* — 20 messages per month, all features included.\nNeed more? Pro is $19/month — unlimited messages, no per-seat pricing."}
+            "text": {"type": "mrkdwn", "text": "*Free plan* — Anonymous routing, HR channel & Notion sync. Up to 20 messages/month.\nPro is $19/month — unlimited messages."}
         })
         blocks.append({
             "type": "actions",
