@@ -1078,25 +1078,45 @@ def admin_settings_blocks(config, team_id, is_pro=False):
         },
     ]
 
-    # Upgrade button for free workspaces
-    if not is_pro:
-        blocks.append({"type": "divider"})
+    # Plan & version section
+    blocks.append({"type": "divider"})
+    blocks.append({
+        "type": "header",
+        "text": {"type": "plain_text", "text": "Plan & Version", "emoji": False}
+    })
+
+    if is_pro:
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "⭐ *Pro plan* — Unlimited messages and routing."}
+        })
+    else:
+        blocks.append({
+            "type": "section",
+            "text": {"type": "mrkdwn", "text": "*Free plan* — 20 messages per month.\nUpgrade to Pro for unlimited routing, no monthly cap."}
+        })
         blocks.append({
             "type": "actions",
-            "elements": [{
-                "type": "button",
-                "action_id": "upgrade_click",
-                "style": "primary",
-                "text": {"type": "plain_text", "text": "Upgrade to Pro — $19/mo", "emoji": False},
-                "url": f"{os.environ.get('API_BASE', 'https://hushask.com')}/upgrade?team_id={team_id}"
-            }]
+            "elements": [
+                {
+                    "type": "button",
+                    "action_id": "upgrade_click",
+                    "style": "primary",
+                    "text": {"type": "plain_text", "text": "Upgrade to Pro — $19/mo", "emoji": False},
+                    "url": f"{os.environ.get('API_BASE', 'https://hushask.com')}/upgrade?team_id={team_id}"
+                },
+                {
+                    "type": "button",
+                    "action_id": "view_pricing",
+                    "text": {"type": "plain_text", "text": "View Pricing", "emoji": False},
+                    "url": f"{os.environ.get('API_BASE', 'https://hushask.com')}/pricing"
+                }
+            ]
         })
 
-    # Plan + version footer
-    plan_label = "⭐ Pro" if is_pro else "Free plan — 20 messages/month"
     blocks.append({
         "type": "context",
-        "elements": [{"type": "mrkdwn", "text": f"{plan_label}  ·  Build `{BUILD_ID}`"}]
+        "elements": [{"type": "mrkdwn", "text": f"Build `{BUILD_ID}`"}]
     })
 
     return blocks
@@ -1478,6 +1498,9 @@ def handle_notion_oauth_click(ack): ack()
 
 @app.action("upgrade_click")
 def handle_upgrade(ack): ack()
+
+@app.action("view_pricing")
+def handle_view_pricing(ack): ack()
 
 @app.action("upgrade_cta_admin_alert")
 def handle_upgrade_cta_admin_alert(ack): ack()
