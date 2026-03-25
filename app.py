@@ -2864,6 +2864,11 @@ def handle_reactivate_pro_cta(ack):
     ack()
 
 
+@app.action("payment_failed_update_cta")
+def handle_payment_failed_update_cta(ack):
+    ack()
+
+
 # ── Init ──────────────────────────────────────────────────────────────────────
 
 init_db()

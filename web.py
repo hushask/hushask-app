@@ -418,6 +418,23 @@ def stripe_webhook():
             _send_downgrade_notice(team_id)
             print(f"[stripe] Workspace {team_id} downgraded to free tier.")
 
+    elif event["type"] == "invoice.payment_failed":
+        invoice = event["data"]["object"]
+        customer_id = invoice.get("customer", "")
+        # Try to get team_id from invoice metadata, then subscription metadata
+        team_id = (invoice.get("metadata") or {}).get("team_id")
+        if not team_id:
+            sub_id = invoice.get("subscription")
+            if sub_id and stripe.api_key:
+                try:
+                    sub = stripe.Subscription.retrieve(sub_id)
+                    team_id = (sub.get("metadata") or {}).get("team_id")
+                except Exception as e:
+                    print(f"[stripe/payment_failed] subscription lookup failed: {e}")
+        if team_id:
+            _send_payment_failed_notice(team_id, customer_id)
+            print(f"[stripe] Payment failed for workspace {team_id}.")
+
     return "", 200
 
 
@@ -439,6 +456,58 @@ def _send_pro_welcome(team_id: str):
         )
     except Exception as e:
         print(f"[pro_welcome] error: {e}")
+
+
+def _send_payment_failed_notice(team_id: str, customer_id: str):
+    """DM the workspace installer when a Stripe payment fails."""
+    from database import find_bot_token, get_workspace_config
+    from slack_sdk import WebClient
+    bot_token = find_bot_token(None, team_id)
+    config    = get_workspace_config(team_id)
+    if not bot_token or not config:
+        return
+    installer_id = config.get("installer_id") if config else None
+    if not installer_id:
+        return
+    # Generate a Stripe Billing Portal session so they land directly on payment settings
+    portal_url = None
+    if stripe.api_key and customer_id:
+        try:
+            portal_session = stripe.billing_portal.Session.create(
+                customer=customer_id,
+                return_url=f"{API_BASE}",
+            )
+            portal_url = portal_session.url
+        except Exception as e:
+            print(f"[payment_failed] portal session failed: {e}")
+    update_btn = {
+        "type": "button",
+        "text": {"type": "plain_text", "text": "Update Payment Method →"},
+        "style": "primary",
+        "url": portal_url or f"https://billing.stripe.com",
+        "action_id": "payment_failed_update_cta"
+    }
+    try:
+        client = WebClient(token=bot_token)
+        dm     = client.conversations_open(users=installer_id)["channel"]["id"]
+        client.chat_postMessage(
+            channel=dm,
+            text="⚠️ HushAsk Pro payment failed.",
+            blocks=[
+                {"type": "section", "text": {"type": "mrkdwn", "text":
+                    "⚠️ *Payment failed.*\n\n"
+                    "We couldn't charge the card on file for HushAsk Pro. "
+                    "Your workspace will remain on Pro while Stripe retries — "
+                    "but if the payment can't be collected, your subscription will be cancelled automatically."
+                }},
+                {"type": "actions", "elements": [update_btn]},
+                {"type": "context", "elements": [{"type": "mrkdwn",
+                    "text": "Stripe will retry automatically. No action needed if you update your card."}]}
+            ]
+        )
+        print(f"[payment_failed] DM sent to installer for workspace {team_id}")
+    except Exception as e:
+        print(f"[payment_failed] error: {e}")
 
 
 def _send_downgrade_notice(team_id: str):
