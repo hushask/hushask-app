@@ -593,7 +593,7 @@ def pro_welcome_blocks():
         {"type":"header","text":{"type":"plain_text","text":"HushAsk Pro — Active","emoji":True}},
         {"type":"section","text":{"type":"mrkdwn","text":"Pro plan active. What changed:\n\n✅ No message cap\n✅ Notion sync\n✅ Multi-channel routing\n✅ Priority support"}},
         {"type":"divider"},
-        {"type":"context","elements":[{"type":"mrkdwn","text":"Support: hello@hushask.com"}]}
+        {"type":"context","elements":[{"type":"mrkdwn","text":"Support: support@hushask.com"}]}
     ]
 
 
