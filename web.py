@@ -117,8 +117,66 @@ def handle_unhandled_exception(e):
 def slack_install():
     return handler.handle(request)
 
+@web.route("/slack/install/upgrade")
+def slack_install_upgrade():
+    """OAuth entry point for upgrade intent — works for new and returning users."""
+    import secrets
+    state = f"upgrade::{secrets.token_hex(16)}"
+    # Store it in the state store (reuse slack_oauth_states table)
+    from database import get_conn
+    with get_conn() as conn:
+        conn.execute(
+            "INSERT OR REPLACE INTO slack_oauth_states (state, created_at) VALUES (?, datetime('now'))",
+            (state,)
+        )
+    # Build Slack OAuth URL with this state
+    client_id = os.environ.get("SLACK_CLIENT_ID", "")
+    redirect_uri = f"{API_BASE}/slack/oauth_redirect"
+    scopes = ",".join([
+        "chat:write", "chat:write.public",
+        "channels:read", "channels:history", "channels:manage",
+        "groups:read", "groups:write", "groups:history",
+        "im:history", "im:read", "im:write",
+        "app_mentions:read", "users:read",
+    ])
+    oauth_url = (
+        f"https://slack.com/oauth/v2/authorize"
+        f"?client_id={client_id}"
+        f"&scope={scopes}"
+        f"&redirect_uri={redirect_uri}"
+        f"&state={state}"
+    )
+    return redirect(oauth_url)
+
 @web.route("/slack/oauth_redirect")
 def slack_oauth_redirect():
+    state = request.args.get("state", "")
+    is_upgrade = state.startswith("upgrade::")
+
+    if is_upgrade:
+        # Extract team_id before Bolt consumes the code
+        code = request.args.get("code", "")
+        team_id = ""
+        if code:
+            try:
+                import requests as _http
+                r = _http.post("https://slack.com/api/oauth.v2.access", data={
+                    "client_id": os.environ.get("SLACK_CLIENT_ID", ""),
+                    "client_secret": os.environ.get("SLACK_CLIENT_SECRET", ""),
+                    "code": code,
+                    "redirect_uri": f"{API_BASE}/slack/oauth_redirect",
+                }, timeout=10)
+                team_id = r.json().get("team", {}).get("id", "")
+            except Exception as e:
+                print(f"[oauth_redirect/upgrade] pre-extract failed: {e}")
+
+        # Now let Bolt handle it normally (it will also call oauth.v2.access — that's fine, Slack allows it)
+        handler.handle(request)
+
+        if team_id:
+            return redirect(f"/upgrade?team_id={team_id}", 302)
+        return redirect("/pricing")
+
     return handler.handle(request)
 
 @web.route("/slack/events", methods=["POST"])
