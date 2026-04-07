@@ -605,6 +605,10 @@ def _send_downgrade_notice(team_id: str):
 
 # ── Static serving ─────────────────────────────────────────────────────────────
 
+@web.route("/favicon.ico")
+def favicon():
+    return send_from_directory(BASE_DIR, "favicon.ico", mimetype="image/x-icon")
+
 @web.route("/robots.txt")
 def robots():
     return send_from_directory(BASE_DIR, "robots.txt", mimetype="text/plain")
