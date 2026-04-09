@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="canonical" href="https://hushask.com/blog/hushask-vs-abot-anonymous-slack-tool">
+  <title>HushAsk vs. Abot: Which Anonymous Slack Tool Actually Protects Identity? — HushAsk</title>
+  <meta name="description" content="Both tools promise anonymity. One backs it with cryptography. A straight comparison of HushAsk and Abot on what actually happens to your Slack user ID.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hushask.com/blog/hushask-vs-abot-anonymous-slack-tool">
+  <meta property="og:title" content="HushAsk vs. Abot: Which Anonymous Slack Tool Actually Protects Identity?">
+  <meta property="og:description" content="Both tools promise anonymity. One backs it with cryptography. A straight comparison of HushAsk and Abot on what actually happens to your Slack user ID.">
+  <meta property="og:image" content="https://hushask.com/assets/blog-hero-5-og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="HushAsk vs. Abot: Which Anonymous Slack Tool Actually Protects Identity?">
+  <meta name="twitter:description" content="Both tools promise anonymity. One backs it with cryptography. A straight comparison of HushAsk and Abot on what actually happens to your Slack user ID.">
+  <meta name="twitter:image" content="https://hushask.com/assets/blog-hero-5-og.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/blog">Blog</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/faq">FAQ</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary nav-cta">Add to Slack</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu-header">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="mobile-menu-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/pricing">Pricing</a></li>
+      <li><a href="/blog">Blog</a></li>
+      <li><a href="/help/">Help</a></li>
+      <li><a href="/faq">FAQ</a></li>
+    </ul>
+    <div class="mobile-menu-cta">
+      <a href="/slack/install">Add to Slack</a>
+    </div>
+  </div>
+
+  <div class="article-layout">
+  <aside class="article-sidebar-col">
+    <div class="toc-box">
+      <div class="toc-title">Table of contents</div>
+      <ul class="toc-list">
+        <li><a href="#why-implementation-matters">Why the technical implementation matters</a></li>
+        <li><a href="#abot">Abot</a></li>
+        <li><a href="#others">HonestBot and OpenSay</a></li>
+        <li><a href="#hushask">HushAsk</a></li>
+        <li><a href="#summary">The honest summary</a></li>
+      </ul>
+    </div>
+    <div class="share-box">
+      <div class="share-title">Share</div>
+      <div class="share-btns">
+        <a class="share-btn" href="https://twitter.com/intent/tweet?url=https://hushask.com/blog/hushask-vs-abot-anonymous-slack-tool&text=HushAsk+vs.+Abot%3A+Which+Anonymous+Slack+Tool+Actually+Protects+Identity?" target="_blank" rel="noopener" aria-label="Share on X">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a class="share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https://hushask.com/blog/hushask-vs-abot-anonymous-slack-tool" target="_blank" rel="noopener" aria-label="Share on LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <a class="share-btn" href="mailto:?subject=HushAsk+vs.+Abot%3A+Which+Anonymous+Slack+Tool+Actually+Protects+Identity%3F&body=https://hushask.com/blog/hushask-vs-abot-anonymous-slack-tool" aria-label="Share via email">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+        <a class="share-btn" href="#" onclick="navigator.clipboard.writeText(window.location.href);this.title='Copied!';return false;" aria-label="Copy link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+  <article class="article-page">
+    <header class="article-header">
+      <a href="/blog" class="back-link">← Blog</a>
+      <div class="article-date">April 9, 2026</div>
+      <h1>HushAsk vs. Abot: Which Anonymous Slack Tool Actually Protects Identity?</h1>
+      <p class="article-lead">Both tools promise anonymity. The question worth asking isn't which has more features — it's what "anonymous" actually means in each one, and whether that holds up when it matters most.</p>
+    </header>
+
+    <div class="article-byline">
+      <img class="byline-avatar" src="/assets/morgan-avatar.png" alt="Morgan" width="44" height="44">
+      <div class="byline-meta">
+        <span class="byline-name">Morgan — Content Lead, HushAsk</span>
+        <span class="byline-bio">Morgan writes about workplace communication, employee feedback, and the systems that make honesty possible. She covers HR technology for the HushAsk blog.</span>
+      </div>
+    </div>
+
+    <!-- Mobile TOC (hidden on desktop) -->
+    <div class="mobile-toc">
+      <div class="toc-title">In this article</div>
+      <ul class="toc-list">
+        <li><a href="#why-implementation-matters">Why the technical implementation matters</a></li>
+        <li><a href="#abot">Abot</a></li>
+        <li><a href="#others">HonestBot and OpenSay</a></li>
+        <li><a href="#hushask">HushAsk</a></li>
+        <li><a href="#summary">The honest summary</a></li>
+      </ul>
+    </div>
+
+    <div class="article-body">
+      <p>If you're evaluating anonymous feedback tools for Slack, you've probably come across Abot. It's the most established option in the category — used by over 1,000 teams, well-reviewed, and straightforward to set up.</p>
+
+      <p>The question worth asking before you choose isn't which tool has more features. It's what "anonymous" actually means in each one — and whether that holds up when it matters most.</p>
+
+      <h2 id="why-implementation-matters">Why the technical implementation matters more than the marketing claim</h2>
+
+      <p>Every anonymous feedback tool promises anonymity. The question is what backs the promise.</p>
+
+      <p>For low-stakes feedback — team suggestions, poll votes, "which office snack should we order" — the distinction doesn't matter much. For anything sensitive — a concern about a manager, a pay disparity, a compliance issue — the implementation is the thing.</p>
+
+      <p>Two tools can both describe themselves as "anonymous" and have very different answers to the question: could someone find out who sent this message, if they really wanted to?</p>
+
+      <h2 id="abot">Abot</h2>
+
+      <p>Abot is a general-purpose anonymous communication tool for Slack. It handles anonymous channel messages, direct messages, polls, emoji reactions, and threaded discussion — all anonymously. It's highly configurable: admins can restrict which channels allow anonymous posting, limit it to specific user groups, and moderate messages.</p>
+
+      <p>It's a good tool for teams that want a broad, flexible anonymous communication layer. The HR-channel use case (routing sensitive feedback to a private channel) is explicitly supported, and it works well for that.</p>
+
+      <p>On the technical side, Abot's approach is transparent. Their FAQ states directly: <em>"Just like in the case of all the other 'anonymous' apps on Slack, Abot's anonymity guarantees are constrained by the Slack logging system. Content of the messages is never stored on Abot servers, and the metadata is regularly removed."</em></p>
+
+      <p>Their privacy policy confirms that what is stored is the user's Slack identifier — the original ID, not a hash.</p>
+
+      <p>Here's where it gets specific. Abot's FAQ goes on: <em>"If you're on Slack Free or Pro plan, no one from your team (including admins) can track who sent which message. However, if your team is using Business+ plan or Enterprise Grid, then admins could determine the sender from the optional private messages export logs."</em></p>
+
+      <p>This is Abot being honest — and they deserve credit for that disclosure. But the implication is real: if your organization is on Slack Business+ or Enterprise Grid, anonymity in Abot depends on whether your Slack admin chooses to pull the export. It's a policy protection, not a technical one.</p>
+
+      <p><strong>Abot is the right choice if:</strong> You want a flexible, feature-rich anonymous communication tool, your team is on Slack Free or Pro, and your use case goes beyond HR routing — polls, anonymous reactions, threaded discussion, moderation controls.</p>
+
+      <h2 id="others">HonestBot and OpenSay</h2>
+
+      <p><strong>HonestBot</strong> takes the opposite approach to Abot: extreme minimalism. The website is minimal, the feature set is narrow — anonymous messages through the bot, with optional 1:1 anonymous dialogue. They've claimed in public forums that they don't store any message data on servers at all, making identification technically impossible even if hacked. There's no published privacy documentation to verify this in detail, but the positioning is consistent. It's the right tool for teams that want simplicity above everything else.</p>
+
+      <p><strong>OpenSay</strong> leans toward compliance and moderation. It adds AI-powered sentiment filtering, message flagging, karma systems, and whistleblowing workflow support. It's more feature-heavy than the others and explicitly positions around psychological safety frameworks and regulatory compliance. No detailed technical anonymity documentation is publicly available.</p>
+
+      <h2 id="hushask">HushAsk</h2>
+
+      <p>HushAsk takes a different architectural approach. When a message is sent, the sender's Slack user ID is immediately passed through SHA-256 — a one-way cryptographic hash — combined with a private salt unique to the deployment. The result is a 64-character string. The original ID is discarded and never written to disk.</p>
+
+      <p>This means HushAsk's database doesn't contain the sender's Slack identifier. Not stored, then removed later — never stored. The distinction matters because there's no point at which an admin, the vendor, or a Slack export could recover it.</p>
+
+      <p>HushAsk's Slack caveat is narrower than Abot's: on Enterprise Grid plans (not Business+), Slack's audit log API records bot interactions independently of what HushAsk stores. This is disclosed in HushAsk's <a href="/privacy">privacy documentation</a>. For teams on Free, Pro, or Business+, it doesn't apply. On Business+ plans, a Slack admin can request a DM export — but since HushAsk never stores the original Slack user ID, there's no data on HushAsk's side that connects a DM to a specific routed message. The hash exists; the identity doesn't.</p>
+
+      <p>HushAsk is more focused than Abot. It doesn't do polls, anonymous emoji reactions, or arbitrary channel messaging. It does two things: route sensitive questions to HR anonymously, and route general questions to a public channel where they can be answered and archived to Notion. That's the design.</p>
+
+      <p><strong>HushAsk is the right choice if:</strong> Your primary use case is anonymous HR routing and knowledge capture, you want cryptographic identity protection rather than policy-based anonymity, and your team is on a standard Slack plan (or you're on Enterprise Grid and the audit log caveat is acceptable).</p>
+
+      <h2 id="summary">The honest summary</h2>
+
+      <table style="width:100%;border-collapse:collapse;font-size:14px;margin:24px 0;">
+        <thead>
+          <tr style="border-bottom:2px solid var(--border);">
+            <th style="text-align:left;padding:8px 12px;color:#6B7280;font-weight:600;"></th>
+            <th style="text-align:left;padding:8px 12px;color:#6B7280;font-weight:600;">Abot</th>
+            <th style="text-align:left;padding:8px 12px;color:#6B7280;font-weight:600;">HonestBot</th>
+            <th style="text-align:left;padding:8px 12px;color:#6B7280;font-weight:600;">OpenSay</th>
+            <th style="text-align:left;padding:8px 12px;color:#6B7280;font-weight:600;">HushAsk</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:#374151;">Identity stored</td><td style="padding:8px 12px;color:#374151;">Slack ID (original)</td><td style="padding:8px 12px;color:#374151;">Claims none</td><td style="padding:8px 12px;color:#374151;">Not documented</td><td style="padding:8px 12px;color:#374151;">64-char hash only</td></tr>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:#374151;">Business+ exposure risk</td><td style="padding:8px 12px;color:#374151;">Yes (Slack export)</td><td style="padding:8px 12px;color:#374151;">Unclear</td><td style="padding:8px 12px;color:#374151;">Unclear</td><td style="padding:8px 12px;color:#374151;">No</td></tr>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:#374151;">Enterprise Grid risk</td><td style="padding:8px 12px;color:#374151;">Yes (Slack export)</td><td style="padding:8px 12px;color:#374151;">Unclear</td><td style="padding:8px 12px;color:#374151;">Unclear</td><td style="padding:8px 12px;color:#374151;">Slack audit log only</td></tr>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:#374151;">HR routing</td><td style="padding:8px 12px;color:#374151;">✓ (configurable)</td><td style="padding:8px 12px;color:#374151;">Limited</td><td style="padding:8px 12px;color:#374151;">✓</td><td style="padding:8px 12px;color:#374151;">✓ (built-in)</td></tr>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:#374151;">Polls / reactions</td><td style="padding:8px 12px;color:#374151;">✓</td><td style="padding:8px 12px;color:#374151;">✗</td><td style="padding:8px 12px;color:#374151;">✓</td><td style="padding:8px 12px;color:#374151;">✗</td></tr>
+          <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 12px;color:#374151;">Notion integration</td><td style="padding:8px 12px;color:#374151;">✗</td><td style="padding:8px 12px;color:#374151;">✗</td><td style="padding:8px 12px;color:#374151;">✗</td><td style="padding:8px 12px;color:#374151;">✓</td></tr>
+          <tr><td style="padding:8px 12px;color:#374151;">Cryptographic hashing</td><td style="padding:8px 12px;color:#374151;">✗</td><td style="padding:8px 12px;color:#374151;">Not documented</td><td style="padding:8px 12px;color:#374151;">Not documented</td><td style="padding:8px 12px;color:#374151;">✓ SHA-256 + salt</td></tr>
+        </tbody>
+      </table>
+
+      <p>The right tool depends on what you're trying to solve. If you want broad anonymous communication with good configurability and you're on Slack Free or Pro, Abot is solid and well-established. If you want the strongest technical anonymity guarantee for HR-specific feedback — and you want answered questions to build a searchable knowledge base — HushAsk is built for that.</p>
+    </div>
+
+    <div class="article-cta">
+      <p>Read how HushAsk's anonymity works in full — <a href="/privacy">Privacy Policy →</a></p>
+      <a href="/slack/install" class="btn btn-primary btn-lg" style="margin-top:16px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+        Try HushAsk Free
+      </a>
+    </div>
+  </article>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('mobile-menu');
+      var closeBtn = document.getElementById('mobile-menu-close');
+      function openMenu() { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+      btn.addEventListener('click', openMenu);
+      closeBtn.addEventListener('click', closeMenu);
+      menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+  </script>
+
+</body>
+</html>
