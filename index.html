@@ -259,7 +259,42 @@
       transition: opacity 0.18s;
     }
     .mobile-menu-cta a:hover { opacity: 0.88; }
+  
+    /* hero keyword H2 (added 2026-04-29 for SEO) */
+    .hero-keyword { font-size: clamp(18px, 2.4vw, 22px); font-weight: 600; color: var(--navy); margin: -8px auto 28px; max-width: 620px; line-height: 1.45; letter-spacing: -0.3px; }
+    .hero-keyword a { color: var(--navy); text-decoration: none; border-bottom: 1px solid currentColor; }
+    /* Animated Slack mockup */
+    @keyframes ha-fadeup { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes ha-fadeout { to { opacity: 0; max-height: 0; padding-top: 0; padding-bottom: 0; margin: 0; overflow: hidden; } }
+    @keyframes ha-pulse { 0%, 60%, 100% { opacity: 0.3; transform: scale(0.85); } 30% { opacity: 1; transform: scale(1); } }
+    .mockup-anim-1 { opacity: 0; animation: ha-fadeup 0.5s ease-out 0.5s forwards; }
+    .mockup-anim-typing { opacity: 0; max-height: 60px; animation: ha-fadeup 0.4s ease-out 1.4s forwards, ha-fadeout 0.35s ease-in 2.5s forwards; }
+    .mockup-anim-2 { opacity: 0; animation: ha-fadeup 0.5s ease-out 2.85s forwards; }
+    .mockup-typing-bubble { display: inline-flex; gap: 5px; padding: 10px 14px; background: #F0F0F0; border-radius: 14px; align-items: center; }
+    .mockup-typing-bubble .dot { width: 6px; height: 6px; border-radius: 50%; background: #999; animation: ha-pulse 1.4s infinite; }
+    .mockup-typing-bubble .dot:nth-child(2) { animation-delay: 0.2s; }
+    .mockup-typing-bubble .dot:nth-child(3) { animation-delay: 0.4s; }
+    @media (prefers-reduced-motion: reduce) {
+      .mockup-anim-1, .mockup-anim-2 { animation: none; opacity: 1; }
+      .mockup-anim-typing { display: none; }
+    }
+
   </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "HushAsk",
+  "operatingSystem": "Slack",
+  "applicationCategory": "BusinessApplication",
+  "description": "HushAsk routes anonymous employee questions to HR or your Notion knowledge base, directly in Slack. Sender identity is SHA-256 hashed.",
+  "offers": [
+    {"@type": "Offer", "price": "0", "priceCurrency": "USD", "description": "Free, 20 messages per month"},
+    {"@type": "Offer", "price": "19", "priceCurrency": "USD", "description": "Pro, unlimited messages, $19 per month"}
+  ],
+  "url": "https://hushask.com/"
+}
+</script>
 </head>
 <body>
 
@@ -305,17 +340,18 @@
 
   <!-- HERO -->
   <section class="hero">
-    <h1>What your team wouldn't say in Slack,<br> <span class="accent-text">they'll say now.</span></h1>
+    <h1>What your team wouldn't say in Slack, they'll say now.</h1>
+    <h2 class="hero-keyword">Anonymous employee feedback in Slack — <a href="/help/privacy-and-hashing.html">cryptographic, not a policy promise</a>.</h2>
     <p class="hero-tagline">
       Your employees send anonymous questions and choose where they go — straight to HR, or to a public channel where an expert can answer. Either way, no one knows who asked.
     </p>
-    <p style="font-size:15px;font-weight:600;color:var(--navy);margin-bottom:32px;">Anonymity in <a href="/help/privacy-and-hashing.html" style="color:var(--navy);text-decoration:none;border-bottom:1px solid currentColor;">HushAsk is cryptographic</a> — not a policy promise.</p>
+    
     <div class="hero-actions">
       <a href="/slack/install" class="btn btn-primary btn-lg">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
         Add to Slack
       </a>
-      <a href="#how-it-works" class="btn btn-ghost btn-lg">See how it works</a>
+      <a href="/pricing" class="btn btn-ghost btn-lg">See pricing</a>
     </div>
     <div class="hero-trust">20 messages free monthly</div>
 

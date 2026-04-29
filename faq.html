@@ -4,7 +4,17 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="canonical" href="https://hushask.com/faq">
-  <title>FAQ — HushAsk</title>
+  <meta name="description" content="HushAsk FAQ for anonymous Slack feedback. Answers about anonymity guarantees, Notion sync, pricing, and how SHA-256 hashing works in practice.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hushask.com/faq">
+  <meta property="og:title" content="FAQ — HushAsk Anonymous Slack Feedback">
+  <meta property="og:description" content="Common questions about HushAsk anonymous Slack feedback — anonymity guarantees, Notion sync, pricing, admin controls.">
+  <meta property="og:image" content="https://hushask.com/assets/ha-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="FAQ — HushAsk Anonymous Slack Feedback">
+  <meta name="twitter:description" content="Common questions about HushAsk anonymous Slack feedback.">
+  <meta name="twitter:image" content="https://hushask.com/assets/ha-512.png">
+  <title>FAQ — HushAsk Anonymous Slack Feedback</title>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
@@ -175,6 +185,22 @@
     .mobile-menu-cta a { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 24px; background: var(--navy); color: white; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; transition: opacity 0.18s; }
     .mobile-menu-cta a:hover { opacity: 0.88; }
   </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"Is anonymity really guaranteed?","acceptedAnswer":{"@type":"Answer","text":"Technically yes, with one caveat. When an employee sends a message, HushAsk immediately hashes their Slack user ID using SHA-256 and discards the original. The stored hash cannot be reversed to identify anyone. The caveat: on Slack Enterprise Grid plans, Slack's own audit log records DM interactions independently of HushAsk."}},
+    {"@type":"Question","name":"Can admins find out who sent a message?","acceptedAnswer":{"@type":"Answer","text":"No. HushAsk stores message content and routing data, not sender identity. There is no setting, no override, and no request process that surfaces a sender's name or Slack ID."}},
+    {"@type":"Question","name":"What happens if someone sends a threatening or harassing message?","acceptedAnswer":{"@type":"Answer","text":"HushAsk routes messages anonymously and cannot identify the sender after the fact. If your organization receives a message that requires escalation, the appropriate path is your internal HR or legal process and, if warranted, law enforcement contact with Slack directly."}},
+    {"@type":"Question","name":"How does the Notion sync work?","acceptedAnswer":{"@type":"Answer","text":"Once Notion is connected in HushAsk settings, a Sync to Notion button appears on each answered thread. When an admin clicks it, the Q&A is saved to a database in your Notion workspace. No sender identity is included. Syncing is manual and per-message."}},
+    {"@type":"Question","name":"What's included in the free plan?","acceptedAnswer":{"@type":"Answer","text":"Everything. The free plan includes anonymous message routing, HR channel routing, and Notion sync. The full product, with no features gated. The only limit is volume: 20 messages per month per workspace. Pro is $19 per month for unlimited messages."}},
+    {"@type":"Question","name":"Will anyone know it was me?","acceptedAnswer":{"@type":"Answer","text":"HushAsk is built so that no one — including the HR admin, and including us — can identify who sent a message. The Slack user ID is hashed at send time and the original is discarded. Exception: on Slack Enterprise Grid, Slack's own audit log records bot DM interactions independently."}},
+    {"@type":"Question","name":"Can I take back a message after I've sent it?","acceptedAnswer":{"@type":"Answer","text":"Yes, but only before an admin replies. Until then you can delete your original message in your DM with HushAsk and it will be retracted. Once an admin has responded, the message can no longer be retracted."}},
+    {"@type":"Question","name":"What does the admin see?","acceptedAnswer":{"@type":"Answer","text":"Your message, the channel it was routed to, and the timestamp. They do not see your name, your Slack handle, or any identifier linking the message to you."}}
+  ]
+}
+</script>
 </head>
 <body>
 
@@ -187,9 +213,9 @@
       <ul class="nav-links">
         <li><a href="/#features">Features</a></li>
         <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/blog">Blog</a></li>
         <li><a href="/help/">Help</a></li>
         <li><a href="/faq" style="color:var(--navy);font-weight:600;">FAQ</a></li>
-        <li><a href="/privacy">Privacy</a></li>
       </ul>
       <a href="/slack/install" class="btn btn-primary nav-cta" style="width:auto;flex-shrink:0;">Add to Slack</a>
       <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
