@@ -317,7 +317,7 @@
     <p>When you interact with HushAsk, we collect a limited set of data necessary to operate the service:</p>
     <ul>
       <li><strong>Message content</strong> — The text of messages you choose to route through HushAsk. Stored temporarily while you select a routing destination, and post-routing for Notion sync where enabled.</li>
-      <li><strong>Anonymous user hash</strong> — A 16-character truncated SHA-256 hash derived from your Slack user ID and workspace ID, combined with a private salt. This hash cannot be reversed to identify you. It is used only for abuse detection at a workspace level.</li>
+      <li><strong>Anonymous user hash</strong> — A full 64-character (256-bit) SHA-256 hash derived from your Slack user ID and workspace ID, combined with a private salt. This hash cannot be reversed to identify you. It is used only for abuse detection at a workspace level.</li>
       <li><strong>Routing metadata</strong> — Which channel a message was delivered to, the timestamp, and whether the message was synced to Notion. No sender identity is included.</li>
       <li><strong>Workspace configuration</strong> — The Slack team ID, configured channel IDs, and any Notion integration credentials supplied by workspace admins.</li>
     </ul>
@@ -333,7 +333,7 @@
     </ul>
 
     <h2 id="how-hashing-works">4. How identity hashing works</h2>
-    <p>When you send a message through HushAsk, your Slack user ID and workspace ID are passed through a SHA-256 one-way hash function combined with a private server-side salt. The result is a 16-character string that:</p>
+    <p>When you send a message through HushAsk, your Slack user ID and workspace ID are passed through a SHA-256 one-way hash function combined with a private server-side salt. The result is a 64-character (256-bit) hex string that:</p>
     <ul>
       <li>Cannot be mathematically reversed to recover your Slack ID</li>
       <li>Is not linkable to any external identity database</li>
