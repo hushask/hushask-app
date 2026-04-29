@@ -89,6 +89,27 @@ def build_share_links(slug: str, title: str) -> str:
         </a>""".strip()
 
 
+def build_related_block(related: list[dict]) -> str:
+    """Render a 'Related reading' block from a list of {slug, title} dicts.
+
+    Returns an empty string if `related` is empty or None.
+    """
+    if not related:
+        return ""
+    items = "\n".join(
+        f'        <li><a href="/blog/{r["slug"]}" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">{r["title"]}</a></li>'
+        for r in related
+    )
+    return f"""
+    <div class="article-related" style="margin:48px 0 24px;padding:24px 28px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#94A3B8;margin-bottom:14px;">Related reading</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+{items}
+      </ul>
+    </div>
+"""
+
+
 def render_article(spec: dict) -> str:
     slug   = spec["slug"]
     title  = spec["title"]
@@ -104,6 +125,7 @@ def render_article(spec: dict) -> str:
     hero_img   = f"/assets/blog-hero-{hero_n}.png"
     toc_items  = build_toc_items(toc)
     share_html = build_share_links(slug, title)
+    related_html = build_related_block(spec.get("related", []))
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -213,6 +235,7 @@ def render_article(spec: dict) -> str:
 {body}
     </div>
 
+    {related_html}
     <div class="article-cta">
       <p>Try HushAsk free — 20 messages per month, no credit card required.</p>
       <a href="/slack/install" class="btn btn-primary btn-lg">
