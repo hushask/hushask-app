@@ -132,6 +132,18 @@ def admin_metrics():
         """)
         row = cur.fetchone()
 
+        # Active workspaces in last 28 days — Slack Marketplace threshold definition.
+        # An "active" workspace is one that has actually been used (a message delivered)
+        # in the trailing 28-day window. Slack auto-blocks Marketplace submissions
+        # below 5 active workspaces.
+        cur.execute("""
+            SELECT COUNT(DISTINCT team_id) AS active_28d
+            FROM delivered_messages
+            WHERE datetime(delivered_at) >= datetime('now', '-28 days')
+        """)
+        active_row = cur.fetchone()
+        active_28d = (active_row["active_28d"] or 0) if active_row else 0
+
         cur.execute("""
             SELECT team_name, is_pro, installed_at
             FROM workspaces
@@ -161,9 +173,11 @@ def admin_metrics():
         "paid_installs": (row["paid"] or 0) if row else 0,
         "installs_last_7d": (row["last_7d"] or 0) if row else 0,
         "installs_last_30d": (row["last_30d"] or 0) if row else 0,
+        "active_last_28d": active_28d,
         "recent": recent,
         "daily_30d": daily,
         "goal": 5,
+        "marketplace_threshold": 5,
         "deadline": "2026-05-31",
         "as_of": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }), 200
