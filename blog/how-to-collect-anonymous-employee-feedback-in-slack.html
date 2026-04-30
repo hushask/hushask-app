@@ -71,6 +71,7 @@
         <li><a href="#why-employees">Why employees don't give honest feedback</a></li>
         <li><a href="#what-makes-trustworthy">What makes a tool trustworthy</a></li>
         <li><a href="#cryptographic-anonymity">What cryptographic anonymity actually means</a></li>
+        <li><a href="#rollout-playbook">Roll it out in week one</a></li>
         <li><a href="#how-to-set-up">How to set it up</a></li>
         <li><a href="#one-thing">One thing to be honest about</a></li>
         <li><a href="#what-you-get">What you get</a></li>
@@ -97,7 +98,7 @@
   <article class="article-page">
     <header class="article-header">
       <a href="/blog" class="back-link">← Blog</a>
-      <div class="article-date">March 22, 2026</div>
+      <div class="article-date">Updated May 4, 2026</div>
       <h1>How to Collect Anonymous Employee Feedback in Slack</h1>
       <p class="article-lead">Most anonymous feedback tools make a promise. HushAsk makes it technically impossible to identify you. Here's what that difference means in practice.</p>
     </header>
@@ -118,12 +119,15 @@
         <li><a href="#why-employees">Why employees don't give honest feedback</a></li>
         <li><a href="#what-makes-trustworthy">What makes a tool trustworthy</a></li>
         <li><a href="#cryptographic-anonymity">What cryptographic anonymity actually means</a></li>
+        <li><a href="#rollout-playbook">Roll it out in week one</a></li>
         <li><a href="#how-to-set-up">How to set it up</a></li>
         <li><a href="#one-thing">One thing to be honest about</a></li>
         <li><a href="#what-you-get">What you get</a></li>
       </ul>
     </div>
     <div class="article-body">
+      <p>Anonymous employee feedback in Slack is a trust problem before it's a tooling problem. If your team thinks the admin can trace messages back, they won't send the questions you need them to send — no matter how slick the tool is. The rest of this is about getting the trust part right.</p>
+
       <p>Your employees know things you don't. They know which manager is struggling. They know which policy doesn't make sense in practice. They know which meeting could be an email. And in most workplaces, they're not telling you — because they've learned, correctly or not, that honesty has a cost.</p>
 
       <figure class="article-mockup">
@@ -211,6 +215,20 @@
         <figcaption>Admins see the message — never the sender.</figcaption>
       </figure>
 
+            <h2 id="rollout-playbook">Roll it out in week one</h2>
+
+      <p>Most anonymous feedback tools don't fail because they're built badly. They fail because nobody uses them. Adoption isn't automatic — it's a sequence of moves that establish trust. Four steps, in order, that work in companies under 200 people:</p>
+
+      <p><strong>1. Explain the mechanism, not just the existence.</strong> Don't roll out HushAsk with "we have an anonymous feedback tool now." Roll it out with a five-minute explanation of cryptographic vs policy anonymity. Employees who understand <em>why</em> HushAsk can't trace them are far more likely to use it. A Loom or a slot in the next all-hands works.</p>
+
+      <p><strong>2. Pre-commit to what you'll do with the feedback.</strong> The single biggest reason anonymous tools die: people send a message, hear nothing, and conclude it disappeared. Decide before launch which questions get a public answer (your knowledge base) and which get a private HR response. Tell the team out loud — "every non-personal question gets an answer in #hush-public within 48 hours."</p>
+
+      <p><strong>3. Seed it with a real question.</strong> Have a leader send the first message anonymously. The first question that surfaces should be one your team would have actually asked. That proves the tool works <em>and</em> shows what kinds of questions are welcome.</p>
+
+      <p><strong>4. Watch participation, not just volume.</strong> A healthy HushAsk channel has unique senders, not one prolific user. Track the diversity of voices over the first month. If only one person is sending, the tool is working but trust hasn't spread — go back to step 1 with the teams that haven't joined in.</p>
+
+      <p>Done well, the first month produces 5–10 messages from 4–6 different people. By month three, it's part of the rhythm.</p>
+
       <h2 id="how-to-set-up">How to set it up — and what employees experience</h2>
 
       <p>HushAsk installs like any Slack app. Employees don't need a new account, a separate login, or any onboarding. If Slack is open — and it almost always is — HushAsk is available.</p>
@@ -234,6 +252,15 @@
       <p>The employees most likely to leave because they didn't feel heard now have a path.</p>
     </div>
 
+
+    <div class="article-related" style="margin:48px 0 24px;padding:24px 28px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#94A3B8;margin-bottom:14px;">Related reading</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+        <li><a href="/blog/is-anonymous-feedback-in-slack-actually-anonymous" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">Is Anonymous Feedback in Slack Actually Anonymous?</a></li>
+        <li><a href="/blog/why-employees-wont-use-anonymous-feedback-tool" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">Why Your Employees Won't Use an Anonymous Feedback Tool (and How to Fix It)</a></li>
+        <li><a href="/blog/building-a-team-knowledge-base-from-anonymous-qa" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">Building a Team Knowledge Base from Anonymous Q&amp;A</a></li>
+      </ul>
+    </div>
     <div class="article-cta">
       <p>Try HushAsk free — 20 messages per month, no credit card required.</p>
       <a href="/slack/install" class="btn btn-primary btn-lg">
