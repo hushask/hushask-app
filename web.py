@@ -12,6 +12,7 @@ Routes:
   /upgrade/success        → Post-payment landing + DM "Welcome to Pro"
   /stripe/webhook         → Stripe event listener
   /health                 → Healthcheck
+  /admin/metrics          → Bearer-token-protected install metrics (JSON)
   /* (static)             → Landing page, help, assets
 
 Note: Notion access tokens are stored in plaintext SQLite.
@@ -68,6 +69,7 @@ def _validate_env():
         "STRIPE_WEBHOOK_SECRET",
         "NOTION_CLIENT_ID",
         "NOTION_CLIENT_SECRET",
+        "HUSHASK_METRICS_TOKEN",
     ]
     missing = [k for k in required if not os.environ.get(k)]
     if missing:
@@ -95,6 +97,76 @@ def redirect_api_subdomain():
 @web.route("/health")
 def health():
     return jsonify({"status": "ok", "service": "hushask"}), 200
+
+
+# ── Admin metrics ──────────────────────────────────────────────────────────────
+# Bearer-token-protected JSON endpoint for monitoring install counts.
+# Set HUSHASK_METRICS_TOKEN env var to enable. Returns 503 if not configured.
+# No PII (team_id, installer_user_id) is exposed; only team_name (Slack workspace
+# display name), install timestamp, and is_pro flag.
+
+@web.route("/admin/metrics")
+def admin_metrics():
+    expected = os.environ.get("HUSHASK_METRICS_TOKEN", "")
+    if not expected:
+        return jsonify({"error": "metrics endpoint not configured"}), 503
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer ") or auth[7:] != expected:
+        return jsonify({"error": "unauthorized"}), 401
+
+    from database import get_conn
+    import sqlite3
+    from datetime import datetime, timezone
+
+    with get_conn() as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT
+                COUNT(*) AS total,
+                SUM(CASE WHEN is_pro = 1 THEN 1 ELSE 0 END) AS paid,
+                SUM(CASE WHEN datetime(installed_at) >= datetime('now', '-7 days') THEN 1 ELSE 0 END) AS last_7d,
+                SUM(CASE WHEN datetime(installed_at) >= datetime('now', '-30 days') THEN 1 ELSE 0 END) AS last_30d
+            FROM workspaces
+        """)
+        row = cur.fetchone()
+
+        cur.execute("""
+            SELECT team_name, is_pro, installed_at
+            FROM workspaces
+            ORDER BY installed_at DESC
+            LIMIT 10
+        """)
+        recent = [
+            {
+                "team_name": (r["team_name"] or "Unknown"),
+                "is_pro": bool(r["is_pro"]),
+                "installed_at": r["installed_at"],
+            }
+            for r in cur.fetchall()
+        ]
+
+        cur.execute("""
+            SELECT date(installed_at) AS day, COUNT(*) AS count
+            FROM workspaces
+            WHERE datetime(installed_at) >= datetime('now', '-30 days')
+            GROUP BY date(installed_at)
+            ORDER BY day
+        """)
+        daily = [{"day": r["day"], "count": r["count"]} for r in cur.fetchall()]
+
+    return jsonify({
+        "total_installs": (row["total"] or 0) if row else 0,
+        "paid_installs": (row["paid"] or 0) if row else 0,
+        "installs_last_7d": (row["last_7d"] or 0) if row else 0,
+        "installs_last_30d": (row["last_30d"] or 0) if row else 0,
+        "recent": recent,
+        "daily_30d": daily,
+        "goal": 5,
+        "deadline": "2026-05-31",
+        "as_of": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }), 200
 
 
 # ── Global error handlers ──────────────────────────────────────────────────────
