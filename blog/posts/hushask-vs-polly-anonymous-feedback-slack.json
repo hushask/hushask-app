@@ -1,0 +1,41 @@
+{
+  "slug": "hushask-vs-polly-anonymous-feedback-slack",
+  "title": "HushAsk vs Polly: Anonymous Feedback in Slack",
+  "date": "May 7, 2026",
+  "meta_description": "Polly is the most-installed Slack feedback tool. HushAsk is built differently. A practical comparison on anonymity model, conversation shape, and which one fits which team.",
+  "lead": "Polly is the default for Slack-based engagement surveys. HushAsk is built for ongoing anonymous Q&A. The comparison isn't \"better or worse\" \u2014 it's about which one fits the question your team is actually trying to ask.",
+  "hero_num": 7,
+  "toc": [
+    {
+      "id": "what-polly-does",
+      "text": "What Polly does well"
+    },
+    {
+      "id": "anonymity-models",
+      "text": "Two different anonymity models"
+    },
+    {
+      "id": "conversation-shape",
+      "text": "Polls and surveys vs Q&A"
+    },
+    {
+      "id": "which-fits",
+      "text": "Which one fits which team"
+    }
+  ],
+  "related": [
+    {
+      "slug": "is-anonymous-feedback-in-slack-actually-anonymous",
+      "title": "Is Anonymous Feedback in Slack Actually Anonymous?"
+    },
+    {
+      "slug": "hushask-vs-abot-anonymous-slack-tool",
+      "title": "HushAsk vs. Abot: Which Anonymous Slack Tool Actually Protects Identity?"
+    },
+    {
+      "slug": "google-forms-anonymous-employee-feedback",
+      "title": "Are Google Forms Actually Anonymous for Workplace Feedback?"
+    }
+  ],
+  "body": "<h2 id=\"what-polly-does\">What Polly does well</h2>\n<p>Polly is the most-installed feedback tool in the Slack App Directory, and that's not an accident. It's good at the thing it's designed for: structured polls, recurring engagement surveys, and Q&amp;A templates that work on a schedule. The format is tight, the UI is polished, recurring pollys have proper scheduling, and integrations into reporting tools are mature. If you want to know your team's pulse on five preset questions every Monday morning, Polly is the obvious choice.</p>\n<p>Polly is priced per-license, not per-user: Free for the basics, $19/license/month for Basic, $29/license/month for Pro, custom Enterprise pricing above that. For a small team where one or two HR leads are the people sending pollys, the cost is reasonable for what you get.</p>\n<p>Where the comparison with HushAsk gets interesting is the anonymity model \u2014 and the kind of conversation each tool is built for.</p>\n\n<h2 id=\"anonymity-models\">Two different anonymity models</h2>\n<p>Polly offers three response settings: Non-anonymous (default), Anonymous, and Confidential. Their <a href=\"https://www.polly.ai/help/slack/response-anonymity-settings\" rel=\"noopener noreferrer\" target=\"_blank\">docs describe Anonymous responses</a> as \"truly anonymous and hidden from everyone\" \u2014 including from the polly sender. That's a meaningful guarantee, stronger than what most workplace feedback tools offer.</p>\n<p>Two things to know about that guarantee in practice:</p>\n<p><strong>1. Anonymity is plan-gated.</strong> Anonymous responses are only available on Polly's Pro plan or above. Free and Basic users get non-anonymous responses where Slack usernames are visible. If you want anonymity from your Free Polly install, the answer is \"upgrade.\" For a 50-person company evaluating tools, that's a real cost to factor in.</p>\n<p><strong>2. The guarantee describes what users see, not where the data lives.</strong> Polly's docs say responses are \"hidden from everyone\" \u2014 but they don't document whether the underlying Slack user ID is stored in their database (just suppressed from admin views) or discarded at submission. That distinction matters if you ever need the anonymity guarantee to hold up against a subpoena, a security incident, or a future product change. Polly might do the right thing under the hood; it's just not documented.</p>\n<p>HushAsk approaches this differently. When you send a message, your Slack user ID is passed through SHA-256 with a private salt before <em>anything</em> is stored. The original ID is discarded \u2014 not hidden, discarded. <a href=\"/help/privacy-and-hashing.html\">The mechanism is documented in detail</a>. There is no admin override, no data export that surfaces sender identity, no support flow that can recover it. The information isn't there to find.</p>\n<p>Whether your team needs that level of guarantee depends on the kinds of questions you're trying to surface. For five-question pulse surveys about office snacks, Polly's UI-level anonymity is plenty. For ongoing questions about manager behavior, pay disparities, or compliance concerns \u2014 that's where the architectural distinction starts to matter.</p>\n\n<h2 id=\"conversation-shape\">Polls and surveys vs Q&amp;A</h2>\n<p>The other structural difference is the kind of conversation each tool is built for.</p>\n<p>Polly is engineered for structured-response formats. You write the questions, configure the schedule, send to a channel, get aggregated results in a dashboard. The conversation is bounded \u2014 the polly closes, results aggregate, you move on. Polly does have a Q&amp;A template, but the dominant pattern is poll-shaped.</p>\n<p>HushAsk is engineered for unstructured ongoing Q&amp;A. An employee opens a DM with the bot, types a question, the question routes to HR or to a public knowledge channel, an admin replies, the employee sees the reply (still anonymous), they can ask a follow-up. The conversation can keep going. Nothing about it is bounded by a schedule.</p>\n<p>Said another way: Polly answers <em>\"what do five people on average think about X?\"</em> HushAsk answers <em>\"why is this one specific thing happening, and what should we do about it?\"</em></p>\n<p>One honest caveat about HushAsk: on Slack Enterprise Grid plans, Slack's own audit logs record DM interactions with bots. HushAsk can't suppress what Slack itself records. For Enterprise Grid teams that need the strongest guarantee, the answer is HushAsk's cryptographic layer plus an IT policy agreement that those audit logs aren't accessed.</p>\n\n<h2 id=\"which-fits\">Which one fits which team</h2>\n<p>The honest answer is that most teams should probably use both, for different jobs.</p>\n<p><strong>Pick Polly when</strong> you need structured engagement surveys on a schedule, when you want trend-line dashboards over time, when the questions are bounded and preset, when the audience is the whole company at once, and when \"anonymous from the UI\" is enough for the topics you're asking about.</p>\n<p><strong>Pick HushAsk when</strong> the question is ad-hoc, when the answer requires back-and-forth, when the topic is sensitive enough that a clearly-documented cryptographic guarantee matters more than a UI-level promise, or when you want the conversation to live in Slack rather than redirect to a survey URL.</p>\n<p>If you're picking one for your team's first anonymous feedback rollout, the question to ask is: <em>am I trying to learn something predictable, or surface something unpredictable?</em> Predictable, scheduled, aggregable \u2192 Polly. Unpredictable, ongoing, sensitive \u2192 HushAsk.</p>\n<p>Either is better than nothing. Both is better than either alone \u2014 and if budget forces a choice, pick the one that fits the question your team most needs to ask.</p>"
+}
