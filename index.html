@@ -269,6 +269,28 @@
     .ha-msg-1 { animation: ha-msgin 0.5s ease-out 0.7s forwards; }
     .ha-msg-2 { animation: ha-msgin 0.5s ease-out 1.9s forwards; }
     @media (prefers-reduced-motion: reduce) { .ha-msg { opacity: 1; animation: none; } }
+    /* Directory badge row (homepage stat-callout) */
+    .dir-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 38px;
+      padding: 0 14px;
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: -0.1px;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+      white-space: nowrap;
+    }
+    .dir-badge:hover { border-color: #94A3B8; box-shadow: 0 4px 12px rgba(15,28,63,0.06); transform: translateY(-1px); }
+    .dir-badge .dir-logo { width: 16px; height: 16px; flex-shrink: 0; }
+    .dir-badge .dir-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dir-badge .dir-label { color: var(--text); }
 
   </style>
 <script type="application/ld+json">
@@ -428,13 +450,28 @@
         </a>
         <img alt="GDPR Compliant" style="height:45px;width:auto;" src="/assets/gdpr-badge.svg">
       </div>
-      <p style="margin-top:24px;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);">Listed on</p>
-      <ul class="dir-row" style="list-style:none;margin:10px 0 0;padding:0;display:flex;justify-content:center;align-items:center;gap:6px 18px;flex-wrap:wrap;">
-        <li><a target="_blank" rel="noopener" href="https://www.capterra.com/p/10040370/HushAsk/" style="color:var(--text-mid);font-size:14px;font-weight:600;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px;transition:color 0.15s;">Capterra</a></li>
-        <li><a target="_blank" rel="noopener" href="https://www.getapp.com/all-software/a/hushask/" style="color:var(--text-mid);font-size:14px;font-weight:600;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px;transition:color 0.15s;">GetApp</a></li>
-        <li><a target="_blank" rel="noopener" href="https://www.softwareadvice.com/product/547183-HushAsk/" style="color:var(--text-mid);font-size:14px;font-weight:600;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px;transition:color 0.15s;">Software Advice</a></li>
-        <li><a target="_blank" rel="noopener" href="https://www.g2.com/products/hushask/reviews" style="color:var(--text-mid);font-size:14px;font-weight:600;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px;transition:color 0.15s;">G2</a></li>
-        <li><a target="_blank" rel="noopener" href="https://www.producthunt.com/products/hushask" style="color:var(--text-mid);font-size:14px;font-weight:600;text-decoration:none;border-bottom:1px solid var(--border);padding-bottom:1px;transition:color 0.15s;">Product Hunt</a></li>
+      <p style="margin-top:28px;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--text-muted);">Listed on</p>
+      <ul class="dir-row" style="list-style:none;margin:14px 0 0;padding:0;display:flex;justify-content:center;align-items:stretch;gap:10px;flex-wrap:wrap;">
+        <li><a class="dir-badge" data-brand="capterra" target="_blank" rel="noopener" href="https://www.capterra.com/p/10040370/HushAsk/">
+          <span class="dir-dot" style="background:#FF9D28;"></span>
+          <span class="dir-label">Capterra</span>
+        </a></li>
+        <li><a class="dir-badge" data-brand="getapp" target="_blank" rel="noopener" href="https://www.getapp.com/all-software/a/hushask/">
+          <span class="dir-dot" style="background:#7341DD;"></span>
+          <span class="dir-label">GetApp</span>
+        </a></li>
+        <li><a class="dir-badge" data-brand="softwareadvice" target="_blank" rel="noopener" href="https://www.softwareadvice.com/product/547183-HushAsk/">
+          <span class="dir-dot" style="background:#F47B20;"></span>
+          <span class="dir-label">Software Advice</span>
+        </a></li>
+        <li><a class="dir-badge" data-brand="g2" target="_blank" rel="noopener" href="https://www.g2.com/products/hushask/reviews" aria-label="View HushAsk on G2">
+          <svg class="dir-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="fill:#FF492C;"><path d="M12 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24Zm.122 5.143c.45 0 .9.044 1.342.132l-1.342 2.806C9.962 8.08 8.203 9.84 8.203 12s1.76 3.92 3.92 3.92c.937 0 1.844-.338 2.553-.951l1.483 2.572A6.856 6.856 0 0 1 5.266 12a6.856 6.856 0 0 1 6.856-6.856Zm3.498.49a1.262 1.262 0 0 1 .026 0c.427 0 .792.113 1.101.34.31.229.466.546.466.946 0 .639-.36 1.03-1.035 1.376l-.377.191c-.403.204-.602.385-.657.706h2.05v.85h-3.101v-.144c0-.526.103-.96.314-1.306.211-.345.576-.65 1.102-.917l.242-.117c.427-.216.538-.401.538-.625 0-.266-.228-.458-.6-.458-.44 0-.773.228-1.004.694l-.592-.595c.13-.279.338-.502.619-.675a1.7 1.7 0 0 1 .908-.266Zm-2.094 5.388h3.394l1.697 2.937-1.697 2.94-1.697-2.94H11.83l1.696-2.937Z"/></svg>
+          <span class="dir-label">G2</span>
+        </a></li>
+        <li><a class="dir-badge" data-brand="producthunt" target="_blank" rel="noopener" href="https://www.producthunt.com/products/hushask" aria-label="View HushAsk on Product Hunt">
+          <svg class="dir-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="fill:#DA552F;"><path d="M13.604 8.4h-3.405V12h3.405c.995 0 1.801-.806 1.801-1.801 0-.993-.805-1.799-1.801-1.799zM12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm1.604 14.4h-3.405V18H7.801V6h5.804c2.319 0 4.2 1.88 4.2 4.199 0 2.321-1.881 4.201-4.201 4.201z"/></svg>
+          <span class="dir-label">Product Hunt</span>
+        </a></li>
       </ul>
     </div>
   </section>
