@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # App source (secrets injected at runtime via env vars — not baked in)
 COPY app.py database.py web.py crypto.py start-railway.sh ./
-COPY index.html privacy.html terms.html pricing.html faq.html ./
+COPY index.html privacy.html terms.html pricing.html faq.html dpa.html ./
 COPY robots.txt sitemap.xml favicon.ico ./
 COPY blog/ ./blog/
 COPY help/ ./help/
