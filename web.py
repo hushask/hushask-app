@@ -715,6 +715,11 @@ def privacy():
 def terms():
     return send_from_directory(BASE_DIR, "terms.html")
 
+@web.route("/dpa")
+def dpa():
+    return send_from_directory(BASE_DIR, "dpa.html")
+
+
 @web.route("/pricing")
 def pricing():
     return send_from_directory(BASE_DIR, "pricing.html")

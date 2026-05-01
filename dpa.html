@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="canonical" href="https://hushask.com/dpa">
+  <title>Data Processing Agreement — HushAsk</title>
+  <meta name="description" content="HushAsk's Data Processing Agreement (DPA) under GDPR Article 28. Sub-processors, security measures, breach notification, transfer mechanisms.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://hushask.com/dpa">
+  <meta property="og:title" content="Data Processing Agreement — HushAsk">
+  <meta property="og:description" content="HushAsk's Data Processing Agreement (DPA) under GDPR Article 28. Sub-processors, security measures, breach notification, transfer mechanisms.">
+  <meta property="og:image" content="https://hushask.com/assets/ha-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Data Processing Agreement — HushAsk">
+  <meta name="twitter:description" content="HushAsk's Data Processing Agreement (DPA) under GDPR Article 28. Sub-processors, security measures, breach notification, transfer mechanisms.">
+  <meta name="twitter:image" content="https://hushask.com/assets/ha-512.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1A2E62;
+      --navy-dark: #0F1C3F;
+      --blue: #2563EB;
+      --blue-light: #EFF4FF;
+      --bg: #F8FAFC;
+      --bg-white: #ffffff;
+      --bg-dark: #0F172A;
+      --border: #E2E8F0;
+      --border-dark: #1E293B;
+      --text: #0F172A;
+      --text-mid: #475569;
+      --text-muted: #94A3B8;
+      --surface: #F1F5F9;
+      --radius: 14px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      line-height: 1.8;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(248,250,252,0.95);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px; max-width: 1080px; margin: 0 auto;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .logo-badge {
+      width: 36px; height: 36px; background: var(--navy);
+      border-radius: 9px; display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 14px; color: white; transform: rotate(-6deg); flex-shrink: 0;
+    }
+    .logo-name { font-size: 18px; font-weight: 900; letter-spacing: -0.5px; color: var(--text); }
+    .logo-name em { font-style: normal; color: var(--navy); }
+    /* CONTENT */
+    .content {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 64px 40px 100px;
+    }
+
+    /* PAGE HEADER */
+    .page-header { margin-bottom: 48px; }
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      color: var(--text);
+      margin-bottom: 10px;
+    }
+    .updated {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin: 0;
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--bg-white);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 22px 26px;
+      margin-bottom: 48px;
+    }
+    .toc-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .toc ol {
+      color: var(--text-mid);
+      font-size: 14px;
+      padding-left: 18px;
+      line-height: 1.6;
+    }
+    .toc ol li { margin-bottom: 4px; }
+    .toc a { color: var(--text-mid); text-decoration: none; }
+    .toc a:hover { color: var(--blue); }
+
+    /* CALLOUT */
+    .callout {
+      border-left: 3px solid var(--blue);
+      background: var(--blue-light);
+      border-radius: 0 6px 6px 0;
+      padding: 16px 20px;
+      margin: 0 0 44px;
+    }
+    .callout p {
+      font-size: 14px;
+      color: var(--text-mid);
+      margin: 0;
+      line-height: 1.7;
+    }
+
+    /* BODY COPY */
+    h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 48px 0 10px;
+      letter-spacing: 0;
+    }
+    h3 {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      margin: 28px 0 8px;
+    }
+    p {
+      color: var(--text-mid);
+      font-size: 15px;
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    ul, ol {
+      color: var(--text-mid);
+      font-size: 15px;
+      padding-left: 22px;
+      margin-bottom: 14px;
+      line-height: 1.8;
+    }
+    ul li, ol li { margin-bottom: 6px; }
+    strong { color: var(--text); font-weight: 600; }
+    a { color: var(--blue); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    table.subprocessors {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 14px;
+    }
+    table.subprocessors th {
+      text-align: left;
+      padding: 10px 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      border-bottom: 2px solid var(--border);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    table.subprocessors td {
+      padding: 10px 12px;
+      color: var(--text-mid);
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 48px 0 24px;
+    }
+    .footer-note {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .footer-note a { color: var(--text-muted); }
+    .footer-note a:hover { color: var(--blue); }
+
+    /* FOOTER */
+    footer {
+      background: var(--bg-dark);
+      border-top: 1px solid var(--border-dark);
+      padding: 32px 40px;
+    }
+    .footer-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .footer-copy { font-size: 13px; color: #475569; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a {
+      font-size: 13px;
+      color: #475569;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: #94A3B8; }
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;text-decoration:none;border:none;transition:opacity .18s,transform .12s;}
+    .btn:hover{opacity:.88;transform:translateY(-1px);}
+    .btn-primary{background:#1A2E62;color:white;}
+    .nav-links{display:flex;gap:28px;list-style:none;}
+    .nav-links a{color:#94A3B8;text-decoration:none;font-size:14px;font-weight:500;}
+    .nav-links a:hover{color:#0F172A;}
+    .nav-hamburger { display: none; background: none; border: none; cursor: pointer; padding: 6px 8px; color: #0F172A; font-size: 22px; line-height: 1; border-radius: 8px; transition: background 0.15s; flex-shrink: 0; }
+    .nav-hamburger:hover { background: #F1F5F9; }
+    .nav-cta { flex-shrink: 0; }
+    @media (max-width: 768px) {
+      .nav-inner { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .content { padding: 44px 20px 72px; }
+      h1 { font-size: 26px; }
+      .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+      .footer-links { justify-content: center; }
+      .nav-hamburger { display: flex; }
+      .nav-cta { display: none; }
+      table.subprocessors { font-size: 13px; }
+      table.subprocessors th, table.subprocessors td { padding: 8px 6px; }
+    }
+    .mobile-menu { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: #ffffff; z-index: 200; flex-direction: column; padding: 20px 24px 32px; }
+    .mobile-menu.open { display: flex; }
+    .mobile-menu-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 36px; padding-bottom: 16px; border-bottom: 1px solid #E2E8F0; }
+    .mobile-menu-close { background: none; border: none; cursor: pointer; font-size: 22px; color: #0F172A; padding: 6px 8px; border-radius: 8px; line-height: 1; }
+    .mobile-menu-close:hover { background: #F1F5F9; }
+    .mobile-menu-links { list-style: none; flex: 1; }
+    .mobile-menu-links li { border-bottom: 1px solid #E2E8F0; }
+    .mobile-menu-links a { display: block; padding: 16px 4px; font-size: 17px; font-weight: 600; color: #0F172A; text-decoration: none; transition: color 0.15s; }
+    .mobile-menu-links a:hover { color: #2563EB; }
+    .mobile-menu-cta { margin-top: 32px; }
+    .mobile-menu-cta a { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px 24px; background: #1A2E62; color: white; border-radius: 10px; font-weight: 700; font-size: 15px; text-decoration: none; transition: opacity 0.18s; }
+    .mobile-menu-cta a:hover { opacity: 0.88; }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/blog">Blog</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/faq">FAQ</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary nav-cta" style="width:auto;flex-shrink:0;">Add to Slack</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <!-- Mobile menu overlay -->
+  <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu-header">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="mobile-menu-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/pricing">Pricing</a></li>
+      <li><a href="/blog">Blog</a></li>
+      <li><a href="/help/">Help</a></li>
+      <li><a href="/faq">FAQ</a></li>
+    </ul>
+    <div class="mobile-menu-cta">
+      <a href="/slack/install">Add to Slack</a>
+    </div>
+  </div>
+
+    <div class="content">
+    <div class="page-header">
+      <h1>Data Processing Agreement</h1>
+      <p class="updated">Last updated: May 2026 · Version 1.0</p>
+    </div>
+
+    <div class="toc">
+      <div class="toc-label">Contents</div>
+      <ol>
+        <li><a href="#parties">Parties and applicability</a></li>
+        <li><a href="#definitions">Definitions</a></li>
+        <li><a href="#subject-matter">Subject matter and duration</a></li>
+        <li><a href="#processing-instructions">Processing instructions</a></li>
+        <li><a href="#confidentiality">Confidentiality</a></li>
+        <li><a href="#security">Security measures</a></li>
+        <li><a href="#sub-processors">Sub-processors</a></li>
+        <li><a href="#transfers">International transfers</a></li>
+        <li><a href="#data-subject-rights">Assistance with data subject rights</a></li>
+        <li><a href="#breach">Personal data breach notification</a></li>
+        <li><a href="#audits">Audits</a></li>
+        <li><a href="#return-deletion">Return and deletion of personal data</a></li>
+        <li><a href="#liability">Liability</a></li>
+        <li><a href="#general">Governing law and general provisions</a></li>
+        <li><a href="#annex-a">Annex A — Details of processing</a></li>
+        <li><a href="#annex-b">Annex B — Technical and organizational measures</a></li>
+        <li><a href="#annex-c">Annex C — Approved sub-processors</a></li>
+        <li><a href="#signing">How to execute this DPA</a></li>
+      </ol>
+    </div>
+
+    <div class="callout">
+      <p><strong>Plain-English summary:</strong> If you're a HushAsk customer in the EU, UK, or anywhere covered by GDPR/UK GDPR, this page is your DPA. It's published, dated, and incorporated into our <a href="/terms">Terms of Service</a>. By installing or paying for HushAsk, both parties agree to it. If your procurement team needs a counter-signed copy, email <a href="mailto:privacy@hushask.com">privacy@hushask.com</a> and we'll send one back signed within two business days.</p>
+    </div>
+
+    <p>This Data Processing Agreement ("DPA") forms part of the agreement between HushAsk and the workspace ("Customer") that has installed or subscribed to HushAsk. It governs the processing of Personal Data carried out by HushAsk on Customer's behalf and is intended to satisfy Article 28 of the EU General Data Protection Regulation (GDPR), the equivalent provisions of the UK GDPR, and analogous obligations under other applicable data protection laws.</p>
+    <p>HushAsk is designed so that very little Personal Data is processed in the first place — sender identities are cryptographically anonymized at ingestion, and we never store Slack user IDs, names, or email addresses. The terms below apply to the limited set of Personal Data we do process, which is described in Annex A.</p>
+
+    <h2 id="parties">1. Parties and applicability</h2>
+    <p><strong>Processor:</strong> Jaris LLC, a Wyoming limited liability company, doing business as HushAsk ("HushAsk," "we," or "Processor"). Contact: <a href="mailto:privacy@hushask.com">privacy@hushask.com</a>.</p>
+    <p><strong>Controller:</strong> The legal entity that has installed HushAsk into a Slack workspace or that pays for a HushAsk subscription ("Customer" or "Controller"). Where a workspace admin installs HushAsk on behalf of an organization, that organization is the Controller.</p>
+    <p>This DPA applies to any Processing of Personal Data that HushAsk carries out on Customer's behalf in connection with the HushAsk service. It is incorporated by reference into the HushAsk Terms of Service and takes effect automatically upon installation or subscription. No counter-signature is required for this DPA to be binding, though Customer may request a signed copy at any time.</p>
+    <p>If there is a conflict between this DPA and the Terms of Service with respect to Processing of Personal Data, this DPA prevails.</p>
+
+    <h2 id="definitions">2. Definitions</h2>
+    <p>Capitalised terms not otherwise defined here have the meanings given to them in the GDPR. The following definitions apply:</p>
+    <ul>
+      <li><strong>Personal Data</strong> — any information relating to an identified or identifiable natural person processed under this DPA. Within HushAsk, Personal Data is limited to the categories described in Annex A.</li>
+      <li><strong>Processing</strong> — any operation performed on Personal Data, including collection, storage, transmission, deletion, and, where applicable, the synchronisation of message content to a Customer-controlled Notion workspace.</li>
+      <li><strong>Sub-processor</strong> — any third party engaged by HushAsk to Process Personal Data on Customer's behalf (e.g., infrastructure and platform providers listed in Annex C).</li>
+      <li><strong>Data Subject</strong> — the natural person to whom Personal Data relates. In the context of HushAsk, Data Subjects are the workspace's installer admin and the workspace members who interact with HushAsk.</li>
+      <li><strong>Personal Data Breach</strong> — a breach of security leading to the accidental or unlawful destruction, loss, alteration, unauthorised disclosure of, or access to, Personal Data.</li>
+      <li><strong>Standard Contractual Clauses ("SCCs")</strong> — the European Commission's standard contractual clauses for the transfer of personal data to third countries, as adopted in Commission Implementing Decision (EU) 2021/914 of 4 June 2021, and the UK Information Commissioner's International Data Transfer Addendum where applicable.</li>
+    </ul>
+
+    <h2 id="subject-matter">3. Subject matter, duration, nature, and purpose of processing</h2>
+    <p>The subject matter, duration, nature, purpose, types of Personal Data, and categories of Data Subjects are set out in <a href="#annex-a">Annex A</a>. In short:</p>
+    <ul>
+      <li><strong>Subject matter:</strong> HushAsk routes anonymous messages within Customer's Slack workspace and, where Customer has connected Notion, archives answered threads to Customer's own Notion database.</li>
+      <li><strong>Duration:</strong> The DPA applies for as long as HushAsk Processes Personal Data on Customer's behalf — that is, until the app is uninstalled from Slack or the subscription is cancelled, whichever is later.</li>
+      <li><strong>Nature and purpose:</strong> Processing is limited to what is necessary to operate the service, enforce free-tier limits, detect abuse on an anonymized basis, and (optionally) sync answered threads to Notion.</li>
+    </ul>
+
+    <h2 id="processing-instructions">4. Processing instructions</h2>
+    <p>HushAsk Processes Personal Data only on documented instructions from Customer. Customer's instructions are given through:</p>
+    <ul>
+      <li>This DPA and the Terms of Service;</li>
+      <li>Customer's configuration choices made through the HushAsk App Home or admin commands within Slack (for example, choosing which channels receive messages, connecting or disconnecting Notion);</li>
+      <li>Written instructions sent to <a href="mailto:privacy@hushask.com">privacy@hushask.com</a>, where Customer requests deletion or other lawful action that HushAsk is technically able to perform.</li>
+    </ul>
+    <p>HushAsk will inform Customer if, in HushAsk's opinion, an instruction infringes applicable data protection law. HushAsk may continue to Process Personal Data without Customer's instructions only where required to do so by EU, EU Member State, or other applicable law to which HushAsk is subject; in that case, HushAsk will inform Customer of the legal requirement before Processing, unless the law prohibits such information on important grounds of public interest.</p>
+
+    <h2 id="confidentiality">5. Confidentiality</h2>
+    <p>HushAsk ensures that any person authorised to Process Personal Data is bound by an obligation of confidentiality, whether by contract or by statutory duty. As of the last-updated date of this DPA, HushAsk has no employees other than its founder, who is bound by these confidentiality obligations directly under this DPA. If HushAsk later engages employees or contractors who handle Personal Data, written confidentiality obligations equivalent to those described here will be in place before any such access is granted.</p>
+
+    <h2 id="security">6. Security measures</h2>
+    <p>HushAsk implements appropriate technical and organizational measures to ensure a level of security appropriate to the risk, including the measures referred to in Article 32 GDPR. The full list is set out in <a href="#annex-b">Annex B</a>. Highlights include:</p>
+    <ul>
+      <li>Architectural anonymization of sender identity using a 256-bit SHA-256 hash combined with a private server-side salt — Slack user IDs are never written to disk;</li>
+      <li>Encryption of Notion access tokens at rest using authenticated symmetric encryption (Fernet, AES-128-CBC + HMAC-SHA256), with the encryption key stored separately as a server environment variable;</li>
+      <li>Encryption in transit (TLS 1.2+) for all customer-facing endpoints and outbound API calls;</li>
+      <li>Principle of least privilege for infrastructure access, with admin access protected by multi-factor authentication;</li>
+      <li>Regular review of dependencies for known vulnerabilities and timely patching;</li>
+      <li>Incident response procedures including breach notification triggers and a published security contact.</li>
+    </ul>
+
+    <h2 id="sub-processors">7. Sub-processors</h2>
+    <p>Customer authorises HushAsk to engage the Sub-processors listed in <a href="#annex-c">Annex C</a> for the Processing of Personal Data described in Annex A. HushAsk imposes data protection obligations on each Sub-processor that are no less protective than those in this DPA, in particular as regards the implementation of appropriate technical and organizational measures.</p>
+    <p>HushAsk remains liable to Customer for the performance of any Sub-processor's data protection obligations to the same extent as for its own.</p>
+    <p><strong>Adding or replacing a Sub-processor:</strong> HushAsk will notify Customer at least thirty (30) days before adding or replacing any Sub-processor by updating Annex C on this page and emailing the workspace's admin contact on file. Customer may object to the change in writing during the notice period for documented data protection reasons. If the parties cannot agree on a resolution, Customer's sole remedy is to terminate the relevant subscription and request deletion of Personal Data, without further liability for either party beyond fees already accrued.</p>
+
+    <h2 id="transfers">8. International transfers</h2>
+    <p>HushAsk is established in the United States. Sub-processors listed in Annex C may also be located outside the European Economic Area, the United Kingdom, or Switzerland. To the extent any transfer of Personal Data to a country not subject to an adequacy decision occurs, HushAsk will rely on a valid transfer mechanism, including:</p>
+    <ul>
+      <li>The European Commission's Standard Contractual Clauses (Module Two: Controller-to-Processor; or Module Three: Processor-to-Processor where relevant), which are incorporated into this DPA by reference and deemed executed by the parties upon Customer's installation of HushAsk;</li>
+      <li>The UK Information Commissioner's International Data Transfer Addendum, where the transfer is subject to UK GDPR;</li>
+      <li>The Swiss-equivalent transfer mechanism, where the transfer is subject to the Swiss Federal Act on Data Protection.</li>
+    </ul>
+    <p>Where the SCCs apply, the optional clauses are completed as follows: the docking clause (Clause 7) does not apply; in Clause 9, Option 2 (general written authorisation) applies with the notice period set out in Section 7 above; in Clause 11, the optional independent dispute resolution language is omitted; in Clause 17, the governing law is the law of Ireland; and in Clause 18(b), the courts of Ireland are designated. The Annexes to the SCCs are populated by Annex A, Annex B, and Annex C of this DPA.</p>
+
+    <h2 id="data-subject-rights">9. Assistance with Data Subject rights</h2>
+    <p>HushAsk will, taking into account the nature of the Processing, assist Customer by appropriate technical and organizational measures, insofar as possible, to fulfil Customer's obligation to respond to requests from Data Subjects to exercise their rights under Chapter III of the GDPR.</p>
+    <p>Because HushAsk's architectural anonymization means we cannot identify which message belongs to which Data Subject, the practical scope of HushAsk's assistance is limited:</p>
+    <ul>
+      <li><strong>Sender-side requests (e.g., access, deletion of an individual message):</strong> HushAsk genuinely cannot link an external request to a specific stored record. We will tell the Data Subject this directly and will support Customer in explaining the architectural reason in any response Customer makes.</li>
+      <li><strong>Workspace-wide deletion:</strong> On written request from a workspace admin, HushAsk will delete all message content associated with the workspace and confirm completion in writing, typically within fifteen (15) business days.</li>
+      <li><strong>Configuration data (workspace ID, channel IDs, Notion tokens):</strong> These can be inspected and deleted on workspace admin request.</li>
+    </ul>
+    <p>If a Data Subject sends a rights request directly to HushAsk that relates to Customer's workspace, HushAsk will, without undue delay, forward the request to Customer's admin contact on file and instruct the Data Subject to direct further correspondence to Customer.</p>
+
+    <h2 id="breach">10. Personal data breach notification</h2>
+    <p>HushAsk will notify Customer without undue delay, and in any event within seventy-two (72) hours, after becoming aware of a Personal Data Breach affecting Customer's data. Notification will be sent by email to the workspace admin contact on file and will include, to the extent then known:</p>
+    <ul>
+      <li>The nature of the Personal Data Breach including, where possible, the categories and approximate number of Data Subjects and records concerned;</li>
+      <li>The likely consequences of the breach;</li>
+      <li>The measures taken or proposed to address the breach and to mitigate its possible adverse effects;</li>
+      <li>The name and contact details of HushAsk's data protection point of contact.</li>
+    </ul>
+    <p>Where it is not possible to provide all of this information at once, HushAsk will provide it in phases as it becomes available, without further undue delay. Notification of a Personal Data Breach is not, by itself, an admission of fault or liability.</p>
+
+    <h2 id="audits">11. Audits</h2>
+    <p>HushAsk will make available to Customer all information necessary to demonstrate compliance with this DPA, and will allow for and contribute to audits, including inspections, conducted by Customer or another auditor mandated by Customer, in accordance with this Section.</p>
+    <p>In practice, given the size of HushAsk and the limited categories of Personal Data Processed:</p>
+    <ul>
+      <li>HushAsk will respond to written security and privacy questionnaires within fifteen (15) business days, free of charge, no more than once per twelve-month period per Customer (additional questionnaires may be subject to a reasonable fee);</li>
+      <li>On request, HushAsk will provide documentation of its technical and organizational measures and any security certifications it holds at the time of the request;</li>
+      <li>On-site audits are not generally available given HushAsk's remote-only operation. Where Customer has a regulatory or contractual requirement that cannot be satisfied by documentation alone, the parties will agree in good faith on an alternative assurance mechanism (for example, a remote video walkthrough);</li>
+      <li>Audit rights described here may be exercised on at least thirty (30) days' written notice and during normal business hours, in a manner that does not unreasonably interfere with HushAsk's operations.</li>
+    </ul>
+
+    <h2 id="return-deletion">12. Return and deletion of personal data</h2>
+    <p>On termination or expiry of the agreement between Customer and HushAsk, HushAsk will, at Customer's choice, delete or return all Personal Data Processed under this DPA, unless EU or Member State law requires further storage.</p>
+    <p>By default, HushAsk will delete:</p>
+    <ul>
+      <li>Pending message content within seven (7) days of uninstallation or written deletion request;</li>
+      <li>Stored message content (retained for up to twelve (12) months to support Notion sync) within thirty (30) days of uninstallation or written deletion request;</li>
+      <li>Workspace configuration, including OAuth tokens and channel mappings, within thirty (30) days of uninstallation;</li>
+      <li>Notion access tokens immediately upon uninstallation or admin disconnection of the Notion integration.</li>
+    </ul>
+    <p>Backups containing Personal Data will be overwritten according to the rolling backup retention schedule set out in Annex B; HushAsk will not restore Personal Data from backups except for genuine disaster recovery, after which the data will be re-deleted on the same schedule.</p>
+
+    <h2 id="liability">13. Liability</h2>
+    <p>The liability of each party arising under or in connection with this DPA is subject to the limitations and exclusions set out in the HushAsk Terms of Service. Nothing in this DPA limits or excludes either party's liability for matters that cannot be limited or excluded under applicable law (including, where applicable, fines imposed by supervisory authorities under Article 83 GDPR).</p>
+
+    <h2 id="general">14. Governing law and general provisions</h2>
+    <p>This DPA is governed by the law of the State of Wyoming, USA, without regard to its conflict-of-law principles, except that, to the extent the SCCs apply to a transfer covered by this DPA, the SCCs are governed by the law of Ireland as specified in Section 8 above. The choice of governing law in this Section does not deprive a Data Subject of the protection afforded by the mandatory provisions of the law of their habitual residence.</p>
+    <p>If any provision of this DPA is held to be invalid or unenforceable, the remaining provisions remain in full force, and the parties will replace the invalid provision with one that achieves the original commercial intent to the maximum extent permitted by law.</p>
+    <p>This DPA, the Terms of Service, and the Privacy Policy together constitute the entire agreement of the parties with respect to the Processing of Personal Data and supersede any prior data-processing terms.</p>
+    <p>HushAsk may update this DPA from time to time, including to reflect new Sub-processors, regulatory developments, or product changes. Material changes will be communicated to workspace admins, and the "Last updated" date at the top of this page will be revised. Customer's continued use of HushAsk after a material change constitutes acceptance of the updated DPA.</p>
+
+    <hr>
+
+    <h2 id="annex-a">Annex A — Details of processing</h2>
+
+    <h3>A.1 Subject matter and duration</h3>
+    <p>HushAsk Processes Personal Data on Customer's behalf in order to operate the HushAsk Slack application: routing anonymous messages within Customer's Slack workspace, optionally synchronising answered threads to Customer's own Notion database, and enforcing service limits. Processing continues for as long as HushAsk is installed in Customer's Slack workspace or Customer maintains an active subscription, whichever is later.</p>
+
+    <h3>A.2 Nature and purpose of processing</h3>
+    <p>The Processing involves: temporary storage of message content while routing is selected; durable storage of routed message content for up to twelve months to support Notion sync; storage of an anonymized hashed identifier per workspace to enforce free-tier limits and detect abuse; storage of workspace configuration (Slack team ID, channel IDs, encrypted Notion tokens); and onward transmission of message content to Slack and (where the integration is enabled) Notion.</p>
+
+    <h3>A.3 Types of personal data</h3>
+    <ul>
+      <li>Message content authored by Slack workspace members and routed through HushAsk. This may, depending on what users choose to write, include freeform Personal Data of the sender or third parties;</li>
+      <li>Workspace configuration data, including the Slack team ID, channel IDs, and the identifier of the workspace admin who installed HushAsk;</li>
+      <li>An anonymized 256-bit SHA-256 hash derived from the sender's Slack user ID and workspace ID combined with a private server-side salt — this hash is not reasonably linkable to a natural person without HushAsk's salt and is retained only for abuse detection and rate-limiting;</li>
+      <li>Encrypted OAuth access tokens for Slack and (optionally) Notion;</li>
+      <li>Billing and contact information for paid subscriptions (handled by Stripe — see Annex C — HushAsk does not receive payment card numbers).</li>
+    </ul>
+
+    <h3>A.4 Categories of data subjects</h3>
+    <ul>
+      <li>The workspace admin who installs and configures HushAsk;</li>
+      <li>Members of Customer's Slack workspace who interact with HushAsk to send anonymous messages;</li>
+      <li>Members of Customer's Slack workspace who receive routed messages in admin or routing channels;</li>
+      <li>Where applicable, the billing contact for Customer's paid subscription.</li>
+    </ul>
+
+    <h3>A.5 Sensitive data</h3>
+    <p>HushAsk does not request, encourage, or specifically design for the Processing of special categories of Personal Data under Article 9 GDPR. Customer acknowledges that anonymous feedback channels can result in users voluntarily disclosing sensitive information (for example, references to health, religious belief, or trade union membership). Where this occurs, the Personal Data is held subject to the same security and retention measures as other message content, and Customer remains responsible as Controller for the lawful basis of any such disclosure.</p>
+
+    <h3>A.6 Frequency of processing</h3>
+    <p>Continuous, in response to user-initiated activity within Customer's Slack workspace.</p>
+
+    <h2 id="annex-b">Annex B — Technical and organizational measures</h2>
+
+    <p>HushAsk maintains the following technical and organizational measures, calibrated to the limited Personal Data we Process and our remote-first operation. Specific implementations may evolve as the product develops; the substance of the protections described here will not be reduced without revising this DPA.</p>
+
+    <h3>B.1 Pseudonymisation and anonymisation</h3>
+    <ul>
+      <li>Sender Slack user IDs are passed through SHA-256 with a private server-side salt at ingestion, producing a 64-character (256-bit) hex digest. The original Slack user ID is never written to disk;</li>
+      <li>The hash is not reversible without the server-side salt and is not linkable to any external identity database;</li>
+      <li>Slack display names, real names, email addresses, profile photos, and IP addresses are not collected.</li>
+    </ul>
+
+    <h3>B.2 Confidentiality, integrity, availability, and resilience</h3>
+    <ul>
+      <li>TLS 1.2+ for all inbound and outbound HTTP traffic, with HSTS enabled at the edge;</li>
+      <li>Notion OAuth tokens encrypted at rest using Fernet (AES-128-CBC + HMAC-SHA256) with the key held in a separate environment variable;</li>
+      <li>Slack OAuth tokens stored in a database file outside the public web root, with the application server explicitly blocking download of source code, database files, and environment configuration;</li>
+      <li>SQLite WAL mode for safe concurrent access without network exposure;</li>
+      <li>Hosting on infrastructure with automatic vertical scaling, regional redundancy, and managed restarts;</li>
+      <li>Daily automated backups of the production database with rolling retention of approximately seven days;</li>
+      <li>Stateless application servers behind a managed load balancer that can be replaced or rolled back rapidly.</li>
+    </ul>
+
+    <h3>B.3 Restoration of availability after incident</h3>
+    <ul>
+      <li>Documented restore procedure with rolling backups described above;</li>
+      <li>Source code and infrastructure-as-code stored in a private repository with full revision history, enabling re-deployment to a clean environment;</li>
+      <li>Target recovery time objective (RTO) of twenty-four (24) hours and recovery point objective (RPO) of twenty-four (24) hours for the production database, on a commercially reasonable basis.</li>
+    </ul>
+
+    <h3>B.4 Testing and evaluation of measures</h3>
+    <ul>
+      <li>Dependency vulnerability monitoring with timely patching;</li>
+      <li>Manual review of access logs and Sub-processor security advisories;</li>
+      <li>Penetration testing or external security review on a commercially reasonable basis as the service grows.</li>
+    </ul>
+
+    <h3>B.5 User identification and authorisation</h3>
+    <ul>
+      <li>Administrative access to production infrastructure is restricted to HushAsk's founder, with multi-factor authentication required for the underlying provider accounts;</li>
+      <li>No shared admin accounts;</li>
+      <li>Access to Customer's data is limited to what is necessary to operate the service or respond to a documented Customer instruction.</li>
+    </ul>
+
+    <h3>B.6 Protection of data during transmission and storage</h3>
+    <ul>
+      <li>All inbound and outbound API traffic uses TLS;</li>
+      <li>Data at rest is held on encrypted volumes provided by infrastructure Sub-processors (see Annex C);</li>
+      <li>The application server explicitly blocks web access to <code>.env</code>, database files, source files, and other internal artefacts.</li>
+    </ul>
+
+    <h3>B.7 Physical security</h3>
+    <ul>
+      <li>HushAsk does not operate its own data centres. Physical security is provided by infrastructure Sub-processors listed in Annex C, each of which maintains industry-standard certifications for the physical security of its facilities.</li>
+    </ul>
+
+    <h3>B.8 Event logging and incident response</h3>
+    <ul>
+      <li>Application-level logs are retained for operational and security review;</li>
+      <li>Documented incident response procedure including assessment, mitigation, notification, and post-incident review;</li>
+      <li>Security contact: <a href="mailto:security@hushask.com">security@hushask.com</a>.</li>
+    </ul>
+
+    <h3>B.9 System configuration and change management</h3>
+    <ul>
+      <li>Production deployments are made through a controlled pipeline from a private source repository;</li>
+      <li>Configuration secrets (API keys, signing secrets, encryption keys) are stored as environment variables, not in source code;</li>
+      <li>A documented list of blocked file paths prevents accidental exposure of internal artefacts via the public web server.</li>
+    </ul>
+
+    <h3>B.10 Data minimisation and quality</h3>
+    <ul>
+      <li>By design, HushAsk collects only the data necessary to operate the service. Slack user IDs are discarded immediately after hashing; Slack display names, real names, email addresses, and IP addresses are never collected;</li>
+      <li>Workspace admins can request deletion of stored message content at any time.</li>
+    </ul>
+
+    <h3>B.11 Limited retention</h3>
+    <ul>
+      <li>Message content: retained for up to twelve (12) months to support Notion sync, then deleted;</li>
+      <li>Pending messages awaiting routing: deleted on routing or on abandonment;</li>
+      <li>OAuth state tokens: purged automatically after one (1) hour;</li>
+      <li>Workspace configuration: retained until uninstallation;</li>
+      <li>Hashed identifiers: retained alongside message content for the same period.</li>
+    </ul>
+
+    <h3>B.12 Accountability</h3>
+    <ul>
+      <li>Public Privacy Policy and DPA, both versioned and dated;</li>
+      <li>Maintained list of Sub-processors (Annex C);</li>
+      <li>Documented breach notification procedure with a 72-hour notification commitment.</li>
+    </ul>
+
+    <h2 id="annex-c">Annex C — Approved sub-processors</h2>
+    <p>The Sub-processors listed below are authorised by Customer for the purposes described. HushAsk will provide thirty (30) days' notice of any changes by updating this Annex and emailing the workspace's admin contact on file, in accordance with Section 7.</p>
+
+    <table class="subprocessors">
+      <thead>
+        <tr>
+          <th>Sub-processor</th>
+          <th>Purpose</th>
+          <th>Location of processing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Railway Corporation</strong></td>
+          <td>Application hosting, primary database storage, automated backups</td>
+          <td>United States</td>
+        </tr>
+        <tr>
+          <td><strong>Cloudflare, Inc.</strong></td>
+          <td>DNS, TLS termination, CDN edge for static assets, DDoS protection</td>
+          <td>Global edge network</td>
+        </tr>
+        <tr>
+          <td><strong>Stripe, Inc.</strong></td>
+          <td>Payment processing for paid subscriptions (HushAsk does not receive card numbers)</td>
+          <td>United States</td>
+        </tr>
+        <tr>
+          <td><strong>Slack Technologies, LLC</strong> (a Salesforce company)</td>
+          <td>The Slack platform itself, where Customer's workspace is hosted and where HushAsk delivers messages</td>
+          <td>United States</td>
+        </tr>
+        <tr>
+          <td><strong>Notion Labs, Inc.</strong> (optional, only if Customer has connected Notion)</td>
+          <td>Sync of answered threads to Customer's own Notion workspace, at Customer's election</td>
+          <td>United States</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>For Sub-processors located outside the EEA, the United Kingdom, or Switzerland, transfers are governed by the mechanisms described in Section 8.</p>
+    <p>Where a Sub-processor itself maintains a list of further sub-processors (for example, the cloud regions used by an infrastructure provider), HushAsk relies on each such Sub-processor's published security and privacy commitments for those onward arrangements.</p>
+
+    <h2 id="signing">15. How to execute this DPA</h2>
+    <p>This DPA is binding on both parties as soon as Customer installs or subscribes to HushAsk, and no further action is required for it to take effect.</p>
+    <p>If Customer's procurement, security, or legal team requires a counter-signed copy, email <a href="mailto:privacy@hushask.com">privacy@hushask.com</a> from a verified Customer email address with:</p>
+    <ul>
+      <li>Customer's full legal entity name and registered address;</li>
+      <li>The Slack workspace name and any internal vendor reference (optional);</li>
+      <li>The DPA version number shown at the top of this page.</li>
+    </ul>
+    <p>HushAsk will return a counter-signed PDF (typically within two business days) that mirrors the version of this DPA in force on the date of signature. The signed copy and this published page are intended to be substantively identical; in the event of any discrepancy, the most recent published version of this DPA governs.</p>
+
+    <hr>
+    <p class="footer-note">HushAsk · <a href="https://hushask.com">hushask.com</a> · See also our <a href="/privacy">Privacy Policy</a> and <a href="/terms">Terms of Service</a>.</p>
+
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/blog">Blog</a>
+        <a href="/faq">FAQ</a>
+        <a href="/help/">Help</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/dpa">DPA</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('mobile-menu');
+      var closeBtn = document.getElementById('mobile-menu-close');
+      function openMenu() { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+      btn.addEventListener('click', openMenu);
+      closeBtn.addEventListener('click', closeMenu);
+      menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+  </script>
+
+</body>
+</html>
