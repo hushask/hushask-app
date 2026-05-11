@@ -81,11 +81,16 @@ def _validate_env():
 _validate_env()
 
 
-# ── api.hushask.com → hushask.com redirect ────────────────────────────────────
+# ── api.hushask.com / www.hushask.com → hushask.com redirect ──────────────────
+# 301 redirects consolidate SEO signals to the canonical apex domain. Google
+# Search Console flagged www.hushask.com URLs as 404s on 2026-05-05 — adding
+# www here fixes that.
+
+_REDIRECT_HOSTS = {'api.hushask.com', 'www.hushask.com'}
 
 @web.before_request
-def redirect_api_subdomain():
-    if request.host == 'api.hushask.com':
+def redirect_aliased_hosts():
+    if request.host in _REDIRECT_HOSTS:
         target = 'https://hushask.com' + request.path
         if request.query_string:
             target += '?' + request.query_string.decode()
