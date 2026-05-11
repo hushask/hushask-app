@@ -32,11 +32,56 @@ import stripe
 from slack_bolt.adapter.flask import SlackRequestHandler
 import app as bolt_module
 from database import check_checkout_rate
+from analytics import init_analytics_db, record_page_view, get_summary
 
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 PORT      = int(os.environ.get("PORT", os.environ.get("WEB_PORT", "8080")))
 API_BASE  = os.environ.get("API_BASE", "https://hushask.com")
 SITE_BASE = os.environ.get("SITE_BASE", "https://hushask.com")
+
+# ── Client-side analytics (server-injected into HTML responses) ────────────────
+# Tokens read from Railway env vars; missing env var = beacon not injected.
+#   CLOUDFLARE_ANALYTICS_TOKEN — beacon token from one.dash.cloudflare.com → Web Analytics
+#   CLARITY_PROJECT_ID         — project ID from clarity.microsoft.com → Settings
+CLOUDFLARE_ANALYTICS_TOKEN = os.environ.get("CLOUDFLARE_ANALYTICS_TOKEN", "")
+CLARITY_PROJECT_ID         = os.environ.get("CLARITY_PROJECT_ID", "")
+
+def _build_beacon_snippet() -> str:
+    parts = []
+    if CLOUDFLARE_ANALYTICS_TOKEN:
+        parts.append(
+            "<script defer src=\"https://static.cloudflareinsights.com/beacon.min.js\" "
+            "data-cf-beacon='{\"token\": \"" + CLOUDFLARE_ANALYTICS_TOKEN + "\"}'></script>"
+        )
+    if CLARITY_PROJECT_ID:
+        parts.append(
+            "<script>(function(c,l,a,r,i,t,y){"
+            "c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};"
+            "t=l.createElement(r);t.async=1;t.src=\"https://www.clarity.ms/tag/\"+i;"
+            "y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);"
+            "})(window,document,\"clarity\",\"script\",\"" + CLARITY_PROJECT_ID + "\");</script>"
+        )
+    return "\n".join(parts)
+
+_BEACON_SNIPPET = _build_beacon_snippet()
+
+def _serve_html(directory: str, filename: str):
+    """Like send_from_directory but for HTML files: reads the file and injects
+    analytics beacons right before </head> if env vars are configured."""
+    full_path = os.path.join(directory, filename)
+    if not os.path.isfile(full_path):
+        return "Not found", 404
+    try:
+        with open(full_path, "rb") as f:
+            body = f.read().decode("utf-8", errors="replace")
+        if _BEACON_SNIPPET and "</head>" in body.lower():
+            import re as _re
+            body = _re.sub(r"</head>", _BEACON_SNIPPET + "\n</head>", body, count=1, flags=_re.IGNORECASE)
+        return body, 200, {"Content-Type": "text/html; charset=utf-8"}
+    except Exception as e:
+        print(f"[serve_html] {filename}: {e}")
+        return send_from_directory(directory, filename)
+
 
 NOTION_CLIENT_ID     = os.environ.get("NOTION_CLIENT_ID", "")
 NOTION_CLIENT_SECRET = os.environ.get("NOTION_CLIENT_SECRET", "")
@@ -79,6 +124,7 @@ def _validate_env():
             print(f"[HushAsk] WARNING: Optional env var not set: {k} — related features will be disabled")
 
 _validate_env()
+init_analytics_db()
 
 
 # ── api.hushask.com / www.hushask.com → hushask.com redirect ──────────────────
@@ -95,6 +141,13 @@ def redirect_aliased_hosts():
         if request.query_string:
             target += '?' + request.query_string.decode()
         return redirect(target, 301)
+
+
+@web.before_request
+def _log_page_view():
+    # Privacy-first server-side page-view logger. Cookie-less, no IP, no PII.
+    # See analytics.py for what is and isn't captured.
+    record_page_view()
 
 
 # ── Health ─────────────────────────────────────────────────────────────────────
@@ -187,6 +240,107 @@ def admin_metrics():
         "as_of": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }), 200
 
+
+
+
+# ── Admin analytics ────────────────────────────────────────────────────────────
+# Bearer-token-protected page-view stats. Reuses HUSHASK_METRICS_TOKEN.
+# JSON when Accept: application/json, otherwise an HTML dashboard.
+
+@web.route("/admin/analytics")
+def admin_analytics():
+    expected = os.environ.get("HUSHASK_METRICS_TOKEN", "")
+    if not expected:
+        return jsonify({"error": "analytics endpoint not configured"}), 503
+    auth = request.headers.get("Authorization", "")
+    if not auth.startswith("Bearer ") or auth[7:] != expected:
+        return jsonify({"error": "unauthorized"}), 401
+
+    try:
+        days = max(1, min(int(request.args.get("days", "28")), 365))
+    except ValueError:
+        days = 28
+
+    data = get_summary(days=days)
+
+    if "application/json" in (request.headers.get("Accept") or "").lower() \
+       or request.args.get("format") == "json":
+        return jsonify(data), 200
+
+    # Minimal HTML dashboard. Self-contained — no external assets.
+    def _rows(items, cols):
+        if not items:
+            return '<tr><td colspan="{n}" class="muted">No data yet</td></tr>'.format(n=len(cols))
+        out = []
+        for it in items:
+            tds = "".join(f'<td>{escape(str(it.get(c, "")))}</td>' for c in cols)
+            out.append(f"<tr>{tds}</tr>")
+        return "".join(out)
+
+    html = f"""<!DOCTYPE html><html><head>
+<title>HushAsk Analytics — last {data['window_days']}d</title>
+<style>
+ *{{box-sizing:border-box}}body{{font-family:'Inter',system-ui,sans-serif;background:#F8FAFC;color:#0F172A;margin:0;padding:32px;max-width:1100px;margin:0 auto}}
+ h1{{font-size:22px;margin:0 0 4px}}.sub{{color:#64748B;font-size:13px;margin-bottom:24px}}
+ .kpis{{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px}}
+ .kpi{{background:white;border:1px solid #E2E8F0;border-radius:12px;padding:18px}}
+ .kpi .v{{font-size:28px;font-weight:800}}.kpi .l{{font-size:12px;color:#64748B;text-transform:uppercase;letter-spacing:.05em}}
+ .grid{{display:grid;grid-template-columns:1fr 1fr;gap:16px}}
+ .card{{background:white;border:1px solid #E2E8F0;border-radius:12px;padding:16px;margin-bottom:16px}}
+ .card h2{{font-size:14px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.05em;color:#475569}}
+ table{{width:100%;border-collapse:collapse;font-size:13px}}
+ th,td{{text-align:left;padding:6px 8px;border-bottom:1px solid #F1F5F9}}
+ th{{color:#64748B;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.05em}}
+ td.r,th.r{{text-align:right;font-variant-numeric:tabular-nums}}
+ .muted{{color:#94A3B8;font-style:italic}}
+ .ranges a{{margin-right:10px;color:#2563EB;text-decoration:none;font-size:13px}}
+ .ranges a.active{{font-weight:700;color:#0F172A}}
+ code{{font-family:ui-monospace,monospace;font-size:12px;color:#475569}}
+</style></head><body>
+<h1>Site analytics</h1>
+<div class="sub">Server-side, cookie-less, last {data['window_days']} days · as of {data['as_of']}</div>
+<div class="ranges">Window:
+  <a href="?days=7"  class="{'active' if days == 7 else ''}">7d</a>
+  <a href="?days=28" class="{'active' if days == 28 else ''}">28d</a>
+  <a href="?days=90" class="{'active' if days == 90 else ''}">90d</a>
+</div>
+<div class="kpis">
+  <div class="kpi"><div class="l">Page views</div><div class="v">{data['pageviews']}</div></div>
+  <div class="kpi"><div class="l">Unique visitors</div><div class="v">{data['visitors']}</div></div>
+</div>
+<div class="grid">
+  <div class="card"><h2>Top pages</h2><table>
+    <tr><th>Path</th><th class="r">Views</th><th class="r">Uniques</th></tr>
+    {_rows(data['top_pages'], ['path','views','uniques'])}
+  </table></div>
+  <div class="card"><h2>Referrers</h2><table>
+    <tr><th>Host</th><th class="r">Views</th></tr>
+    {_rows(data['referrers'], ['host','views'])}
+  </table></div>
+  <div class="card"><h2>Countries</h2><table>
+    <tr><th>Country</th><th class="r">Views</th></tr>
+    {_rows(data['countries'], ['country','views'])}
+  </table></div>
+  <div class="card"><h2>Devices</h2><table>
+    <tr><th>Device</th><th class="r">Views</th></tr>
+    {_rows(data['devices'], ['device_type','views'])}
+  </table></div>
+  <div class="card"><h2>Browsers</h2><table>
+    <tr><th>Browser</th><th class="r">Views</th></tr>
+    {_rows(data['browsers'], ['browser','views'])}
+  </table></div>
+  <div class="card"><h2>Daily trend</h2><table>
+    <tr><th>Day</th><th class="r">Views</th><th class="r">Visitors</th></tr>
+    {_rows(data['daily'], ['day','views','visitors'])}
+  </table></div>
+</div>
+<p style="margin-top:24px;font-size:12px;color:#94A3B8">
+  No cookies. No IP storage. Visitor identity is a daily-rotating hash of (UA + country + salt).
+  Cloudflare Web Analytics and Microsoft Clarity provide additional client-side data.
+  <code>format=json</code> available for programmatic access.
+</p>
+</body></html>"""
+    return html, 200, {"Content-Type": "text/html; charset=utf-8"}
 
 # ── Global error handlers ──────────────────────────────────────────────────────
 
@@ -710,33 +864,33 @@ def sitemap():
 
 @web.route("/")
 def index():
-    return send_from_directory(BASE_DIR, "index.html")
+    return _serve_html(BASE_DIR, "index.html")
 
 @web.route("/privacy")
 def privacy():
-    return send_from_directory(BASE_DIR, "privacy.html")
+    return _serve_html(BASE_DIR, "privacy.html")
 
 @web.route("/terms")
 def terms():
-    return send_from_directory(BASE_DIR, "terms.html")
+    return _serve_html(BASE_DIR, "terms.html")
 
 @web.route("/dpa")
 def dpa():
-    return send_from_directory(BASE_DIR, "dpa.html")
+    return _serve_html(BASE_DIR, "dpa.html")
 
 
 @web.route("/pricing")
 def pricing():
-    return send_from_directory(BASE_DIR, "pricing.html")
+    return _serve_html(BASE_DIR, "pricing.html")
 
 @web.route("/faq")
 def faq():
-    return send_from_directory(BASE_DIR, "faq.html")
+    return _serve_html(BASE_DIR, "faq.html")
 
 @web.route("/blog/")
 @web.route("/blog")
 def blog_index():
-    return send_from_directory(os.path.join(BASE_DIR, "blog"), "index.html")
+    return _serve_html(os.path.join(BASE_DIR, "blog"), "index.html")
 
 @web.route("/blog/<path:filename>")
 def blog_static(filename):
@@ -748,15 +902,18 @@ def blog_static(filename):
     html_file = filename if filename.endswith('.html') else filename + '.html'
     if not os.path.isfile(os.path.join(blog_dir, html_file)):
         return "Not found", 404
-    return send_from_directory(blog_dir, html_file)
+    return _serve_html(blog_dir, html_file)
 
 @web.route("/help/")
 def help_index():
-    return send_from_directory(os.path.join(BASE_DIR, "help"), "index.html")
+    return _serve_html(os.path.join(BASE_DIR, "help"), "index.html")
 
 @web.route("/help/<path:filename>")
 def help_file(filename):
-    return send_from_directory(os.path.join(BASE_DIR, "help"), filename)
+    help_dir = os.path.join(BASE_DIR, "help")
+    if filename.endswith(".html"):
+        return _serve_html(help_dir, filename)
+    return send_from_directory(help_dir, filename)
 
 @web.route("/assets/<path:filename>")
 def assets_file(filename):
@@ -769,6 +926,8 @@ def root_file(filename):
     ext = os.path.splitext(filename)[1].lower()
     if ext not in {".html", ".css", ".js", ".svg", ".png", ".ico", ".txt", ".xml", ".webmanifest"}:
         return "403 Forbidden", 403
+    if ext == ".html":
+        return _serve_html(BASE_DIR, filename)
     return send_from_directory(BASE_DIR, filename)
 
 

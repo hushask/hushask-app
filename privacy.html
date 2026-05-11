@@ -281,7 +281,7 @@
     <div class="content">
     <div class="page-header">
       <h1>Privacy Policy</h1>
-      <p class="updated">Last updated: March 2026</p>
+      <p class="updated">Last updated: May 2026</p>
     </div>
 
     <div class="toc">
@@ -298,6 +298,7 @@
         <li><a href="#your-rights">Your rights</a></li>
         <li><a href="#slack-platform">Slack platform and audit logs</a></li>
         <li><a href="#security">Security</a></li>
+        <li><a href="#website-analytics">Website analytics</a></li>
         <li><a href="#changes">Changes to this policy</a></li>
         <li><a href="#contact">Contact</a></li>
       </ol>
@@ -418,10 +419,21 @@
     </ul>
     <p>No system is perfectly secure. If you discover a vulnerability, please report it responsibly to <a href="mailto:security@hushask.com">security@hushask.com</a>.</p>
 
-    <h2 id="changes">12. Changes to this policy</h2>
+    <h2 id="website-analytics">12. Website analytics</h2>
+    <p><strong>Applies only to visitors of hushask.com — not to Slack users of the HushAsk app.</strong> The cryptographic anonymity protections in sections 2–4 are separate and unchanged.</p>
+    <p>To understand which pages are useful and where visitors come from, we run a small amount of analytics on the marketing website (hushask.com). We have kept the footprint as narrow as we reasonably can:</p>
+    <ul>
+      <li><strong>Server-side page logs</strong> — Each page request is recorded on our server with: timestamp, URL path, the referring site's hostname (no path or query string), the country code provided by Cloudflare, a coarse device type (mobile/tablet/desktop), and browser family. We do <em>not</em> store IP addresses, raw user-agent strings, or any cookies. To count unique visitors per day without tracking, we derive a daily-rotating SHA-256 hash of (date + country + user-agent + a private salt). The hash changes every UTC day and cannot be linked across days.</li>
+      <li><strong>Cloudflare Web Analytics</strong> — A small JavaScript beacon served by Cloudflare records page views, time on page, referrer, country, and device type. Cloudflare's implementation is cookie-less and does not fingerprint visitors. Cloudflare is already in our request path as our CDN, so this does not introduce a new data processor. See <a href="https://www.cloudflare.com/privacypolicy/" target="_blank">Cloudflare's Privacy Policy</a>.</li>
+      <li><strong>Microsoft Clarity</strong> — A JavaScript tag that records aggregated behavioral signals: scroll depth, click locations (heatmaps), and anonymized session replays of mouse movement and page navigation. Clarity is designed to mask form inputs and text content by default; we do not enable any setting that would unmask them. Clarity sets cookies (<code>_clck</code>, <code>_clsk</code>) used to stitch a single visitor's pageviews into one session. Microsoft processes this data on its own infrastructure under <a href="https://privacy.microsoft.com/en-us/privacystatement" target="_blank">Microsoft's Privacy Statement</a>.</li>
+    </ul>
+    <p>None of this applies to messages sent through the HushAsk Slack app. The Slack product has no website analytics in its data path — anonymity for senders is a property of the product, not a policy promise.</p>
+    <p><strong>Opting out:</strong> Cloudflare Web Analytics and Microsoft Clarity both respect the browser's Do Not Track signal and standard ad/tracking blockers (uBlock Origin, Privacy Badger, Brave Shields). Disabling JavaScript blocks both entirely. Our server-side logs are not affected by client-side opt-outs, but they contain no identifiers we can use to honor a per-visitor deletion request.</p>
+
+    <h2 id="changes">13. Changes to this policy</h2>
     <p>We may update this policy as the product evolves. Material changes will be communicated to workspace admins via the HushAsk App Home. The "Last updated" date at the top of this page will reflect the most recent revision. Continued use of HushAsk after changes constitutes acceptance of the updated policy.</p>
 
-    <h2 id="contact">13. Contact</h2>
+    <h2 id="contact">14. Contact</h2>
     <p>For privacy questions, data deletion requests, or security disclosures:</p>
     <ul>
       <li>Email: <a href="mailto:privacy@hushask.com">privacy@hushask.com</a></li>
