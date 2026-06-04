@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="canonical" href="https://hushask.com/blog/anonymous-skip-level-feedback-slack">
+  <title>Anonymous Skip-Level Feedback in Slack — HushAsk</title>
+  <meta name="description" content="A practical guide to running skip-level feedback through an anonymous Slack channel: three patterns that surface real signal, and what to do with what you hear.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hushask.com/blog/anonymous-skip-level-feedback-slack">
+  <meta property="og:title" content="Anonymous Skip-Level Feedback in Slack — HushAsk">
+  <meta property="og:description" content="A practical guide to running skip-level feedback through an anonymous Slack channel: three patterns that surface real signal, and what to do with what you hear.">
+  <meta property="og:image" content="https://hushask.com/assets/blog-hero-14-og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Anonymous Skip-Level Feedback in Slack — HushAsk">
+  <meta name="twitter:description" content="A practical guide to running skip-level feedback through an anonymous Slack channel: three patterns that surface real signal, and what to do with what you hear.">
+  <meta name="twitter:image" content="https://hushask.com/assets/blog-hero-14-og.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/blog">Blog</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/faq">FAQ</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary nav-cta">Add to Slack</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu-header">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="mobile-menu-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/pricing">Pricing</a></li>
+      <li><a href="/blog">Blog</a></li>
+      <li><a href="/help/">Help</a></li>
+      <li><a href="/faq">FAQ</a></li>
+    </ul>
+    <div class="mobile-menu-cta">
+      <a href="/slack/install">Add to Slack</a>
+    </div>
+  </div>
+
+  <div class="article-layout">
+  <aside class="article-sidebar-col">
+    <div class="toc-box">
+      <div class="toc-title">Table of contents</div>
+      <ul class="toc-list">
+        <li><a href="#what-skip-level-buys-you">What skip-level actually buys you</a></li>
+        <li><a href="#why-skip-levels-die">Why skip-levels die quietly</a></li>
+        <li><a href="#three-patterns">Three patterns that work</a></li>
+        <li><a href="#setting-it-up">Setting it up with HushAsk</a></li>
+      </ul>
+    </div>
+    <div class="share-box">
+      <div class="share-title">Share</div>
+      <div class="share-btns">
+        <a class="share-btn" href="https://twitter.com/intent/tweet?url=https://hushask.com/blog/anonymous-skip-level-feedback-slack&text=Anonymous+Skip-Level+Feedback+in+Slack" target="_blank" rel="noopener" aria-label="Share on X">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a class="share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https://hushask.com/blog/anonymous-skip-level-feedback-slack" target="_blank" rel="noopener" aria-label="Share on LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 24 22.222 24h.003z"/></svg>
+        </a>
+        <a class="share-btn" href="mailto:?subject=Anonymous+Skip-Level+Feedback+in+Slack&body=https://hushask.com/blog/anonymous-skip-level-feedback-slack" aria-label="Share via email">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+        <a class="share-btn" href="#" onclick="navigator.clipboard.writeText(window.location.href);this.title='Copied!';return false;" aria-label="Copy link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+  <article class="article-page">
+    <header class="article-header">
+      <a href="/blog" class="back-link">← Blog</a>
+      <div class="article-date">June 4, 2026</div>
+      <h1>Anonymous Skip-Level Feedback in Slack</h1>
+      <p class="article-lead">Skip-level conversations break for structural reasons, not personal ones. A practical guide to fixing them with an anonymous Slack channel — three patterns that work, and the discipline required to act on what you hear without burning the trust that made it possible.</p>
+    </header>
+
+    <div class="article-byline">
+      <img class="byline-avatar" src="/assets/morgan-avatar.png" alt="Morgan" width="44" height="44">
+      <div class="byline-meta">
+        <span class="byline-name">Morgan — Content Lead, HushAsk</span>
+        <span class="byline-bio">Morgan writes about workplace communication, employee feedback, and the systems that make honesty possible. She covers HR technology for the HushAsk blog.</span>
+      </div>
+    </div>
+
+    <!-- Mobile TOC (hidden on desktop) -->
+    <div class="mobile-toc">
+      <div class="toc-title">In this article</div>
+      <ul class="toc-list">
+        <li><a href="#what-skip-level-buys-you">What skip-level actually buys you</a></li>
+        <li><a href="#why-skip-levels-die">Why skip-levels die quietly</a></li>
+        <li><a href="#three-patterns">Three patterns that work</a></li>
+        <li><a href="#setting-it-up">Setting it up with HushAsk</a></li>
+      </ul>
+    </div>
+
+    <div class="article-body">
+<h2 id="what-skip-level-buys-you">What skip-level actually buys you</h2>
+<p>A skip-level is the conversation a manager's boss has with the manager's reports, with the manager not in the room. The pattern is older than the term — Andy Grove described a version of it in <em>High Output Management</em> — and the appeal is structural. The person two rungs up gets information that does not survive the trip through a direct manager, because a direct manager has, by definition, the strongest incentive to filter what their own boss hears.</p>
+<p>Done well, a skip-level surfaces three things you cannot get any other way. The first is a calibration check — are the things your direct reports tell you about their teams matching what those teams actually feel. The second is early signal on a manager who is in trouble, before that manager's metrics start moving. The third is the rare, specific feedback about your own behavior, the kind a manager would not tell you because they want their next promotion to come from you.</p>
+<p>The catch is that most skip-levels do not work this way. They turn into thirty-minute career conversations or polite question-and-answer sessions in which nobody risks anything. The information you wanted does not arrive. Worse, you walk out thinking it did.</p>
+
+<h2 id="why-skip-levels-die">Why skip-levels die quietly</h2>
+<p>Two structural things break skip-levels in distributed teams, and a third thing breaks them everywhere.</p>
+<p>The first is scheduling. Skip-levels work when they are recurring, but recurring video meetings with a senior leader are some of the easiest things to push down the calendar. After three reschedules the pattern dies. In an async team, the meeting was always going to feel forced — it was a synchronous solution to a problem that does not respect synchronous time.</p>
+<p>The second is the audience. A skip-level conversation with a director hears the engineer's perspective on the engineering manager. But the engineer knows that the director also has performance conversations about that manager. Even with the best intentions, the engineer cannot be certain that what they say will not be relayed, even paraphrased, even with attribution stripped. The architecture of the conversation makes honest input expensive.</p>
+<p>The third — the one that breaks skip-levels even in co-located teams — is that nobody knows what to do with the answer. A leader who hears something difficult in a skip-level has three options: act on it (which can expose the source), bring it up with the manager in question (which can also expose the source), or sit with it (which feels like betrayal of the person who raised it). Most leaders default to the third, which is the option that quietly tells the team that skip-levels do not actually change anything.</p>
+
+<h2 id="three-patterns">Three patterns that work</h2>
+<p>Anonymous, async skip-level feedback fixes the audience and architecture problems at once. The leader still has to do the hard work of acting on what they hear — that part does not get easier — but the inputs get less filtered, and the team gets to participate without spending courage they may not have to spend.</p>
+<p>Three patterns work in practice.</p>
+<p><strong>Pattern one — the standing open channel.</strong> The senior leader sets up an anonymous channel that any IC in the org can use, at any time, with the explicit framing that this is for things you would normally save for a skip-level. Cadence: zero. The leader is on the receiving end whenever someone sends something. This pattern is the lowest setup cost and the highest reliability — it turns skip-level from a meeting into a behavior.</p>
+<p><strong>Pattern two — the recurring prompt.</strong> Once a quarter, the senior leader sends an anonymous prompt to a defined slice of the org — a team, a level band, a region. The prompt is specific: "What is one thing your manager is doing well, and one thing you wish would change?" The recurrence creates a forcing function. The specificity gets you usable answers. The hard part is doing it for four quarters in a row before judging whether it works; one round produces noise.</p>
+<p><strong>Pattern three — the targeted ask after a transition.</strong> When a team has just shipped a major project, just absorbed a reorg, just hired a new manager, just lost someone — these are the moments when the skip-level conversation is most valuable and the in-person version is most awkward. An anonymous prompt sent within seventy-two hours of the transition gets information the next quarterly survey will never recover.</p>
+
+<h2 id="setting-it-up">Setting it up with HushAsk</h2>
+<p>The HushAsk shape of this is small. You install the bot, you create one channel or DM the senior leader treats as their skip-level inbox, and you tell the team it exists. Submissions arrive as anonymous Slack messages — the user identifier is replaced with a 64-character SHA-256 hash at send time, and on Free, Pro, and Business+ Slack plans there is no path back to the original sender. (On Slack Enterprise Grid plans, Slack's own audit log records bot DM activity — a separate layer HushAsk cannot suppress; the team should know that caveat going in.) The senior leader can reply anonymously through the same thread; the conversation works like a regular Slack DM, with the names stripped.</p>
+<p>Two pieces of practical guidance for what to do with what you hear.</p>
+<p>First, write down — in your own notes, not in Slack — every piece of skip-level feedback you receive for the first three months. Patterns only show up if you can compare across submissions, and three months is roughly the window where the pattern becomes a manager-level conversation rather than a personnel decision based on one anonymous note.</p>
+<p>Second, when you do act on a skip-level signal, do it through the manager, not around them. The point of a skip-level is to give you better calibration, not a back-channel for personnel changes. If a director gets specific, recent, anonymous feedback that an engineering manager is struggling with a particular IC dynamic, the right move is a coaching conversation with that manager about that dynamic — without naming the source. The team can tell the difference between a director who heard something and quietly improved a manager, and a director who heard something and went around the manager. The first one keeps skip-level submissions coming. The second one ends them.</p>
+    </div>
+
+    
+    <div class="article-related" style="margin:48px 0 24px;padding:24px 28px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#94A3B8;margin-bottom:14px;">Related reading</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+        <li><a href="/blog/anonymous-feedback-remote-teams" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">Why Anonymous Feedback Fails in Remote Teams (and What Fixes It)</a></li>
+        <li><a href="/blog/responding-to-hard-anonymous-feedback" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">What to Do With Anonymous Feedback You Didn't Want to Hear</a></li>
+        <li><a href="/blog/anonymous-performance-review-feedback-questions" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">Anonymous Performance Review Feedback: Asking the Right Questions</a></li>
+      </ul>
+    </div>
+
+    <div class="article-cta">
+      <p>20 messages free monthly. No credit card required.</p>
+      <a href="/slack/install" class="btn btn-primary btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+        Add HushAsk to Slack
+      </a>
+    </div>
+  </article>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('mobile-menu');
+      var closeBtn = document.getElementById('mobile-menu-close');
+      function openMenu() { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+      btn.addEventListener('click', openMenu);
+      closeBtn.addEventListener('click', closeMenu);
+      menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+  </script>
+
+</body>
+</html>
