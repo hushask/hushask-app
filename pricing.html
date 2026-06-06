@@ -105,14 +105,17 @@
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "Product",
+  "@type": "SoftwareApplication",
   "name": "HushAsk",
+  "operatingSystem": "Slack",
+  "applicationCategory": "BusinessApplication",
   "description": "Anonymous employee feedback for Slack. Cryptographic anonymity, no admin tracing, optional Notion sync.",
   "brand": {"@type": "Brand", "name": "HushAsk"},
   "offers": [
-    {"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD", "description": "20 messages per month, full feature set"},
-    {"@type": "Offer", "name": "Pro", "price": "19", "priceCurrency": "USD", "description": "Unlimited messages, $19 per month"}
-  ]
+    {"@type": "Offer", "name": "Free", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "priceValidUntil": "2027-12-31", "url": "https://hushask.com/pricing", "description": "20 messages per month, full feature set"},
+    {"@type": "Offer", "name": "Pro", "price": "19", "priceCurrency": "USD", "availability": "https://schema.org/InStock", "priceValidUntil": "2027-12-31", "url": "https://hushask.com/pricing", "description": "Unlimited messages, $19 per month"}
+  ],
+  "url": "https://hushask.com/pricing"
 }
 </script>
 </head>
