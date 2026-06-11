@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="canonical" href="https://hushask.com/blog/anonymous-vs-named-feedback-when-to-use-which">
+  <title>When to Use Anonymous Feedback vs Named Feedback (and How to Tell) — HushAsk</title>
+  <meta name="description" content="A practical decision framework for choosing between anonymous and named feedback channels. Four cases where each one wins, and a hybrid pattern that beats both.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hushask.com/blog/anonymous-vs-named-feedback-when-to-use-which">
+  <meta property="og:title" content="When to Use Anonymous Feedback vs Named Feedback (and How to Tell) — HushAsk">
+  <meta property="og:description" content="A practical decision framework for choosing between anonymous and named feedback channels. Four cases where each one wins, and a hybrid pattern that beats both.">
+  <meta property="og:image" content="https://hushask.com/assets/blog-hero-16-og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="When to Use Anonymous Feedback vs Named Feedback (and How to Tell) — HushAsk">
+  <meta name="twitter:description" content="A practical decision framework for choosing between anonymous and named feedback channels. Four cases where each one wins, and a hybrid pattern that beats both.">
+  <meta name="twitter:image" content="https://hushask.com/assets/blog-hero-16-og.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/blog">Blog</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/faq">FAQ</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary nav-cta">Add to Slack</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu-header">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="mobile-menu-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/pricing">Pricing</a></li>
+      <li><a href="/blog">Blog</a></li>
+      <li><a href="/help/">Help</a></li>
+      <li><a href="/faq">FAQ</a></li>
+    </ul>
+    <div class="mobile-menu-cta">
+      <a href="/slack/install">Add to Slack</a>
+    </div>
+  </div>
+
+  <div class="article-layout">
+  <aside class="article-sidebar-col">
+    <div class="toc-box">
+      <div class="toc-title">Table of contents</div>
+      <ul class="toc-list">
+        <li><a href="#rarely-binary">The decision is rarely binary</a></li>
+        <li><a href="#named-wins">Four cases where named feedback wins</a></li>
+        <li><a href="#anonymous-wins">Four cases where anonymous wins</a></li>
+        <li><a href="#hybrid-pattern">The hybrid pattern: switching mid-conversation</a></li>
+      </ul>
+    </div>
+    <div class="share-box">
+      <div class="share-title">Share</div>
+      <div class="share-btns">
+        <a class="share-btn" href="https://twitter.com/intent/tweet?url=https://hushask.com/blog/anonymous-vs-named-feedback-when-to-use-which&text=When+to+Use+Anonymous+Feedback+vs+Named+Feedback+(and+How+to+Tell)" target="_blank" rel="noopener" aria-label="Share on X">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a class="share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https://hushask.com/blog/anonymous-vs-named-feedback-when-to-use-which" target="_blank" rel="noopener" aria-label="Share on LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 24 22.222 24h.003z"/></svg>
+        </a>
+        <a class="share-btn" href="mailto:?subject=When+to+Use+Anonymous+Feedback+vs+Named+Feedback+(and+How+to+Tell)&body=https://hushask.com/blog/anonymous-vs-named-feedback-when-to-use-which" aria-label="Share via email">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+        <a class="share-btn" href="#" onclick="navigator.clipboard.writeText(window.location.href);this.title='Copied!';return false;" aria-label="Copy link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+  <article class="article-page">
+    <header class="article-header">
+      <a href="/blog" class="back-link">← Blog</a>
+      <div class="article-date">June 11, 2026</div>
+      <h1>When to Use Anonymous Feedback vs Named Feedback (and How to Tell)</h1>
+      <p class="article-lead">Most teams treat the choice between anonymous and named feedback as a sensitivity dial — sensitive things go anonymous, normal things go named. That framing is wrong in a way that quietly makes feedback programs worse. A more useful frame.</p>
+    </header>
+
+    <div class="article-byline">
+      <img class="byline-avatar" src="/assets/morgan-avatar.png" alt="Morgan" width="44" height="44">
+      <div class="byline-meta">
+        <span class="byline-name">Morgan — Content Lead, HushAsk</span>
+        <span class="byline-bio">Morgan writes about workplace communication, employee feedback, and the systems that make honesty possible. She covers HR technology for the HushAsk blog.</span>
+      </div>
+    </div>
+
+    <!-- Mobile TOC (hidden on desktop) -->
+    <div class="mobile-toc">
+      <div class="toc-title">In this article</div>
+      <ul class="toc-list">
+        <li><a href="#rarely-binary">The decision is rarely binary</a></li>
+        <li><a href="#named-wins">Four cases where named feedback wins</a></li>
+        <li><a href="#anonymous-wins">Four cases where anonymous wins</a></li>
+        <li><a href="#hybrid-pattern">The hybrid pattern: switching mid-conversation</a></li>
+      </ul>
+    </div>
+
+    <div class="article-body">
+<h2 id="rarely-binary">The decision is rarely binary</h2>
+<p>The framing most teams adopt for feedback tools is roughly: anonymous tools for the safety-critical stuff, named tools for everything else. This framing is wrong in a way that quietly makes feedback programs worse. Anonymous and named are not different sensitivity levels; they are different instruments that produce different outputs. The question worth asking is not "is this safe to attach a name to" but "what is the shape of the answer I actually want."</p>
+<p>A named one-on-one with a direct report produces a different output than an anonymous channel — not because one is safer, but because the IC's incentive structure changes. Named feedback comes with the expectation of follow-up, of relational continuity, of a specific accountability loop between two people. Anonymous feedback comes with detachment from that accountability and, often, more bluntness. Both have their place. Both produce things the other one cannot.</p>
+<p>Treating the tool selection as a binary — anonymous tools for fear, named tools for trust — collapses the dimensionality and makes you reach for the wrong instrument half the time. What follows is a more useful frame: four cases where named feedback decisively wins, four where anonymous wins, and one hybrid pattern that beats either one on the conversations that get the most stuck.</p>
+
+<h2 id="named-wins">Four cases where named feedback wins</h2>
+<p><strong>Coaching.</strong> A manager cannot coach an anonymous report. The relationship is the instrument. If you want to help someone get better at a skill, the feedback has to come from a person they can identify, and the loop has to close with that same person over weeks or months. Anonymous coaching is theater.</p>
+<p><strong>Praise.</strong> Anonymous praise feels strange to the receiver and does not build relationships. The whole point of recognition is that someone knows you saw them. Stripping the name strips the value.</p>
+<p><strong>Contested factual feedback.</strong> Situations where the IC and the manager have different memories of what happened in a specific meeting or decision. Anonymity makes the disagreement impossible to resolve, because the manager cannot ask follow-up questions to the actual sender. The conversation degenerates into a manager defending their version against a phantom.</p>
+<p><strong>Feedback that will inevitably expose the source.</strong> If the only person who would say a particular thing is the one IC on a three-person team, anonymity is fiction, and pretending otherwise is worse than naming. Better to have the named conversation than to hide behind a thin anonymity wrapper.</p>
+
+<h2 id="anonymous-wins">Four cases where anonymous wins</h2>
+<p><strong>Feedback about the direct manager.</strong> This is the canonical case and the one most teams identify correctly. A named complaint about a manager goes through that manager's performance review and into their salary calculation, which is exactly the dynamic that makes the IC quiet in the first place. Anonymity is not a courtesy here; it is the only way the information gets out.</p>
+<p><strong>Pre-decision dissent on a publicly committed direction.</strong> The IC who thinks the new architecture is wrong, after the CTO has announced it as the path forward, will not raise that named — the cost of being the one engineer who publicly disagreed with the CTO is too high to absorb for low-probability outcomes. Anonymously, you might get the sentence that saves you the wrong decision.</p>
+<p><strong>Feedback from groups whose identities carry asymmetric cost.</strong> People on visa programs, junior ICs uncertain about their standing, members of any underrepresented group on the team. The asymmetry is not paranoid; it is structural, and named feedback systems systematically undersample these voices. Anonymity equalizes the cost of speaking.</p>
+<p><strong>Post-mortems on projects everyone agrees went badly.</strong> Named post-mortems become careful narratives in which everyone is the protagonist of their own decisions. Anonymous post-mortems get to the thing nobody wants to write under their byline — that the project failed because the lead engineer left in week six and nobody wanted to say so.</p>
+
+<h2 id="hybrid-pattern">The hybrid pattern: switching mid-conversation</h2>
+<p>The pattern that beats either pure model on the most-stuck conversations is the one most feedback tools do not support: starting anonymous, then offering the source the option to reveal themselves once the conversation has built some trust.</p>
+<p>The shape works like this. An anonymous channel collects the initial feedback. The leader engages anonymously, asks clarifying questions, and demonstrates that the response is going to be considered rather than dismissed. At some point — sometimes the same day, sometimes weeks later — the sender decides whether to name themselves. The choice stays with them. The leader does not pressure either way.</p>
+<p>The pattern works because the cost structure changes over the course of the conversation. The IC who would not name themselves cold sometimes will name themselves after seeing that the leader engaged seriously with the anonymous version. The shift from anonymous to named is the IC choosing to convert the conversation from one-shot feedback into an ongoing relationship — which is exactly the conversion you want, and which forced-named feedback systems never allow to happen organically.</p>
+<p>The shorter version: a good anonymous channel is not a replacement for named feedback. It is a low-friction entry point that, in the cases where it matters, becomes named feedback by the IC's own choice. The leader's job is to be the kind of receiver who makes that choice feel safe.</p>
+    </div>
+
+    
+    <div class="article-related" style="margin:48px 0 24px;padding:24px 28px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#94A3B8;margin-bottom:14px;">Related reading</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+        <li><a href="/blog/responding-to-hard-anonymous-feedback" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">What to Do With Anonymous Feedback You Didn't Want to Hear</a></li>
+        <li><a href="/blog/why-employees-wont-use-anonymous-feedback-tool" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">Why Your Employees Won't Use an Anonymous Feedback Tool (and How to Fix It)</a></li>
+        <li><a href="/blog/is-anonymous-feedback-in-slack-actually-anonymous" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">Is Anonymous Feedback in Slack Actually Anonymous?</a></li>
+      </ul>
+    </div>
+
+    <div class="article-cta">
+      <p>20 messages free monthly. No credit card required.</p>
+      <a href="/slack/install" class="btn btn-primary btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+        Add HushAsk to Slack
+      </a>
+    </div>
+  </article>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('mobile-menu');
+      var closeBtn = document.getElementById('mobile-menu-close');
+      function openMenu() { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+      btn.addEventListener('click', openMenu);
+      closeBtn.addEventListener('click', closeMenu);
+      menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+  </script>
+
+</body>
+</html>
