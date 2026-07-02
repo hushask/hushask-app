@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="canonical" href="https://hushask.com/blog/hushask-vs-slido-anonymous-qa">
+  <title>HushAsk vs Slido: Anonymous Q&A for All-Hands vs Everyday Slack — HushAsk</title>
+  <meta name="description" content="An honest comparison of HushAsk and Slido. Slido runs live Q&A for the all-hands; HushAsk runs always-on anonymous Q&A in Slack. Different jobs, often confused — when to pick each, and why teams run both.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://hushask.com/blog/hushask-vs-slido-anonymous-qa">
+  <meta property="og:title" content="HushAsk vs Slido: Anonymous Q&A for All-Hands vs Everyday Slack — HushAsk">
+  <meta property="og:description" content="An honest comparison of HushAsk and Slido. Slido runs live Q&A for the all-hands; HushAsk runs always-on anonymous Q&A in Slack. Different jobs, often confused — when to pick each, and why teams run both.">
+  <meta property="og:image" content="https://hushask.com/assets/blog-hero-22-og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="HushAsk vs Slido: Anonymous Q&A for All-Hands vs Everyday Slack — HushAsk">
+  <meta name="twitter:description" content="An honest comparison of HushAsk and Slido. Slido runs live Q&A for the all-hands; HushAsk runs always-on anonymous Q&A in Slack. Different jobs, often confused — when to pick each, and why teams run both.">
+  <meta name="twitter:image" content="https://hushask.com/assets/blog-hero-22-og.png">
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+  <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/blog/blog.css">
+</head>
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="/#features">Features</a></li>
+        <li><a href="/pricing">Pricing</a></li>
+        <li><a href="/blog">Blog</a></li>
+        <li><a href="/help/">Help</a></li>
+        <li><a href="/faq">FAQ</a></li>
+      </ul>
+      <a href="/slack/install" class="btn btn-primary nav-cta">Add to Slack</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <div class="mobile-menu" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Navigation menu">
+    <div class="mobile-menu-header">
+      <a href="/" class="logo">
+        <div class="logo-badge">HA</div>
+        <span class="logo-name"><em>Hush</em>Ask</span>
+      </a>
+      <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Close menu">&#10005;</button>
+    </div>
+    <ul class="mobile-menu-links">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/pricing">Pricing</a></li>
+      <li><a href="/blog">Blog</a></li>
+      <li><a href="/help/">Help</a></li>
+      <li><a href="/faq">FAQ</a></li>
+    </ul>
+    <div class="mobile-menu-cta">
+      <a href="/slack/install">Add to Slack</a>
+    </div>
+  </div>
+
+  <div class="article-layout">
+  <aside class="article-sidebar-col">
+    <div class="toc-box">
+      <div class="toc-title">Table of contents</div>
+      <ul class="toc-list">
+        <li><a href="#slido-strengths">What Slido does well</a></li>
+        <li><a href="#meeting-scope">Where the meeting-scoped model ends</a></li>
+        <li><a href="#always-on">What changes with year-round anonymous Q&A</a></li>
+        <li><a href="#pick-which">When to pick which — and the case for both</a></li>
+      </ul>
+    </div>
+    <div class="share-box">
+      <div class="share-title">Share</div>
+      <div class="share-btns">
+        <a class="share-btn" href="https://twitter.com/intent/tweet?url=https://hushask.com/blog/hushask-vs-slido-anonymous-qa&text=HushAsk+vs+Slido%3A+Anonymous+Q%26A+for+All-Hands+vs+Everyday+Slack" target="_blank" rel="noopener" aria-label="Share on X">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a class="share-btn" href="https://www.linkedin.com/sharing/share-offsite/?url=https://hushask.com/blog/hushask-vs-slido-anonymous-qa" target="_blank" rel="noopener" aria-label="Share on LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 24 22.222 24h.003z"/></svg>
+        </a>
+        <a class="share-btn" href="mailto:?subject=HushAsk+vs+Slido%3A+Anonymous+Q%26A+for+All-Hands+vs+Everyday+Slack&body=https://hushask.com/blog/hushask-vs-slido-anonymous-qa" aria-label="Share via email">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        </a>
+        <a class="share-btn" href="#" onclick="navigator.clipboard.writeText(window.location.href);this.title='Copied!';return false;" aria-label="Copy link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        </a>
+      </div>
+    </div>
+  </aside>
+  <article class="article-page">
+    <header class="article-header">
+      <a href="/blog" class="back-link">← Blog</a>
+      <div class="article-date">July 2, 2026</div>
+      <h1>HushAsk vs Slido: Anonymous Q&A for All-Hands vs Everyday Slack</h1>
+      <p class="article-lead">Slido is built for the room — live questions and upvotes during the all-hands. HushAsk is built for the other 364 days. A practical breakdown of where each one fits, and why the two get confused.</p>
+    </header>
+
+    <div class="article-byline">
+      <img class="byline-avatar" src="/assets/morgan-avatar.png" alt="Morgan" width="44" height="44">
+      <div class="byline-meta">
+        <span class="byline-name">Morgan — Content Lead, HushAsk</span>
+        <span class="byline-bio">Morgan writes about workplace communication, employee feedback, and the systems that make honesty possible. She covers HR technology for the HushAsk blog.</span>
+      </div>
+    </div>
+
+    <!-- Mobile TOC (hidden on desktop) -->
+    <div class="mobile-toc">
+      <div class="toc-title">In this article</div>
+      <ul class="toc-list">
+        <li><a href="#slido-strengths">What Slido does well</a></li>
+        <li><a href="#meeting-scope">Where the meeting-scoped model ends</a></li>
+        <li><a href="#always-on">What changes with year-round anonymous Q&A</a></li>
+        <li><a href="#pick-which">When to pick which — and the case for both</a></li>
+      </ul>
+    </div>
+
+    <div class="article-body">
+<h2 id="slido-strengths">What Slido does well</h2>
+<p>Slido is a live audience-interaction tool — now part of Cisco — built for the moment a lot of people are looking at the same screen. During an all-hands, a webinar, or a conference session, the audience submits questions, everyone upvotes the ones they want answered, and the presenter works down the list from the top. Polls and word clouds run alongside the Q&amp;A, and the whole thing plugs into the slide deck and the video call so a moderator can drive it without leaving the presentation.</p>
+<p>The thing Slido does best is big-room moderation. When two hundred people could ask a question and only fifteen minutes exist to answer, upvoting is the right mechanism — it surfaces what the room actually cares about instead of whatever lands in the queue first. The presenter gets a ranked list, a moderator can group duplicates, and the awkward dynamic of who-raises-their-hand disappears. For a company all-hands where leadership wants real questions rather than the same three extroverts, this is a genuine improvement over a live mic, and the option to ask without a name attached gets more honest questions into the queue.</p>
+<p>Slido is also event-shaped, and that is a feature, not a flaw. A session has a start and an end. The Q&amp;A belongs to that session. When the meeting closes, the event closes with it. For the job Slido is built for — the live room — that scoping is exactly right.</p>
+
+<h2 id="meeting-scope">Where the meeting-scoped model ends</h2>
+<p>The limit shows up the day after the all-hands. The questions that matter most are often the ones nobody wanted to type into a shared screen with the whole company watching the upvote count climb — and the ones that only occur to someone on a Tuesday two weeks later, with no event on the calendar to attach them to.</p>
+<p>Slido is designed around the event, so there is no standing channel between events and no two-way thread after one. The presenter answers a question live, the session ends, and if the asker has a follow-up there is nowhere to put it. The exchange was one-to-many in a room, not one-to-one over time. That is the correct shape for a town hall and the wrong shape for an ongoing conversation, because an ongoing conversation needs a place to live when no one is presenting.</p>
+<p>This is the gap teams run into: they adopt Slido for the all-hands, it works well, and then they reach for the same tool to handle the feedback that arrives between all-hands — and find it was never meant to sit there waiting. The event-scoped design that makes Slido good in the room is the same design that ends at the door.</p>
+
+<h2 id="always-on">What changes with year-round anonymous Q&amp;A</h2>
+<p>HushAsk is the channel that stays open between the events Slido runs. It is anonymous, two-way Q&amp;A in Slack — a single channel where a leader receives anonymous messages and replies anonymously in-thread, on conversation timescale rather than event timescale. A message can arrive on a Tuesday afternoon and get a reply that same day, with a follow-up after that, because the thread does not close when a meeting does.</p>
+<p>The other difference is the anonymity model. HushAsk replaces the Slack user identifier with a 64-character SHA-256 hash at send time. On Free, Pro, and Business+ Slack plans there is no path back to the original sender — the anonymity is cryptographic, not a policy promise that an admin will choose not to look. (On Slack Enterprise Grid plans, Slack's own audit logging records bot DM activity as a separate layer that HushAsk cannot suppress; a team on Grid should know that going in.) This is a different guarantee than asking-without-a-name inside a live event, where anonymity is a setting on a session rather than a property of how the message is stored.</p>
+<p>Neither model is universally better — they answer different questions. Event-scoped anonymity is right for surfacing live questions in a room. Always-on cryptographic anonymity is right for the conversation that has to keep going after the room empties out.</p>
+
+<h2 id="pick-which">When to pick which — and the case for both</h2>
+<p>Pick Slido when the shape of what you need is the live event. You are running an all-hands, a webinar, or a conference session, you want ranked audience questions in real time, and you want polls and word clouds driving engagement from the front of the room. For that job, a Slack-based tool is not a substitute, and HushAsk does not pretend to be one — it has no presenter mode, no upvoting, no slide integration, and is not trying to.</p>
+<p>Pick HushAsk when the conversation you need is the one the event does not capture: the question that occurs to someone with no all-hands on the calendar, the follow-up to an answer that deserved more than a live thirty seconds, the thing an IC will only say if the message cannot be traced back. That conversation needs a place to live year-round and a stored anonymity guarantee, not a session that opens and closes.</p>
+<p>The pattern that works for teams running both: Slido for the all-hands itself — the ranked questions, the live polls, the big-room moment — and HushAsk for the 364 other days, when the questions still come but the room is gone. The two do not overlap. The mistake is stretching either one across the whole job. Slido owns the event. HushAsk owns the everyday. Both have work to do, and neither does the other's.</p>
+    </div>
+
+    
+    <div class="article-related" style="margin:48px 0 24px;padding:24px 28px;background:#F1F5F9;border:1px solid #E2E8F0;border-radius:14px;">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#94A3B8;margin-bottom:14px;">Related reading</div>
+      <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:10px;">
+        <li><a href="/blog/how-to-collect-anonymous-employee-feedback-in-slack" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">How to Collect Anonymous Employee Feedback in Slack</a></li>
+        <li><a href="/blog/is-anonymous-feedback-in-slack-actually-anonymous" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">Is Anonymous Feedback in Slack Actually Anonymous?</a></li>
+        <li><a href="/blog/anonymous-vs-named-feedback-when-to-use-which" style="color:#1A2E62;text-decoration:none;border-bottom:1px solid #CBD5E1;">When to Use Anonymous Feedback vs Named Feedback (and How to Tell)</a></li>
+      </ul>
+    </div>
+
+    <div class="article-cta">
+      <p>20 messages free monthly. No credit card required.</p>
+      <a href="/slack/install" class="btn btn-primary btn-lg">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/></svg>
+        Add HushAsk to Slack
+      </a>
+    </div>
+  </article>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <a href="/" class="logo">
+        <div class="logo-badge" style="width:28px;height:28px;font-size:11px;border-radius:7px;">HA</div>
+        <span class="logo-name" style="font-size:15px;color:#94A3B8;"><em>Hush</em>Ask</span>
+      </a>
+      <div class="footer-copy">© 2026 HushAsk. All rights reserved.</div>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/help/">Help</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function() {
+      var btn = document.getElementById('nav-hamburger');
+      var menu = document.getElementById('mobile-menu');
+      var closeBtn = document.getElementById('mobile-menu-close');
+      function openMenu() { menu.classList.add('open'); btn.setAttribute('aria-expanded', 'true'); document.body.style.overflow = 'hidden'; }
+      function closeMenu() { menu.classList.remove('open'); btn.setAttribute('aria-expanded', 'false'); document.body.style.overflow = ''; }
+      btn.addEventListener('click', openMenu);
+      closeBtn.addEventListener('click', closeMenu);
+      menu.querySelectorAll('a').forEach(function(a) { a.addEventListener('click', closeMenu); });
+    })();
+  </script>
+
+</body>
+</html>
