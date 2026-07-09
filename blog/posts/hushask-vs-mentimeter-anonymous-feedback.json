@@ -1,0 +1,41 @@
+{
+  "slug": "hushask-vs-mentimeter-anonymous-feedback",
+  "title": "HushAsk vs Mentimeter: Live Polls vs Anonymous Feedback Threads",
+  "date": "July 9, 2026",
+  "meta_description": "An honest comparison of HushAsk and Mentimeter. Mentimeter runs live polls and word clouds for the room; HushAsk runs two-way anonymous feedback threads in Slack. What each does well, and when to pick which.",
+  "lead": "Mentimeter turns a room into a live chart — polls, rankings, word clouds on the screen. HushAsk turns anonymous feedback into a two-way thread in Slack. A poll tells you what people picked; a thread tells you why. A practical breakdown of where each one fits.",
+  "hero_num": 24,
+  "toc": [
+    {
+      "id": "menti-strengths",
+      "text": "What Mentimeter does well"
+    },
+    {
+      "id": "polls-stop",
+      "text": "Where polls stop being feedback"
+    },
+    {
+      "id": "two-way-threads",
+      "text": "What two-way anonymous threads change"
+    },
+    {
+      "id": "pick-which",
+      "text": "When to pick which"
+    }
+  ],
+  "related": [
+    {
+      "slug": "how-to-collect-anonymous-employee-feedback-in-slack",
+      "title": "How to Collect Anonymous Employee Feedback in Slack"
+    },
+    {
+      "slug": "anonymous-vs-named-feedback-when-to-use-which",
+      "title": "When to Use Anonymous Feedback vs Named Feedback (and How to Tell)"
+    },
+    {
+      "slug": "hushask-vs-slido-anonymous-qa",
+      "title": "HushAsk vs Slido: Anonymous Q&A for All-Hands vs Everyday Slack"
+    }
+  ],
+  "body": "<h2 id=\"menti-strengths\">What Mentimeter does well</h2>\n<p>Mentimeter is a live presentation and audience-engagement tool. Its core is the interactive slide: you put a question on screen, the audience answers from their phones, and the results build in real time in front of the room &mdash; bar charts, scales, rankings, quizzes, and the word cloud it is best known for. For a workshop, a training session, an offsite, or the interactive stretch of an all-hands, that live visualization does real work. A word cloud of &ldquo;one word for how the quarter felt&rdquo; gives a room an instant, shared read that a spreadsheet never would.</p>\n<p>Responses are unattributed by default, so people answer more candidly than they would with a show of hands, and the presenter drives the whole thing from the deck without breaking stride. Mentimeter is event-shaped and presenter-led, and for the live room that is exactly the right design. The question, the answers, and the visual all belong to the moment everyone is looking at the same screen.</p>\n\n<h2 id=\"polls-stop\">Where polls stop being feedback</h2>\n<p>A poll captures a snapshot. It tells you what people picked &mdash; sixty percent chose option B, the word &ldquo;workload&rdquo; showed up eleven times &mdash; and that is genuinely useful for reading the temperature of a room. But a poll result is the beginning of a feedback conversation, not the conversation itself. It tells you what, and almost never why.</p>\n<p>The word cloud says &ldquo;workload.&rdquo; It cannot tell you which team, which project, since when, or what specifically to change. And once the slide advances or the session ends, there is nowhere for the answer to go. The person who typed &ldquo;workload&rdquo; has no way to add the sentence that would have made it actionable, and you have no way to ask them for it.</p>\n<p>Three limits stack up. There is no follow-up, because the poll closes with the slide. There is no thread, because each response is a data point rather than a message you can reply to. And there is no resolution, because the loop from signal to action to &ldquo;here is what we changed&rdquo; has nowhere to live. Survey fatigue compounds all three: when the only feedback mechanism is a periodic poll, people learn that answering changes nothing, and the quality of what they submit quietly decays.</p>\n<p>Picture the offsite retro. The room fills a word cloud with &ldquo;communication,&rdquo; &ldquo;priorities,&rdquo; and &ldquo;burnout,&rdquo; everyone nods at the shared picture, and the session moves on. A month later the same three words would surface again, because nothing between the offsites gave anyone a way to say what they meant or hear what changed. The poll measured the mood accurately and moved none of it. That is not a fault in Mentimeter; it is the boundary of what a point-in-time instrument can do.</p>\n\n<h2 id=\"two-way-threads\">What two-way anonymous threads change</h2>\n<p>HushAsk is built around the part the poll model leaves out: the conversation after the first answer. It is anonymous feedback in Slack, structured as threads rather than data points. Someone sends an anonymous message, a leader replies anonymously in-thread, and the sender can respond again &mdash; so &ldquo;workload&rdquo; becomes &ldquo;which team, since when, and here is what we are adjusting&rdquo; over a few messages instead of a single bar on a chart. The follow-up is the product, not an afterthought.</p>\n<p>The anonymity model is also different in kind. HushAsk replaces the Slack user identifier with a 64-character SHA-256 hash at send time. On Free, Pro, and Business+ Slack plans there is no path back to the original sender &mdash; the anonymity is cryptographic, a property of how the message is stored, rather than a policy promise that no one will look. (On Slack Enterprise Grid plans, Slack’s audit log records bot interactions — including messages to HushAsk — so a Slack admin may be able to see that someone sent a DM to the HushAsk bot, independent of anything HushAsk stores or controls. HushAsk has no access to that log and no ability to suppress it. For teams on Free, Pro, or Business+ plans, this caveat does not apply.)</p>\n<p>A poll’s unattributed responses are anonymous within the session, which is the correct guarantee for a live slide. A stored cryptographic hash is a different and more durable one: it holds after the room empties, which is what an ongoing conversation needs.</p>\n<p>The thread also gives leadership a way to close the loop in the open without exposing anyone. A leader can answer an anonymous message in the shared channel, so the whole team sees both the question and the response while the asker stays a hash. Over a quarter, that visible back-and-forth does something a poll cannot: it shows people that raising something anonymously actually leads somewhere, which is the one thing that keeps them using the channel at all.</p>\n\n<h2 id=\"pick-which\">When to pick which</h2>\n<p>Pick Mentimeter when the job is the live, visual moment &mdash; a workshop, a training, the interactive stretch of an all-hands where you want the room to watch the word cloud form and the bars climb together. HushAsk has no presenter mode, no live charts, and no word clouds, and it is not trying to. A Slack thread is not a substitute for a poll on a projector.</p>\n<p>Pick HushAsk when the job is the ongoing conversation: the feedback that needs a reply, the concern that only becomes useful once you can ask &ldquo;tell me more,&rdquo; the signal that has to keep moving in the weeks between offsites. That work needs a thread and a stored anonymity guarantee, not a slide that advances and is gone.</p>\n<p>Many teams run both, because they do different jobs. Mentimeter owns the live room and the shared visual. HushAsk owns the conversation that follows &mdash; the why behind the what, and the reply that closes the loop. The mistake is asking a poll to carry a conversation it was never shaped to hold.</p>"
+}
