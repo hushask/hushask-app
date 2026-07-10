@@ -1,0 +1,41 @@
+{
+  "slug": "anonymous-all-hands-ama-slack",
+  "title": "Running an Anonymous All-Hands AMA in Slack",
+  "date": "July 10, 2026",
+  "meta_description": "The interesting all-hands questions never get asked out loud. A practical guide to running an anonymous AMA in Slack — collecting questions ahead or live, moderating without de-anonymizing, and a 5-minute setup.",
+  "lead": "The questions people actually want answered at the all-hands rarely get asked with a name attached. A practical walkthrough for running an anonymous AMA in Slack: how to collect questions, how to moderate without breaking anonymity, and how to set it up in five minutes.",
+  "hero_num": 23,
+  "toc": [
+    {
+      "id": "why-names",
+      "text": "Why AMA questions dry up when names are attached"
+    },
+    {
+      "id": "pre-ama-setup",
+      "text": "Collecting questions ahead vs live"
+    },
+    {
+      "id": "moderating",
+      "text": "Moderating without de-anonymizing"
+    },
+    {
+      "id": "five-min-setup",
+      "text": "A 5-minute setup, no admin work"
+    }
+  ],
+  "related": [
+    {
+      "slug": "hushask-vs-slido-anonymous-qa",
+      "title": "HushAsk vs Slido: Anonymous Q&A for All-Hands vs Everyday Slack"
+    },
+    {
+      "slug": "how-to-collect-anonymous-employee-feedback-in-slack",
+      "title": "How to Collect Anonymous Employee Feedback in Slack"
+    },
+    {
+      "slug": "is-anonymous-feedback-in-slack-actually-anonymous",
+      "title": "Is Anonymous Feedback in Slack Actually Anonymous?"
+    }
+  ],
+  "body": "<h2 id=\"why-names\">Why AMA questions dry up when names are attached</h2>\n<p>The all-hands AMA has a familiar failure mode. Leadership opens the floor, and the questions that come are safe: the ones about lunch, the offsite, the new logo. The questions people actually carried into the room &mdash; about the reorg nobody is naming, the runway, why a team lost two people last month &mdash; stay in their heads. Asking those with your name attached, in front of the whole company, is a career calculation rather than a moment of curiosity.</p>\n<p>The dynamic falls hardest on exactly the people whose questions would be most useful. The newest hire, the most junior engineer, the person on a visa &mdash; they have the sharpest read on what is broken and the most to lose by saying it out loud. So the session feels productive and answers almost nothing anyone was genuinely wondering. The fix is not more encouragement from the front of the room. &ldquo;No, really, ask anything&rdquo; does not change the math. Removing the name from the question does.</p>\n<p>There is a second cost that is easy to miss. A session full of safe questions does not just waste the hour; it teaches the room that the AMA is theater. People calibrate. At the next all-hands they bring even fewer real questions, because they have learned the format will not hold them. An AMA that never surfaces anything hard slowly trains an organization to stop expecting honesty from the format &mdash; the opposite of what leadership meant to signal by opening the floor.</p>\n\n<h2 id=\"pre-ama-setup\">The pre-AMA setup: collecting questions ahead vs live</h2>\n<p>There are two ways to run an anonymous AMA, and the best version uses both. Collecting ahead means opening an anonymous channel a few days before the all-hands and letting questions accumulate. You walk in with a real list, time to think about the hard answers, and a chance to group duplicates and see what the organization actually cares about. Collecting live means questions arrive anonymously during the session itself, in reaction to what was just said.</p>\n<p>Ahead is better for the structural questions &mdash; people need time away from the moment to type them, and you need time to answer them well. Live is better for the follow-ups and the reactions that only exist because of something a leader said thirty seconds ago. The strong pattern is a few days of pre-collection to surface the real agenda, plus a channel that stays open during the meeting for the in-the-moment questions. This is also where a standing Slack channel differs from an event-scoped tool: the questions do not have to stop when the meeting does.</p>\n\n<h2 id=\"moderating\">Moderating without de-anonymizing</h2>\n<p>Collecting the questions is the easy part. The hard part is handling them without breaking the anonymity that made them honest in the first place. Three habits carry most of the weight.</p>\n<p><strong>Triage.</strong> Read the whole queue before answering anything, and group questions that hit the same theme so you answer the theme rather than each near-duplicate. <strong>Dedupe.</strong> Five versions of &ldquo;what is happening with headcount&rdquo; is one answer &mdash; and merging them also protects the askers, because no single phrasing stays traceable to one person. <strong>Route.</strong> Some questions belong to a specific leader; pass them along without adding any metadata that narrows down who might have asked.</p>\n<p>The discipline underneath all three is simple and absolute: never try to guess or reveal who sent what, even when you think you know. The moment people believe one question got traced back, the channel dies and does not come back. This is where the anonymity model matters. HushAsk replaces the Slack user identifier with a 64-character SHA-256 hash at send time, so on Free, Pro, and Business+ Slack plans there is no path back to the sender &mdash; the anonymity is cryptographic, not a promise that a moderator will choose not to look. (On Slack Enterprise Grid plans, Slack’s audit log records bot interactions — including messages to HushAsk — so a Slack admin may be able to see that someone sent a DM to the HushAsk bot, independent of anything HushAsk stores or controls. HushAsk has no access to that log and no ability to suppress it. For teams on Free, Pro, or Business+ plans, this caveat does not apply.)</p>\n<p>One more habit matters: answer the questions you cannot fully answer. Some anonymous questions land on things leadership genuinely cannot discuss yet &mdash; an unannounced change, a legal constraint, a decision still in flight. Skipping them silently reads as dodging, and the channel notices. &ldquo;I cannot get into that yet, and here is honestly why&rdquo; holds trust far better than pretending the question was never asked. The point of an anonymous AMA is not that every question gets a clean answer; it is that no question gets ignored because of who might have asked it.</p>\n\n<h2 id=\"five-min-setup\">A 5-minute HushAsk setup, no admin work</h2>\n<p>The mechanics are deliberately small. Add HushAsk to Slack, point it at a channel, and share the link a few days out with a short note inviting anonymous questions for the all-hands. Messages arrive anonymously; you or the presenter answer in-thread, anonymously, and the follow-ups keep working after the meeting ends. There are no forms to build, no admin project to file, and no per-question configuration.</p>\n<p>It is free for teams sending up to 20 messages per month, and the button is the same one your team already knows how to use: Add HushAsk to Slack. But the tool is the easy part. The discipline of actually answering the hard questions honestly &mdash; the ones people were afraid to attach their name to &mdash; is what makes anyone believe it is worth asking again next quarter. Get that right and the anonymous channel stops being an all-hands gimmick and becomes the place the real questions live.</p>"
+}
