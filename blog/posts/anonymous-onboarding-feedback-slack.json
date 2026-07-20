@@ -1,0 +1,41 @@
+{
+  "slug": "anonymous-onboarding-feedback-slack",
+  "title": "Anonymous Onboarding Feedback: What New Hires Won't Tell You in Week One",
+  "date": "July 20, 2026",
+  "meta_description": "New hires see every broken thing in your onboarding and are the least likely to say so with a name attached. What to ask at 30, 60, and 90 days, why anonymity matters most for the newest people, and how to run a recurring check-in in Slack.",
+  "lead": "Your newest hire has the clearest view of everything broken in your onboarding, and roughly the least incentive of anyone to tell you about it. What to ask at 30, 60, and 90 days &mdash; and why the answers only arrive when a name is not attached.",
+  "hero_num": 26,
+  "toc": [
+    {
+      "id": "honesty-gap",
+      "text": "The week-one honesty gap"
+    },
+    {
+      "id": "what-to-ask",
+      "text": "What to ask at 30 / 60 / 90 days"
+    },
+    {
+      "id": "why-anonymity",
+      "text": "Why anonymity matters most for the newest people"
+    },
+    {
+      "id": "setup",
+      "text": "Setting up a recurring onboarding check-in in Slack"
+    }
+  ],
+  "related": [
+    {
+      "slug": "how-to-collect-anonymous-employee-feedback-in-slack",
+      "title": "How to Collect Anonymous Employee Feedback in Slack"
+    },
+    {
+      "slug": "anonymous-suggestion-box-slack",
+      "title": "Setting Up an Anonymous Suggestion Box in Slack (Without Google Forms)"
+    },
+    {
+      "slug": "anonymous-exit-interviews-slack",
+      "title": "Running Anonymous Exit Interviews in Slack"
+    }
+  ],
+  "body": "<h2 id=\"honesty-gap\">The week-one honesty gap</h2>\n<p>A new hire spends their first month noticing everything. The doc that describes a system two reorgs out of date. The permission nobody can find the owner of. The meeting everyone attends and nobody can explain. The thing a teammate said on day three that made them wonder what they had signed up for. Six months later they will not see any of it, because by then it will have become the way things are. The clarity is real and it has a short shelf life.</p>\n<p>They are also, at that exact moment, the person in the building with the least standing to say any of it. They are inside a probation window, in some cases on a visa tied to the job, still working out who has influence and which complaints mark you as a complainer. The honest version of &ldquo;how is onboarding going&rdquo; carries risk they cannot price yet, because they do not know the culture well enough to know whether candour is rewarded here or quietly remembered. So they say it is going great. It is the only answer with no downside.</p>\n<p>That is the gap. The maximum-signal moment and the minimum-safety moment are the same moment, and most companies resolve it by asking a question that cannot get a real answer &mdash; usually the hiring manager, usually in a one-on-one, usually with a friendly &ldquo;so, any surprises?&rdquo; The answer is no. There are always surprises.</p>\n\n<h2 id=\"what-to-ask\">What to ask at 30 / 60 / 90 days</h2>\n<p>The three checkpoints are not the same conversation asked three times. Each one has a window where a specific kind of information is available and after which it disappears.</p>\n<p><strong>At 30 days, ask about friction, not feelings.</strong> This is the only point where someone still remembers the mechanics of arriving. What took longer than it should have in your first two weeks? What did you need that you could not find, and where did you look first? What is in the onboarding doc that turned out to be wrong? These produce a punch list. They are also easy to answer honestly, because reporting a broken link is not a criticism of anyone.</p>\n<p><strong>At 60 days, ask about the gap between the pitch and the job.</strong> They now know enough to compare. What is different from what you expected during interviews? What did we describe in a way that turned out not to match? Is there anything you have already learned to work around rather than raise? That last one is the highest-value question at this checkpoint, because a workaround at 60 days is a permanent habit at 120, and it is the clearest early signal of an interview process that is overselling something.</p>\n<p><strong>At 90 days, ask about the things they have stopped noticing.</strong> This is the last call before the fresh eyes close. What surprised you in month one that you have already gotten used to? What would you warn the next new hire about? Is there anything you would have wanted to know before accepting? The last question is uncomfortable and it is the one that predicts regretted attrition better than anything on your engagement survey.</p>\n<p>Keep each round to three or four questions. A new hire who receives a twenty-question form concludes, correctly, that this is a process rather than a conversation, and answers it accordingly.</p>\n\n<h2 id=\"why-anonymity\">Why anonymity matters most for the newest people</h2>\n<p>Anonymous feedback is often framed as a tool for the disgruntled. In practice the people who benefit most are the ones with the least standing, and nobody has less standing than someone eleven weeks in. Everyone else has a track record to fall back on. If a five-year veteran says onboarding is broken, it reads as institutional knowledge. If a new hire says the same sentence, it risks reading as an excuse for not having ramped fast enough &mdash; and they know that, which is why they do not say it.</p>\n<p>There is a small-numbers problem underneath this that policy-based anonymity does not solve. If you onboarded three people this quarter, &ldquo;anonymous&rdquo; feedback from a cohort of three is not especially anonymous, and everyone involved can do that arithmetic. This is where the difference between a promise and a mechanism becomes concrete. HushAsk replaces the Slack user identifier with a 64-character SHA-256 hash at send time, so on Free, Pro, and Business+ Slack plans there is no path back to the sender &mdash; the anonymity is cryptographic rather than an assurance that a manager will choose not to look. (On Slack Enterprise Grid plans, Slack&rsquo;s audit log records bot interactions &mdash; including messages to HushAsk &mdash; so a Slack admin may be able to see that someone sent a DM to the HushAsk bot, independent of anything HushAsk stores or controls. HushAsk has no access to that log and no ability to suppress it. For teams on Free, Pro, or Business+ plans, this caveat does not apply.)</p>\n<p>The small-cohort problem still deserves an honest answer, though, and the mechanism alone is not it. If you are hiring in ones and twos, pool the responses across a quarter before you report on themes, and resist quoting anything verbatim. Being able to prove the tool cannot identify someone does not help if your summary does it for them.</p>\n\n<h2 id=\"setup\">Setting up a recurring onboarding check-in in Slack</h2>\n<p>The reason onboarding feedback rarely gets collected is not that people disagree with the idea. It is that it requires remembering to do something on three specific dates per hire, and that never survives a busy quarter. So make it small enough to survive one.</p>\n<p>Add HushAsk to Slack, point it at a channel, and send the same three or four questions at each checkpoint. Answers come back anonymously, and when something needs one more turn you can follow up in-thread without ever learning who you are talking to. That follow-up is the part a form cannot do, and it is usually where the specific detail lives &mdash; the difference between &ldquo;the docs were out of date&rdquo; and knowing exactly which doc sent three consecutive hires down the wrong path. It is free for teams sending up to 20 messages per month.</p>\n<p>Then close the loop, visibly. Fix two things from each round and say which ones in the channel where the next cohort will see it. New hires are watching for evidence about what this place does with honesty long before they are willing to test it themselves. Fixing the broken link and saying so publicly is a cheaper trust signal than anything in the handbook &mdash; and it is the thing that makes the 90-day answers worth reading.</p>"
+}
